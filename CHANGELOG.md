@@ -33,6 +33,12 @@
   diagnostic's units, scaled with the duel size, after the scored ones (#16).
 - (feat): `icilval catalogue build / verify / push / pull` replace `icilval pools`; `--evict`
   and `generate-draw` go; `Spec.catalogue` replaces `Spec.pools` (#16).
+- (feat): `simulators/libero/generate.py` generates a LIBERO prompt for a catalogue task with
+  BPP's `TaskDemonstrationGenerator`: seeded attempts until one succeeds, BPP's render pass, one
+  npz in the demo format (seed, attempts and BPP commit in `meta`). It runs headless under a
+  validator-owned LIBERO config pointing `datasets` at the grasp-source files fetched by the
+  catalogue's hashes; the simulator and GPU test sessions install that config. The GPU parity
+  test prompts the genesis with generated demonstrations from fresh resets (#17).
 
 ### Pluggable simulators
 
