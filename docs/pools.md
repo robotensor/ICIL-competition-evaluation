@@ -4,37 +4,47 @@ A pool is a content-addressed directory the validator draws units from:
 
 ```
 pool.json          manifest (tasks, the eligible tasks per skill, pool_id = sha256 of the rest)
-bddl/<group>/…     LIBERO BDDL files, as the benchmark ships them
+bddl/<group>/…     LIBERO BDDL files, as BPP's LIBERO-Gen release ships them
 init/<group>/…     LIBERO initial states as npz (converted from pickled .pruned_init at build time)
 demos/<task>/…     demonstrations as npz: LIBERO cameras + proprioception + actions + initial state,
                    or the drawing board's frames + pen state + actions + the strokes drawn
 ```
 
-Build (needs the BPP conda environment and the raw downloads under `~/.cache/icilval/raw`):
+Build (needs the BPP conda environment; raw inputs live under `~/.cache/icilval/raw`):
 
 ```bash
-MUJOCO_GL=egl icilval pools build --out pools/<version> [--stage base object draw finalize] [--limit N]
+MUJOCO_GL=egl icilval pools build --out pools/<version> --version <version> --fetch --evict \
+    [--stage pick_and_place draw finalize] [--limit N]
 icilval pools verify pools/<version>
 icilval pools push pools/<version> --repo <owner>/icil-competition-pools
 ```
 
-A task is eligible when it has at least one usable initial state and one demonstration. The
-LIBERO stages keep, per task, the initial states where the goal is not already satisfied. The
-`draw` stage imports BPP's human-drawn evaluation set (`eval_handmade.zarr`, 50 drawings, 5
-demonstrations each); a drawing task has no initial-state file: its `init_states_per_task`
-instances are board angles and cursor starts derived from the task id. The pool id is pinned in
-`spec.json` (`pools.pool_id`); the validator refuses a pool that does not match.
+Stages are named after the skills, plus `finalize`. `--fetch` downloads each task's files from the
+Hugging Face dataset on demand and `--evict` deletes a demonstration hdf5 once its
+`demos_per_task` demonstrations are npz in the pool - the Combination release alone is about
+160 GB of hdf5, more than a build host has to hold. A task is eligible when it has at least one
+usable initial state (the goal is not already satisfied there) and one demonstration. The pool id
+is pinned in `spec.json` (`pools.pool_id`); the validator refuses a pool that does not match.
 
-Raw inputs: `yifengzhu-hf/LIBERO-datasets` (spatial/goal/object/10),
-`austinpatel/libero_gen_goal_chain_hdf5` (first-step view), `austinpatel/libero_gen_spatial_combination_hdf5`
-(selected view), `austinpatel/drawanything_sim` (`eval_handmade.zarr.zip`, unpacked), BPP's checkout.
+The pick-and-place tasks are BPP's LIBERO-Gen Combination release
+(`austinpatel/libero_gen_spatial_combination_hdf5`), both of its views - the 10 combinations BPP
+held out and the 164 it trained on - imported alike; the view is recorded per task in
+`meta.source_split`. Each task has 50 initial states and the pool keeps 10 of its 50 demonstrations,
+spread over the file. BPP collected those demonstrations by motion planning from states of its
+own, so none coincides with an evaluation initial state; `demo_init_index` records that
+(every entry `null`), and unit derivation would skip a coincidence if there were one.
+
+The `draw` stage imports BPP's human-drawn evaluation set (`eval_handmade.zarr`, 50 drawings, 5
+demonstrations each); a drawing task has no initial-state file: its `init_states_per_task`
+instances are board angles and cursor starts derived from the task id.
 
 Organizer-generated drawings, never published as training data: `icilval pools generate-draw
 --base-seed <secret>` runs BPP's `procedural_generate_drawings.py` and imports its drawings under
 `drawanything_generated/`.
 
 Upgrading a schema-2 pool (perturbation groups and variants) keeps every task and its files
-without re-simulating and drops the variants:
+without re-simulating and drops the variants; it is a stop-gap for a pool built before spec v3,
+not a way to get the v3 task set:
 
 ```bash
 icilval pools upgrade --old pools/2026.09-v2 --out pools/<version>
@@ -44,8 +54,7 @@ icilval pools upgrade --old pools/2026.09-v2 --out pools/<version>
 
 `pool_id` `ae9645cdbc2ed24cdbea436d6677925070f0a4221c604a09e18c96dbd0dad83a` - 98 tasks, 730
 demonstrations. Still the pinned pool until the spec v3 pool is built and pinned at the end of the
-milestone; under spec v3 its variants are ignored and its 48 pick-and-place tasks and 50 drawings
-are the eligible tasks.
+milestone. Its pick-and-place tasks are the organizer selection spec v3 replaces.
 
 | skill | tasks |
 |---|---|

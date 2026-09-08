@@ -4,6 +4,16 @@
 
 ### Spec v3: BPP's unit protocol (pool schema 3, store schema 3, live schema 3)
 
+- (feat): pick and place is BPP's LIBERO-Gen Combination domain, both views (174 tasks), sampled
+  uniformly; the original-LIBERO base tasks, the pick-and-place goal filter, the Goal-Chain
+  first-step import and the organizer task generator (`affordance.yaml`, `pools generate`) are
+  gone (#2). `pools build --fetch --evict` streams the 160 GB of demonstration files from the hub
+  one task at a time; `demo_init_index` is filled at import (no LIBERO-Gen demonstration starts
+  from an evaluation initial state). `scripts/baseline.py` sweeps a model over every eligible
+  task for the numbers in `docs/pools.md`. The genesis for this skill is the converted
+  `austinpatel/liberogen_spatial_combination` checkpoint, whose template is byte-identical to
+  `bpp_libero_v1`.
+
 - (feat): the organizer perturbation groups are gone. A unit is one task, one of its benchmark
   initial states, one prompt demonstration and a seed, spread evenly over a skill's eligible
   tasks - what BPP's own runner evaluates. Removed: the L1..L5 displacement ladder, LIBERO-PRO
