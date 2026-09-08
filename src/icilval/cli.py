@@ -138,7 +138,7 @@ def cmd_units(args) -> int:
     return 0
 
 
-def cmd_pools(args) -> int:
+def cmd_catalogue(args) -> int:
     import logging
 
     from .pools.build import finalize, open_pool, stage_skill, summary, verify_pool
@@ -157,7 +157,7 @@ def cmd_pools(args) -> int:
             src.raw = Path(args.raw)
         return src
 
-    if args.pools_cmd == "build":
+    if args.catalogue_cmd == "build":
         out = Path(args.out)
         src = sources()
         stages = args.stage or [*spec.skills, "finalize"]
@@ -175,10 +175,10 @@ def cmd_pools(args) -> int:
         if missing:
             print("missing sources:", *missing, sep="\n  ")
             return 1
-        pool = open_pool(out, spec, args.version or str(spec.pools["version"]))
+        pool = open_pool(out, spec, args.version or str(spec.catalogue["version"]))
         for stage in stages:
             if stage == "finalize":
-                print("eligible:", json.dumps(finalize(pool, spec)))
+                print("tasks:", json.dumps(finalize(pool, spec)))
                 continue
             stage_skill(
                 pool,
@@ -188,59 +188,37 @@ def cmd_pools(args) -> int:
                 limit=args.limit,
                 validate=not args.no_validate,
                 fetch_missing=args.fetch,
-                evict_demos=args.evict,
             )
         pool.save()
         print(json.dumps(summary(pool), indent=1))
         return 0
-    if args.pools_cmd == "verify":
-        errors = verify_pool(Path(args.pool), spec)
+    if args.catalogue_cmd == "verify":
+        errors = verify_pool(Path(args.catalogue), spec)
         for e in errors:
             print("error:", e)
-        print(json.dumps(summary(Pool.load(args.pool)), indent=1))
+        print(json.dumps(summary(Pool.load(args.catalogue)), indent=1))
         return 0 if not errors else 1
-    if args.pools_cmd == "push":
+    if args.catalogue_cmd == "push":
         from .pools.hub import push_pool
 
-        pool = Pool.load(args.pool)
-        print(push_pool(Path(args.pool), args.repo or str(spec.pools["repo"]), pool.pool_version))
+        pool = Pool.load(args.catalogue)
+        print(
+            push_pool(
+                Path(args.catalogue), args.repo or str(spec.catalogue["repo"]), pool.pool_version
+            )
+        )
         return 0
-    if args.pools_cmd == "pull":
+    if args.catalogue_cmd == "pull":
         from .pools.hub import pull_pool
 
         print(
             pull_pool(
-                args.repo or str(spec.pools["repo"]),
-                args.version or str(spec.pools["version"]),
+                args.repo or str(spec.catalogue["repo"]),
+                args.version or str(spec.catalogue["version"]),
                 Path(args.dest),
                 revision=args.revision,
             )
         )
-        return 0
-    if args.pools_cmd == "generate-draw":
-        from .simulators.draw.pool import generate_draw, import_generated_draw
-        from .spec import _repo_root as rr
-
-        root = rr() or Path.cwd()
-        bpp = Path(args.bpp_root) if args.bpp_root else root / "vendor" / "behavior_prompting"
-        run_dir = Path(args.run_dir)
-        if not args.import_only:
-            generate_draw(
-                bpp,
-                run_dir,
-                n_tasks=args.n_tasks,
-                demos_per_task=args.demos_per_task,
-                base_seed=args.base_seed,
-                workers=args.workers,
-                python=args.python,
-                dry_run=args.dry_run,
-            )
-        if args.pool and not args.dry_run:
-            pool = Pool.load(args.pool)
-            pool.pool_id = None
-            got = import_generated_draw(pool, spec, run_dir, skill=args.skill, limit=args.limit)
-            print("imported", got)
-            print("eligible:", json.dumps(finalize(pool, spec)))
         return 0
     return 2
 
@@ -521,7 +499,7 @@ def cmd_smoke(args) -> int:
 
 def _add_runtime_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--store", required=True)
-    p.add_argument("--pool", required=True)
+    p.add_argument("--pool", required=True, help="the catalogue directory")
     p.add_argument("--key", default="keys/validator.ed25519", help="validator.ed25519 secret file")
     p.add_argument("--arch", default=None)
     p.add_argument("--runs", default="runs")
@@ -598,56 +576,40 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--port", type=int, default=None)
     a.set_defaults(func=cmd_admin)
 
-    po = sub.add_parser("pools", help="build, verify and distribute evaluation pools")
-    po_sub = po.add_subparsers(dest="pools_cmd", required=True)
-    po_b = po_sub.add_parser("build")
-    po_b.add_argument("--out", required=True)
-    po_b.add_argument(
+    ca = sub.add_parser("catalogue", help="build, verify and distribute the task catalogue")
+    ca_sub = ca.add_subparsers(dest="catalogue_cmd", required=True)
+    ca_b = ca_sub.add_parser("build")
+    ca_b.add_argument("--out", required=True)
+    ca_b.add_argument(
         "--stage",
         nargs="*",
         default=None,
         help="skill ids (spec order) and finalize; default: all",
     )
-    po_b.add_argument("--limit", type=int, default=None, help="tasks per view (smoke builds)")
-    po_b.add_argument(
-        "--no-validate", action="store_true", help="skip simulator validation (no instance lists)"
+    ca_b.add_argument(
+        "--limit", type=int, default=None, help="tasks per view or file (smoke builds)"
     )
-    po_b.add_argument("--raw", default=None, help="raw cache dir (default ~/.cache/icilval/raw)")
-    po_b.add_argument(
-        "--fetch", action="store_true", help="download missing LIBERO-Gen files from the hub"
+    ca_b.add_argument(
+        "--no-validate", action="store_true", help="skip building each LIBERO scene once"
     )
-    po_b.add_argument(
-        "--evict",
+    ca_b.add_argument("--raw", default=None, help="raw cache dir (default ~/.cache/icilval/raw)")
+    ca_b.add_argument(
+        "--fetch",
         action="store_true",
-        help="delete each demonstration hdf5 after its demos are imported (they total ~160 GB)",
+        help="list tasks and download task files from the hub; record grasp-source hashes from it",
     )
-    po_b.add_argument("--version", default=None)
-    po_v = po_sub.add_parser("verify")
-    po_v.add_argument("pool")
-    po_p = po_sub.add_parser("push")
-    po_p.add_argument("pool")
-    po_p.add_argument("--repo", default=None)
-    po_l = po_sub.add_parser("pull")
-    po_l.add_argument("--dest", required=True)
-    po_l.add_argument("--repo", default=None)
-    po_l.add_argument("--version", default=None)
-    po_l.add_argument("--revision", default=None)
-    po_gd = po_sub.add_parser(
-        "generate-draw", help="run BPP's procedural drawing generator, then import"
-    )
-    po_gd.add_argument("--run-dir", required=True)
-    po_gd.add_argument("--pool", default=None)
-    po_gd.add_argument("--skill", default="draw_anything", help="the drawing skill the run feeds")
-    po_gd.add_argument("--n-tasks", type=int, default=50)
-    po_gd.add_argument("--demos-per-task", type=int, default=10)
-    po_gd.add_argument("--base-seed", type=int, required=True, help="the organizer's secret seed")
-    po_gd.add_argument("--workers", type=int, default=8)
-    po_gd.add_argument("--python", default="python")
-    po_gd.add_argument("--bpp-root", default=None)
-    po_gd.add_argument("--limit", type=int, default=None)
-    po_gd.add_argument("--dry-run", action="store_true")
-    po_gd.add_argument("--import-only", action="store_true")
-    po.set_defaults(func=cmd_pools)
+    ca_b.add_argument("--version", default=None)
+    ca_v = ca_sub.add_parser("verify")
+    ca_v.add_argument("catalogue")
+    ca_p = ca_sub.add_parser("push")
+    ca_p.add_argument("catalogue")
+    ca_p.add_argument("--repo", default=None)
+    ca_l = ca_sub.add_parser("pull")
+    ca_l.add_argument("--dest", required=True)
+    ca_l.add_argument("--repo", default=None)
+    ca_l.add_argument("--version", default=None)
+    ca_l.add_argument("--revision", default=None)
+    ca.set_defaults(func=cmd_catalogue)
 
     u = sub.add_parser("units", help="derive a duel's unit list")
     u.add_argument("units_cmd", choices=["derive"])

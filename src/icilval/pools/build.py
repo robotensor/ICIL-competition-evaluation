@@ -46,20 +46,12 @@ def stage_skill(
     limit: int | None = None,
     validate: bool = True,
     fetch_missing: bool = False,
-    evict_demos: bool = False,
 ) -> None:
-    """The pool stage of one skill, from its simulator."""
+    """The catalogue stage of one skill, from its simulator."""
     from ..simulators import for_skill
 
     for_skill(spec, skill).build_stage(
-        pool,
-        spec,
-        src,
-        skill,
-        limit=limit,
-        validate=validate,
-        fetch_missing=fetch_missing,
-        evict_demos=evict_demos,
+        pool, spec, src, skill, limit=limit, validate=validate, fetch_missing=fetch_missing
     )
 
 

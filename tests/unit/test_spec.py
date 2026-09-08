@@ -46,7 +46,8 @@ def test_spec_v4_generation_changes_and_diagnostics(spec):
     assert set(spec.skill_generation("draw_anything")["families"]) >= {"bpp", "polygon", "glyph"}
     assert spec.skill_generation("pick_and_place") == {}
     assert spec.generation["max_attempts"] >= 1 and spec.generation["workers"] >= 1
-    assert spec.catalogue["repo"] and spec.pools is spec.catalogue
+    assert spec.catalogue["repo"] and spec.catalogue["version"]
+    assert not hasattr(spec, "pools")
     diag = spec.diagnostics["handmade_drawings"]
     assert diag["skill"] in spec.skills and diag["units_per_duel"] >= 0
     assert not any(k.startswith("_") for k in spec.diagnostics)

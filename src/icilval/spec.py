@@ -283,11 +283,6 @@ class Spec:
         return self.raw["catalogue"]
 
     @property
-    def pools(self) -> dict[str, Any]:
-        """The catalogue block, under the name the pool builders still read it by."""
-        return self.catalogue
-
-    @property
     def baseline(self) -> dict[str, Any]:
         return self.raw["baseline"]
 
