@@ -25,7 +25,6 @@ TENSORS = {
     "bpp_libero_v1": {"a.weight": ([4, 3], "F32"), "b": ([2], "F32")},
     "bpp_draw_v1": {"a.weight": ([4, 3], "F32"), "c": ([3], "F32")},
 }
-DIRS = {"bpp_libero_v1": "pick_and_place", "bpp_draw_v1": "draw_anything"}
 
 
 def write_safetensors(path, tensors):
@@ -47,10 +46,12 @@ def make_arch(tmp_path):
     return arch
 
 
-def make_submission(tmp_path, model=None, tensors=None, extra=None, skills=DIRS):
+def make_submission(spec, tmp_path, model=None, tensors=None, extra=None, skills=None):
+    """One directory per spec skill (or per `skills`: skill -> architecture)."""
     root = tmp_path / "sub"
     root.mkdir(exist_ok=True)
-    for arch, skill in skills.items():
+    skills = skills or {s: spec.architecture(s) for s in spec.skills}
+    for skill, arch in skills.items():
         d = root / skill
         d.mkdir(exist_ok=True)
         (d / "config.yaml").write_text(
@@ -76,16 +77,16 @@ def test_diff_and_targets():
 
 def test_header_and_accept(spec, tmp_path):
     arch = make_arch(tmp_path)
-    sub = make_submission(tmp_path)
+    sub = make_submission(spec, tmp_path)
     assert read_safetensors_header(sub / "pick_and_place" / "model.safetensors")["a.weight"][
         "shape"
     ] == [4, 3]
     report = check_submission(sub, spec, arch)
     assert report.ok, report.errors
-    assert set(report.skills) == {"pick_and_place", "draw_anything"}
+    assert set(report.skills) == set(spec.skills)
     assert report.skills["pick_and_place"].param_count == 14
     assert report.skills["draw_anything"].param_count == 15
-    assert report.param_count == 29
+    assert report.param_count == sum(r.param_count for r in report.skills.values())
     assert all(r.model_sha256 and r.config_sha256 for r in report.skills.values())
     one = check_skill(sub / "draw_anything", spec, arch, "draw_anything")
     assert one.ok and one.architecture == "bpp_draw_v1"
@@ -95,31 +96,34 @@ def test_rejections(spec, tmp_path):
     arch = make_arch(tmp_path)
     m = json.loads(json.dumps(TEMPLATE_MODEL))
     m["obs_encoder"]["obs_encoder"]["_target_"] = "evil.Loader"
-    r = check_submission(make_submission(tmp_path, model=m), spec, arch)
+    r = check_submission(make_submission(spec, tmp_path, model=m), spec, arch)
     assert any("allow-listed" in e for e in r.errors)
-    assert all(e.startswith(("pick_and_place:", "draw_anything:")) for e in r.errors)
+    assert all(e.startswith(tuple(f"{s}:" for s in spec.skills)) for e in r.errors)
 
     r = check_submission(
         make_submission(
+            spec,
             tmp_path,
             tensors={"a.weight": ([4, 4], "F32"), "b": ([2], "F32")},
-            skills={"bpp_libero_v1": "pick_and_place"},
+            skills={"pick_and_place": "bpp_libero_v1"},
         ),
         spec,
         arch,
     )
     assert any("shape" in e for e in r.errors)
     r = check_submission(
-        make_submission(tmp_path, tensors={"a.weight": ([4, 3], "F64"), "b": ([2], "F32")}),
+        make_submission(spec, tmp_path, tensors={"a.weight": ([4, 3], "F64"), "b": ([2], "F32")}),
         spec,
         arch,
     )
     assert any("dtype" in e for e in r.errors)
     r = check_submission(
-        make_submission(tmp_path, tensors={"a.weight": ([4, 3], "F32")}), spec, arch
+        make_submission(spec, tmp_path, tensors={"a.weight": ([4, 3], "F32")}), spec, arch
     )
     assert any("missing" in e for e in r.errors)
-    r = check_submission(make_submission(tmp_path, extra={"weights.ckpt": b"\x80\x04"}), spec, arch)
+    r = check_submission(
+        make_submission(spec, tmp_path, extra={"weights.ckpt": b"\x80\x04"}), spec, arch
+    )
     assert any("extension" in e for e in r.errors)
     (tmp_path / "sub" / "weights.ckpt").unlink()
     (tmp_path / "sub" / "draw_anything" / "config.yaml").write_text(
@@ -135,7 +139,7 @@ def test_rejections(spec, tmp_path):
 
 def test_missing_skill_directory(spec, tmp_path):
     arch = make_arch(tmp_path)
-    sub = make_submission(tmp_path, skills={"bpp_libero_v1": "pick_and_place"})
+    sub = make_submission(spec, tmp_path, skills={"pick_and_place": "bpp_libero_v1"})
     r = check_submission(sub, spec, arch)
     assert not r.ok and any("draw_anything: directory missing" in e for e in r.errors)
     assert r.skills["pick_and_place"].ok

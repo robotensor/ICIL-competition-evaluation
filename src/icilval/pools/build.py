@@ -1,12 +1,10 @@
 """`icilval pools build`: turn raw benchmark assets into a content-addressed pool.
 
-Stages (each idempotent, each appends to pool.json):
-  pick_and_place  LIBERO-Gen Combination, both views: bddl, init npz, k demos per task
-  draw            DrawAnything-Sim: the human-drawn evaluation set (see build_draw)
-  finalize        the eligible tasks per skill, pool_id
-
-The pick-and-place tasks are exactly the ones BPP generated demonstrations for; the pool does
-not distinguish the view a task came from beyond recording it in `meta.source_split`.
+One stage per skill, named by the skill id (each idempotent, each appends to pool.json), then
+`finalize`. Where a skill's tasks come from is data: `spec.json` `skills.<skill>.tasks` names
+the Hugging Face dataset and either the LIBERO-Gen views (bddl, init states, hdf5 demos per
+task) or the DrawAnything-Sim replay-buffer files to import. The pool records the view or file
+a task came from in `meta.source_split` / its group and treats them alike.
 """
 
 from __future__ import annotations
@@ -22,17 +20,9 @@ from ..spec import Spec
 from . import validate as V
 from .demos import import_hdf5, load_demo
 from .schema import POOL_SCHEMA, Pool, PoolTask
-from .sources import Sources, convert_init, copy_bddl, evict, fetch
+from .sources import Sources, convert_init, copy_bddl, evict, fetch, hub_files
 
 log = logging.getLogger(__name__)
-
-LIBERO_SKILL = "pick_and_place"
-DRAW_SKILL = "draw_anything"
-COMBINATION_GROUP = "libero_gen_spatial_combination"
-COMBINATION_VIEWS = (
-    "libero_spatial_selected_combinations_view",
-    "libero_spatial_selected_combinations_inverse_view",
-)
 
 
 def open_pool(out: Path, spec: Spec, version: str) -> Pool:
@@ -190,37 +180,38 @@ def _swap_from_goal(goal: list[list[str]]) -> dict[str, Any]:
     return {}
 
 
-def stage_pick_and_place(
+def stage_libero_gen(
     pool: Pool,
     spec: Spec,
     src: Sources,
+    skill: str,
     *,
-    skill: str = LIBERO_SKILL,
     limit: int | None = None,
     validate: bool = True,
     fetch_missing: bool = False,
     evict_demos: bool = False,
 ) -> None:
-    """Every LIBERO-Gen Combination task with demonstrations, from both of BPP's views.
+    """Every task of the skill's LIBERO-Gen views that has demonstrations.
 
     The task list is the hub's `demonstration_data/<view>/` when fetching (only tasks that
     have demonstrations), else the local `bddl_files/<view>/`.
     """
-    root = src.gen_spatial_combination
-    key = "gen_spatial_combination" if fetch_missing else None
-    for view in COMBINATION_VIEWS:
+    tasks_cfg = spec.tasks(skill)
+    dataset = str(tasks_cfg["dataset"])
+    root = src.dataset_root(dataset)
+    group = root.name
+    key = dataset if fetch_missing else None
+    for view in tasks_cfg["views"]:
         if fetch_missing:
-            from .sources import hub_files
-
             names = [
                 Path(f).name[: -len("_demo.hdf5")]
-                for f in hub_files(key or "", f"demonstration_data/{view}/")
+                for f in hub_files(dataset, f"demonstration_data/{view}/")
                 if f.endswith("_demo.hdf5")
             ][:limit]
         else:
             names = sorted(p.stem for p in (root / "bddl_files" / view).glob("*.bddl"))[:limit]
         for name in names:
-            task_id = f"{COMBINATION_GROUP}/{name}"
+            task_id = f"{group}/{name}"
             if task_id in pool.tasks:
                 continue
             bddl = root / "bddl_files" / view / f"{name}.bddl"
@@ -235,7 +226,7 @@ def stage_pick_and_place(
                 name,
                 task_id,
                 skill,
-                "combination",
+                str(tasks_cfg["kind"]),
                 spec.max_steps(skill),
                 {"swap": _swap_from_goal(goal), "source_split": view},
                 validate,
@@ -245,11 +236,37 @@ def stage_pick_and_place(
             if t:
                 log.info("%s %s: %d inits, %d demos", skill, task_id, t.n_init, len(t.demos))
         pool.save()
-    pool.sources["libero_gen_spatial_combination"] = {
-        "root": str(root),
-        "views": list(COMBINATION_VIEWS),
-    }
+    pool.sources[group] = {"dataset": dataset, "root": str(root), "views": list(tasks_cfg["views"])}
     pool.save()
+
+
+def stage_skill(
+    pool: Pool,
+    spec: Spec,
+    src: Sources,
+    skill: str,
+    *,
+    limit: int | None = None,
+    validate: bool = True,
+    fetch_missing: bool = False,
+    evict_demos: bool = False,
+) -> None:
+    """The pool stage of one skill, chosen by its simulator."""
+    if spec.simulator(skill) == "draw":
+        from .build_draw import stage_draw
+
+        stage_draw(pool, spec, src, skill=skill, limit=limit, fetch_missing=fetch_missing)
+        return
+    stage_libero_gen(
+        pool,
+        spec,
+        src,
+        skill,
+        limit=limit,
+        validate=validate,
+        fetch_missing=fetch_missing,
+        evict_demos=evict_demos,
+    )
 
 
 # ---------------------------------------------------------------- finalize
@@ -313,7 +330,8 @@ def summary(pool: Pool) -> dict[str, Any]:
 
 __all__ = [
     "open_pool",
-    "stage_pick_and_place",
+    "stage_skill",
+    "stage_libero_gen",
     "eligible_tasks",
     "finalize",
     "verify_pool",

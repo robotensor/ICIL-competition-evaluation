@@ -14,6 +14,7 @@ its units; the **final score** is the mean over skills.
 | Skill | What the model does | Simulator / architecture | What a unit varies |
 |---|---|---|---|
 | `pick_and_place` | Grasp one object and place it at a destination: BPP's LIBERO-Gen Combination domain. Every task moves the black bowl from one pick location to one placement in the LIBERO-Spatial scene; the pool holds every combination BPP generated demonstrations for. | LIBERO (MuJoCo) / `bpp_libero_v1` | The task and one of its initial states; the prompt is another demonstration of the same task. |
+| `goal_chain` | Do two things in order - open a drawer, turn on the stove or push a plate, then place an object: BPP's LIBERO-Gen Chain domain, every two-step chain BPP generated demonstrations for. | LIBERO (MuJoCo) / `bpp_libero_v1` | The task and one of its initial states; the prompt is another demonstration of the same chain. |
 | `draw_anything` | Reproduce a drawing shown once: BPP's DrawAnything-Sim domain, its 50 human drawings and its 2000 procedural ones. The demonstration is someone drawing a shape on a square whiteboard; the model draws it again on a blank board. | DrawAnything-Sim (pygame/pymunk) / `bpp_draw_v1` | The drawing, the board angle (uniform in `environment.board_angle_range_rad`, the range `DrawEnv` samples from) and the pen start (`cursor_start_range_px`). |
 
 A **unit** is one skill + one task + one initial state + one prompt demonstration + one seed,
@@ -25,8 +26,9 @@ initial state.
 
 ## Success
 
-- `pick_and_place`: LIBERO's goal predicate holds at any step before the cap
-  (`skills.pick_and_place.max_steps`, or the task's own smaller limit).
+- `pick_and_place`, `goal_chain`: every goal predicate of the task's BDDL holds at some step
+  before the cap (`skills.<skill>.max_steps`). A chain has two predicates; how many hold at best
+  is published on the unit as `*_progress`, and the step the first one held at as well.
 - `draw_anything`: the symmetric Chamfer distance, in canvas pixels, between the demonstrated
   strokes (turned upright) and the drawn strokes (turned upright by the unit's board angle) is at
   most `skills.draw_anything.success.threshold` at the best step of the episode. This is BPP's

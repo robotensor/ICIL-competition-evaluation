@@ -81,6 +81,20 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
         for key in ("obs_history", "action_horizon", "exec_horizon", "prompt_actions_per_chunk"):
             need(f"skills.{sid}.environment.{key}", isinstance(env.get(key), int) and env[key] > 0)
         need(f"skills.{sid}.perturbations removed", "perturbations" not in s)
+        tasks = s.get("tasks") or {}
+        need(
+            f"skills.{sid}.tasks.dataset",
+            isinstance(tasks.get("dataset"), str) and "/" in tasks["dataset"],
+        )
+        need(
+            f"skills.{sid}.tasks.kind",
+            isinstance(tasks.get("kind"), str) and bool(tasks.get("kind")),
+        )
+        need(
+            f"skills.{sid}.tasks views|files",
+            (isinstance(tasks.get("views"), list) and bool(tasks["views"]))
+            or (isinstance(tasks.get("files"), dict) and bool(tasks["files"])),
+        )
         if s.get("simulator") == "draw":
             for key in ("board_angle_range_rad", "cursor_start_range_px"):
                 rng = env.get(key)
@@ -171,6 +185,10 @@ class Spec:
 
     def env(self, name: str) -> dict[str, Any]:
         return self.skill(name)["environment"]
+
+    def tasks(self, name: str) -> dict[str, Any]:
+        """Where a skill's tasks come from: a Hugging Face dataset and its views or files."""
+        return self.skill(name)["tasks"]
 
     def success(self, name: str) -> dict[str, Any] | None:
         return self.skill(name).get("success")

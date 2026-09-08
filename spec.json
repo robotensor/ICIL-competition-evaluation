@@ -16,6 +16,54 @@
       "architecture": "bpp_libero_v1",
       "simulator": "libero",
       "max_steps": 550,
+      "tasks": {
+        "dataset": "austinpatel/libero_gen_spatial_combination_hdf5",
+        "views": [
+          "libero_spatial_selected_combinations_view",
+          "libero_spatial_selected_combinations_inverse_view"
+        ],
+        "kind": "combination",
+        "_comment": "Every task in these views of BPP's LIBERO-Gen Combination release: bddl_files/<view>/<task>.bddl, init_files/<view>/<task>.pruned_init, demonstration_data/<view>/<task>_demo.hdf5. The pool holds demos_per_task demonstrations of each and treats the views alike."
+      },
+      "environment": {
+        "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
+        "libero_commit": "8f1084e3132a39270c3a13ebe37270a43ece2a01",
+        "mujoco": "3.3.0",
+        "robosuite": "1.4.0",
+        "controller": "OSC_POSE",
+        "control_delta": true,
+        "control_freq": 20,
+        "cameras": [
+          "agentview",
+          "robot0_eye_in_hand"
+        ],
+        "camera_resolution": 128,
+        "policy_image_resolution": 224,
+        "action_dim": 7,
+        "obs_history": 2,
+        "action_horizon": 16,
+        "exec_horizon": 12,
+        "warmup_open_gripper_steps": 12,
+        "prompt_actions_per_chunk": 20,
+        "prompt_pad_end": "zeros"
+      }
+    },
+    "goal_chain": {
+      "code": "gc",
+      "title": "Goal chain",
+      "blurb": "Do two things in order - open a drawer, turn on the stove or push a plate, then place an object - as BPP's LIBERO-Gen Chain domain defines it. The pool holds every two-step chain BPP generated demonstrations for; a unit starts from one of the task's initial states with another episode of the same task as the demonstration, and succeeds when both goals hold.",
+      "architecture": "bpp_libero_v1",
+      "simulator": "libero",
+      "max_steps": 550,
+      "tasks": {
+        "dataset": "austinpatel/libero_gen_goal_chain_hdf5",
+        "views": [
+          "libero_goal_chain_selected_view",
+          "libero_goal_chain_selected_inverse_view"
+        ],
+        "kind": "chain",
+        "_comment": "The two chain views of BPP's LIBERO-Gen Chain release; the first-step and second-step views are single steps, not chains, and stay out."
+      },
       "environment": {
         "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
         "libero_commit": "8f1084e3132a39270c3a13ebe37270a43ece2a01",
@@ -46,6 +94,15 @@
       "architecture": "bpp_draw_v1",
       "simulator": "draw",
       "max_steps": 400,
+      "tasks": {
+        "dataset": "austinpatel/drawanything_sim",
+        "files": {
+          "drawanything_handmade": "eval_handmade.zarr",
+          "drawanything_procedural_2000_10": "procedural_2000_10.zarr.zip"
+        },
+        "kind": "drawing",
+        "_comment": "BPP's DrawAnything-Sim replay buffers, one pool group per file: the human-drawn evaluation set (50 drawings, 5 demonstrations each) and the procedural training set (2000 drawings, 10 each), treated alike."
+      },
       "environment": {
         "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
         "control_freq": 10,
@@ -80,11 +137,11 @@
   },
   "pools": {
     "repo": "robotensor/icil-competition-pools",
-    "version": "2026.09-v2",
-    "pool_id": "ae9645cdbc2ed24cdbea436d6677925070f0a4221c604a09e18c96dbd0dad83a",
+    "version": "2026.09-v3",
+    "pool_id": "73a98b0821be1fdbb5fb7b08219be6041c644ba35d634a7068688aaf501db843",
     "demos_per_task": 10,
     "init_states_per_task": 50,
-    "_comment": "pool_id is filled by `icilval pools build` (or `pools upgrade`) and must equal pool.json's id; the validator refuses to run on a mismatch. init_states_per_task also sizes the draw skill's table of (board angle, cursor start) instances. The pinned id is the v2 pool until the spec v3 pool is built and pinned at the end of the milestone."
+    "_comment": "pool_id is filled by `icilval pools build` and must equal pool.json's id; the validator refuses to run on a mismatch. demos_per_task is how many of a task's demonstrations the pool keeps; init_states_per_task also sizes the drawing skill's table of (board angle, cursor start) instances."
   },
   "duel": {
     "default_size": "heavy",
@@ -150,9 +207,9 @@
   },
   "baseline": {
     "repo": "robotensor/bpp-genesis",
-    "revision": "213d56f7f3fa6bc89032c44c602dedfe6822b854",
-    "label": "BPP public checkpoints (austinpatel/libero and austinpatel/drawanything_sim, converted)",
-    "_comment": "The genesis king: one repo holding both converted public checkpoints, one directory per skill."
+    "revision": "aa24179bcc6d18185b4b07c995bbd0d15ac10b8a",
+    "label": "BPP public checkpoints, converted (austinpatel/liberogen_spatial_combination, austinpatel/liberogen_goal_chain, austinpatel/drawanything_sim)",
+    "_comment": "The genesis king: one repo holding one converted public checkpoint per skill, one directory per skill."
   },
   "media": {
     "video": {

@@ -4,6 +4,17 @@
 
 ### Spec v3: BPP's unit protocol (pool schema 3, store schema 3, live schema 3)
 
+- published: pool `2026.09-v3` (`73a98b08…`, 2378 tasks, 23530 demonstrations) as
+  `robotensor/icil-competition-pools`, and the three-skill genesis as
+  `robotensor/bpp-genesis@aa24179bcc6d18185b4b07c995bbd0d15ac10b8a`; both pinned in `spec.json`.
+  The store is rebuilt and mirrored with `--prune` after this lands, since schema 3 replaces the
+  v2 records.
+
+- (feat): a third skill, `goal_chain`: the two chain views of BPP's LIBERO-Gen Chain release
+  (154 two-step tasks), scored like the others; the converted `austinpatel/liberogen_goal_chain`
+  checkpoint is its genesis and fits `bpp_libero_v1` unchanged (#5). Pool stages are named after
+  the skills and driven by `spec.json` `skills.<skill>.tasks` (dataset, views or files), so
+  adding a LIBERO-Gen or drawing skill is a spec entry.
 - (feat): the draw pool imports BPP's `procedural_2000_10` set (2000 drawings, 10 demonstrations
   each) beside the 50 handmade drawings, read straight from the zip; both are sampled alike (#4).
 - (feat): pick and place is BPP's LIBERO-Gen Combination domain, both views (174 tasks), sampled
