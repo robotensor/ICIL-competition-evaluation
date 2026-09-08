@@ -220,34 +220,6 @@ def cmd_pools(args) -> int:
             )
         )
         return 0
-    if args.pools_cmd == "generate":
-        from .pools.build_gen import generate, import_generated
-        from .spec import _repo_root as rr
-
-        root = rr() or Path.cwd()
-        bpp = Path(args.bpp_root) if args.bpp_root else root / "vendor" / "behavior_prompting"
-        views = ["libero_goal_icil_object_view"]
-        run_dir = Path(args.run_dir)
-        if not args.import_only:
-            generate(
-                bpp,
-                root / "affordance.yaml",
-                splits=["libero_goal"],
-                views=views,
-                suffix=args.suffix,
-                run_dir=run_dir,
-                n_demos=args.n_demos,
-                workers=args.workers,
-                python=args.python,
-                dry_run=args.dry_run,
-            )
-        if args.pool and not args.dry_run:
-            pool = Pool.load(args.pool)
-            pool.pool_id = None
-            got = import_generated(pool, spec, run_dir, views, validate=not args.no_validate)
-            print("imported", got)
-            print("eligible:", json.dumps(finalize(pool, spec)))
-        return 0
     if args.pools_cmd == "generate-draw":
         from .pools.build_draw import generate_draw, import_generated_draw
         from .spec import _repo_root as rr
@@ -668,19 +640,6 @@ def build_parser() -> argparse.ArgumentParser:
     po_l.add_argument("--repo", default=None)
     po_l.add_argument("--version", default=None)
     po_l.add_argument("--revision", default=None)
-    po_g = po_sub.add_parser(
-        "generate", help="run BPP's LIBERO-Gen scripts with affordance.yaml, then import"
-    )
-    po_g.add_argument("--run-dir", required=True)
-    po_g.add_argument("--pool", default=None)
-    po_g.add_argument("--suffix", default="icil")
-    po_g.add_argument("--n-demos", type=int, default=12)
-    po_g.add_argument("--workers", type=int, default=8)
-    po_g.add_argument("--python", default="python")
-    po_g.add_argument("--bpp-root", default=None)
-    po_g.add_argument("--dry-run", action="store_true")
-    po_g.add_argument("--import-only", action="store_true")
-    po_g.add_argument("--no-validate", action="store_true")
     po_gd = po_sub.add_parser(
         "generate-draw", help="run BPP's procedural drawing generator, then import"
     )

@@ -29,12 +29,9 @@ Raw inputs: `yifengzhu-hf/LIBERO-datasets` (spatial/goal/object/10),
 `austinpatel/libero_gen_goal_chain_hdf5` (first-step view), `austinpatel/libero_gen_spatial_combination_hdf5`
 (selected view), `austinpatel/drawanything_sim` (`eval_handmade.zarr.zip`, unpacked), BPP's checkout.
 
-Organizer-generated tasks, never published as training data:
-
-- `icilval pools generate` runs BPP's LIBERO-Gen scripts with `affordance.yaml` and imports the
-  object-swap tasks that pass the pick-and-place filter under `generated/`.
-- `icilval pools generate-draw --base-seed <secret>` runs BPP's `procedural_generate_drawings.py`
-  and imports its drawings under `drawanything_generated/`.
+Organizer-generated drawings, never published as training data: `icilval pools generate-draw
+--base-seed <secret>` runs BPP's `procedural_generate_drawings.py` and imports its drawings under
+`drawanything_generated/`.
 
 Upgrading a schema-2 pool (perturbation groups and variants) keeps every task and its files
 without re-simulating and drops the variants:

@@ -10,7 +10,6 @@ published is signed and reproducible from `spec.json`, the pool id and the two m
 
 - `spec.json`, `store-schema.json` — the contract (also vendored by the dashboard).
 - `arch/` — the allow-listed architecture templates, one per skill, exported from the genesis checkpoints.
-- `affordance.yaml` — object → operator table driving held-out LIBERO task generation.
 - `docs/` — protocol, submissions, pools, operations.
 - `vendor/behavior_prompting` — BPP pinned as a git submodule (`git submodule update --init --recursive`).
 
