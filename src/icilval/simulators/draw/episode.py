@@ -13,10 +13,10 @@ from typing import Any
 
 import numpy as np
 
-from ..spec import Spec
-from .draw_env import DrawBoard
-from .episode import EpisodeResult
-from .video import VideoWriter
+from ...spec import Spec
+from ...video import VideoWriter
+from ..result import EpisodeResult
+from .env import DrawBoard
 
 log = logging.getLogger(__name__)
 

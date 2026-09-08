@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from ..canon import sha256_file
+from .canon import sha256_file
 
 
 def ffmpeg_exe() -> str:

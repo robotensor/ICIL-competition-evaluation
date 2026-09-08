@@ -1,8 +1,10 @@
 import numpy as np
 import pytest
 
-from icilval.model import rotations as R
-from icilval.model.prompt import build_draw_prompt, build_prompt, chunk_layout
+from icilval.model.prompt import chunk_layout
+from icilval.simulators.draw.prompt import build_draw_prompt
+from icilval.simulators.libero import rotations as R
+from icilval.simulators.libero.prompt import build_prompt
 
 
 def test_rot6d_identity_and_roundtrip():

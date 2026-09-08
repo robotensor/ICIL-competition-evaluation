@@ -7,8 +7,9 @@ from typing import Any
 
 import numpy as np
 
-from .bpp import PolicyBase
-from .prompt import PromptInfo, build_draw_prompt
+from ...model.policy import PolicyBase
+from ...model.prompt import PromptInfo
+from .prompt import build_draw_prompt
 
 
 class DrawPolicy(PolicyBase):

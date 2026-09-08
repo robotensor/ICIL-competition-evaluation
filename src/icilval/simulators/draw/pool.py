@@ -19,10 +19,10 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from ..spec import Spec
+from ...pools.schema import Pool, PoolTask
+from ...pools.sources import Sources, fetch
+from ...spec import Spec
 from .demos import draw_task_names, import_draw_task, open_replay_buffer
-from .schema import Pool, PoolTask
-from .sources import Sources, fetch
 
 log = logging.getLogger(__name__)
 

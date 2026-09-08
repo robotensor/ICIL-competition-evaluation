@@ -10,13 +10,8 @@ from __future__ import annotations
 
 import logging
 import os
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
-
-import numpy as np
-
-from ..sim.libero_env import save_init_states
 
 log = logging.getLogger(__name__)
 
@@ -71,24 +66,3 @@ def evict(path: Path) -> None:
     if path.exists():
         path.unlink()
         log.info("evicted %s", path.name)
-
-
-def load_pruned_init(path: str | Path) -> np.ndarray:
-    """LIBERO's `.pruned_init` is a pickled numpy array (torch.save). Build-time only."""
-    import torch
-
-    states = torch.load(str(path), weights_only=False)
-    return np.asarray(states, dtype=np.float64)
-
-
-def convert_init(src: Path, dst: Path) -> int:
-    from ..canon import sha256_file
-
-    states = load_pruned_init(src)
-    save_init_states(dst, states, sha256_file(src))
-    return int(states.shape[0])
-
-
-def copy_bddl(src: Path, dst: Path) -> None:
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(src, dst)

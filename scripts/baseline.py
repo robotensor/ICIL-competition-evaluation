@@ -23,8 +23,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from icilval.pools.demos import select_indices  # noqa: E402
 from icilval.pools.schema import Pool  # noqa: E402
-from icilval.pools.units import Unit, draw_instance  # noqa: E402
+from icilval.pools.units import Unit  # noqa: E402
 from icilval.rng import HashRng  # noqa: E402
+from icilval.simulators.draw.units import draw_instance  # noqa: E402
 from icilval.spec import _repo_root, load_spec  # noqa: E402
 
 

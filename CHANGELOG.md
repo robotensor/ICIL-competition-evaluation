@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Pluggable simulators
+
+- (refactor): `icilval.simulators` is a registry of `Simulator` records (policy factory, unit
+  runner, pool stage, unit-instance builder, demo frames, spec checks), one package per
+  simulator under `simulators/`; the side runner, unit derivation, demo rendering, pool build
+  and spec validation look a skill's simulator up and never name one. `sim/` and the
+  per-simulator halves of `model/` and `pools/` moved under `simulators/libero/` and
+  `simulators/draw/`; unit lists and pool ids are unchanged (#6).
+
 ### Spec v3: BPP's unit protocol (pool schema 3, store schema 3, live schema 3)
 
 - published: pool `2026.09-v3` (`73a98b08…`, 2378 tasks, 23530 demonstrations) as
