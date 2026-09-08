@@ -13,6 +13,11 @@
 
 ### Spec v3: BPP's unit protocol (pool schema 3, store schema 3, live schema 3)
 
+- baseline on pool `2026.09-v3` (`scripts/baseline.py`, 956 episodes, none void): pick_and_place
+  0.876, goal_chain 0.860, draw_anything 0.900, mean 0.879. On both LIBERO skills the split BPP
+  held out and the split it trained on land within two points of each other; on drawing the
+  baseline reproduces procedural drawings (0.911) far more often than human-drawn ones (0.500 on
+  8 episodes). The 4 px threshold is re-checked and kept; see `docs/pools.md`.
 - published: pool `2026.09-v3` (`73a98b08…`, 2378 tasks, 23530 demonstrations) as
   `robotensor/icil-competition-pools`, and the three-skill genesis as
   `robotensor/bpp-genesis@aa24179bcc6d18185b4b07c995bbd0d15ac10b8a`; both pinned in `spec.json`.

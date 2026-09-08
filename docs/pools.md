@@ -91,6 +91,124 @@ spec v3 replaces.
 | pick_and_place | 27 base (libero_spatial 10, libero_object 10, libero_goal 6, libero_10 1) + 21 object-swap (LIBERO-Gen) |
 | draw_anything | 50 human drawings (eval_handmade) |
 
+## Baseline on pool 2026.09-v3
+
+`scripts/baseline.py` over every eligible task with the pinned genesis
+(`robotensor/bpp-genesis@aa24179b…`): two initial states per task on the LIBERO skills, one each
+on 300 drawing tasks spread evenly over the 2050. No episode was void.
+
+| skill | success rate | episodes | tasks |
+|---|---|---|---|
+| pick_and_place | 0.876 | 348 | 174 |
+| goal_chain | 0.860 | 308 | 154 |
+| draw_anything | 0.900 | 300 | 300 of 2050 |
+| **mean over skills** | **0.879** | | |
+
+Per source split, which is published per task in `meta.source_split` and never scored:
+
+| skill | split | rate | episodes |
+|---|---|---|---|
+| pick_and_place | `libero_spatial_selected_combinations_inverse_view` | 0.875 | 328 |
+| pick_and_place | `libero_spatial_selected_combinations_view` | 0.900 | 20 |
+| goal_chain | `libero_goal_chain_selected_inverse_view` | 0.861 | 288 |
+| goal_chain | `libero_goal_chain_selected_view` | 0.850 | 20 |
+| draw_anything | `drawanything_procedural_2000_10` | 0.911 | 292 |
+| draw_anything | `drawanything_handmade` | 0.500 | 8 |
+
+On both LIBERO skills the split BPP held out and the split it trained on score within about two
+points of each other, which is why the pool samples them uniformly and the store never
+distinguishes them. The drawing skill is the exception: the baseline reproduces a procedural
+drawing far more often than a human-drawn one. The handmade sample here is only 8 episodes, too
+small to read closely, but the gap is large enough to watch. Since the pool is 2000 procedural
+drawings to 50 handmade, a drawing score is in practice a score on the procedural set.
+
+## Calibrating the drawing threshold
+
+`skills.draw_anything.success.threshold` is 4 px: a third of the 12 px pen, so a success is a
+faithful reproduction rather than a rough one. It was set on pool `2026.09-v2` (handmade drawings
+only) and re-checked on `2026.09-v3` over the 300 sweep units above. The best Chamfer distance per
+unit, in canvas pixels:
+
+| percentile | 10 | 25 | 50 | 75 | 90 |
+|---|---|---|---|---|---|
+| 2026.09-v2 (50 handmade) | 0.96 | 1.39 | 2.46 | 3.83 | 7.21 |
+| 2026.09-v3 (2050, 97.5% procedural) | 0.72 | 0.97 | 1.59 | 2.24 | 3.89 |
+
+| threshold (px) | 2.5 | 3 | 3.5 | 4 | 5 | 6 | 12 |
+|---|---|---|---|---|---|---|---|
+| genesis on v2 | 0.51 | 0.61 | 0.69 | 0.79 | 0.83 | 0.86 | 0.93 |
+| genesis on v3 | 0.78 | 0.84 | 0.88 | 0.90 | 0.93 | 0.96 | 0.97 |
+
+The distribution is tighter on v3 because procedural drawings are easier to reproduce than
+human-drawn ones. The threshold stays at 4 px: the rationale is the pen width, not the difficulty
+of a particular set, and moving it would change every published score for no principled reason.
+The consequence to keep in view is headroom - the baseline already reproduces 0.90 of drawing
+units within 4 px, so that skill discriminates less between strong entrants than the LIBERO
+skills do. Tightening to 2.5 px would put the baseline at 0.78 and restore the spread; that is a
+protocol decision, not a calibration one, and would bump `spec_version`.
+
+## Pool 2026.09-v3 (spec v3, schema 3)
+
+`pool_id` `73a98b0821be1fdbb5fb7b08219be6041c644ba35d634a7068688aaf501db843` - 2378 tasks, 23530
+demonstrations, the pinned pool. Built on 2026-09-08 with `--fetch --evict` (the LIBERO-Gen
+releases are ~310 GB of hdf5; the pool keeps `demos_per_task` demonstrations of each task).
+
+| skill | tasks | source |
+|---|---|---|
+| pick_and_place | 174 | LIBERO-Gen Combination, both views (10 `selected_view` + 164 `_inverse_view`) |
+| goal_chain | 154 | LIBERO-Gen Chain, both chain views (10 `selected_view` + 144 `_inverse_view`) |
+| draw_anything | 2050 | DrawAnything-Sim: 50 `eval_handmade` + 2000 `procedural_2000_10` |
+
+Every task is eligible: each has at least one initial state where its goal is not already
+satisfied, and 10 demonstrations. No LIBERO-Gen demonstration starts from an evaluation initial
+state (`demo_init_index` is `null` throughout), so the prompt is never the scored episode.
+
+Genesis for this pool: `robotensor/bpp-genesis@aa24179bcc6d18185b4b07c995bbd0d15ac10b8a`, one
+converted public checkpoint per skill. Both LIBERO-Gen checkpoints instantiate
+`arch/bpp_libero_v1` unchanged (967 tensors, 690,455,718 parameters each).
+
+## Pool 2026.09-v2 (spec v2, schema 2)
+
+`pool_id` `ae9645cdbc2ed24cdbea436d6677925070f0a4221c604a09e18c96dbd0dad83a` - 98 tasks, 730
+demonstrations. Superseded by `2026.09-v3`; its pick-and-place tasks are the organizer selection
+spec v3 replaces.
+
+| skill | tasks |
+|---|---|
+| pick_and_place | 27 base (libero_spatial 10, libero_object 10, libero_goal 6, libero_10 1) + 21 object-swap (LIBERO-Gen) |
+| draw_anything | 50 human drawings (eval_handmade) |
+
+## Baseline on pool 2026.09-v3
+
+`scripts/baseline.py` over every eligible task with the pinned genesis
+(`robotensor/bpp-genesis@aa24179b…`): two initial states per task on the LIBERO skills, one each
+on 300 drawing tasks spread evenly over the 2050. No episode was void.
+
+| skill | success rate | episodes | tasks |
+|---|---|---|---|
+| pick_and_place | 0.876 | 348 | 174 |
+| goal_chain | 0.860 | 308 | 154 |
+| draw_anything | 0.900 | 300 | 300 of 2050 |
+| **mean over skills** | **0.879** | | |
+
+Per source split, which is published per task in `meta.source_split` and never scored:
+
+| skill | split | rate | episodes |
+|---|---|---|---|
+| pick_and_place | `libero_spatial_selected_combinations_inverse_view` | 0.875 | 328 |
+| pick_and_place | `libero_spatial_selected_combinations_view` | 0.900 | 20 |
+| goal_chain | `libero_goal_chain_selected_inverse_view` | 0.861 | 288 |
+| goal_chain | `libero_goal_chain_selected_view` | 0.850 | 20 |
+| draw_anything | `drawanything_procedural_2000_10` | 0.911 | 292 |
+| draw_anything | `drawanything_handmade` | 0.500 | 8 |
+
+On both LIBERO skills the split BPP held out and the split it trained on score within about two
+points of each other, which is why the pool samples them uniformly and the store never
+distinguishes them. The drawing skill is the exception: the baseline reproduces a procedural
+drawing far more often than a human-drawn one. The handmade sample here is only 8 episodes, too
+small to read closely, but the gap is large enough to watch. Since the pool is 2000 procedural
+drawings to 50 handmade, a drawing score is in practice a score on the procedural set.
+
 ## Calibrating the drawing threshold
 
 `skills.draw_anything.success.threshold` was chosen by running the converted BPP drawing
