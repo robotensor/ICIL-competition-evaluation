@@ -1,8 +1,10 @@
-"""The drawing skill's pool stage: BPP's human-drawn evaluation set, and organizer-generated
+"""The drawing skill's pool stage: BPP's public DrawAnything-Sim sets, and organizer-generated
 procedural drawings through BPP's own generator.
 
 `icilval pools build --stage draw` imports `eval_handmade.zarr` (50 human drawings, 5
-demonstrations each, public). `icilval pools generate-draw` runs, inside the BPP checkout:
+demonstrations each) and `procedural_2000_10.zarr.zip` (2000 procedural drawings, 10 each, read
+from the zip in place); both are public and the pool treats them alike. `icilval pools
+generate-draw` runs, inside the BPP checkout:
   scripts/draw/procedural_generate_drawings.py -o <run_dir> --num-tasks N --demos-per-task K
       --base-seed <organizer seed> --no-visualize --no-group-demos --no-vis-grouped-demos
 and imports every `<run_dir>/*.zarr` it wrote as `drawanything_generated/<task>`; those are
@@ -25,6 +27,7 @@ from .sources import Sources
 log = logging.getLogger(__name__)
 
 HANDMADE_GROUP = "drawanything_handmade"
+PROCEDURAL_GROUP = "drawanything_procedural_2000_10"
 GENERATED_GROUP = "drawanything_generated"
 SYMBOLS = {
     "!": "bang",
@@ -110,22 +113,29 @@ def stage_draw(
     skill: str = "draw_anything",
     limit: int | None = None,
 ) -> list[str]:
-    root = open_replay_buffer(src.draw_handmade)
-    got = import_draw_buffer(
-        pool,
-        spec,
-        root,
-        skill=skill,
-        group=HANDMADE_GROUP,
-        source=src.draw_handmade.name,
-        provenance={
-            "source": "DrawAnything-Sim eval_handmade (public)",
-            "dataset": "austinpatel/drawanything_sim",
-        },
-        limit=limit,
+    """Both public DrawAnything-Sim sets, each under its own group; `limit` applies per set."""
+    sets = (
+        (src.draw_handmade, HANDMADE_GROUP, "DrawAnything-Sim eval_handmade (public)"),
+        (src.draw_procedural, PROCEDURAL_GROUP, "DrawAnything-Sim procedural_2000_10 (public)"),
     )
-    pool.sources["drawanything"] = {"handmade": str(src.draw_handmade)}
-    pool.save()
+    got: list[str] = []
+    for path, group, source in sets:
+        if not path.exists():
+            log.warning("draw: %s missing, skipping %s", path, group)
+            continue
+        root = open_replay_buffer(path)
+        got += import_draw_buffer(
+            pool,
+            spec,
+            root,
+            skill=skill,
+            group=group,
+            source=path.name,
+            provenance={"source": source, "dataset": "austinpatel/drawanything_sim"},
+            limit=limit,
+        )
+        pool.sources.setdefault("drawanything", {})[group] = str(path)
+        pool.save()
     return got
 
 

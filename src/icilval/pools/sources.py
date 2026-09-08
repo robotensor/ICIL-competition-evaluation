@@ -16,7 +16,10 @@ log = logging.getLogger(__name__)
 
 DEFAULT_CACHE = Path(os.environ.get("ICILVAL_CACHE", Path.home() / ".cache" / "icilval"))
 
+# BPP's DrawAnything-Sim dataset (austinpatel/drawanything_sim): the human-drawn evaluation set,
+# unpacked, and the procedural training set, read straight from its zip (zarr's ZipStore).
 DRAW_HANDMADE = "eval_handmade.zarr"
+DRAW_PROCEDURAL = "procedural_2000_10.zarr.zip"
 
 # the Hugging Face dataset each LIBERO-Gen raw directory mirrors (bddl_files/, init_files/,
 # demonstration_data/<view>/<task>_demo.hdf5)
@@ -52,6 +55,10 @@ class Sources:
     @property
     def draw_handmade(self) -> Path:
         return self.drawanything / DRAW_HANDMADE
+
+    @property
+    def draw_procedural(self) -> Path:
+        return self.drawanything / DRAW_PROCEDURAL
 
     def check(self, names: tuple[str, ...]) -> list[str]:
         missing = []
