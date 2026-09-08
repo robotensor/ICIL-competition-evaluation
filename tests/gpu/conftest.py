@@ -12,11 +12,28 @@ MODEL_DIR = Path(
 )
 
 
+def bpp_root() -> Path:
+    from icilval.spec import _repo_root
+
+    return (_repo_root() or Path.cwd()) / "vendor" / "behavior_prompting"
+
+
+def grasp_sources_root() -> Path:
+    from icilval.pools.sources import Sources
+    from icilval.spec import _repo_root, load_spec
+
+    dataset = str(load_spec().tasks("pick_and_place")["grasp_sources"]["dataset"])
+    return Sources.default(_repo_root() or Path.cwd()).dataset_root(dataset)
+
+
 @pytest.fixture(scope="session", autouse=True)
-def _gpu_env():
+def _gpu_env(tmp_path_factory):
     if os.environ.get("ICILVAL_TEST_GPU") != "1":
         pytest.skip("set ICILVAL_TEST_GPU=1 to run GPU tests")
-    os.environ.setdefault("MUJOCO_GL", "egl")
+    # the validator's LIBERO config must be in place before libero is first imported
+    from icilval.simulators.libero.generate import libero_config
+
+    libero_config(tmp_path_factory.mktemp("libero-config"), bpp_root(), grasp_sources_root())
     os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
     os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 
