@@ -4,8 +4,9 @@
         --pool pools/2026.09-v3 --model-dir models/genesis --skill pick_and_place \
         --instances 2 --out runs/baseline-v3-pp
 
-Every eligible task gets `--instances` initial states, spread over its usable ones, each with a
-demonstration that did not start from that state; seeds and picks are a pure function of the
+Every eligible task (or `--max-tasks` of them, spread evenly over the list) gets `--instances`
+initial states, spread over its usable ones, each with a demonstration that did not start from
+that state; seeds and picks are a pure function of the
 task id, so the sweep is reproducible. Writes `<out>/units.jsonl` (one line per episode, from
 `side_runner`) and `<out>/baseline.json`: overall, per task and per `meta.source_split`. The
 numbers quoted in docs/pools.md come from here. No clips are recorded.
@@ -27,14 +28,22 @@ from icilval.rng import HashRng  # noqa: E402
 from icilval.spec import _repo_root, load_spec  # noqa: E402
 
 
-def sweep_units(pool: Pool, spec, skill: str, per_task: int, task_filter: str | None) -> list[Unit]:
+def sweep_units(
+    pool: Pool,
+    spec,
+    skill: str,
+    per_task: int,
+    task_filter: str | None,
+    max_tasks: int | None = None,
+) -> list[Unit]:
     units: list[Unit] = []
     code = spec.skill_code(skill)
     env = spec.env(skill)
     index = 0
-    for tid in pool.eligible(skill):
-        if task_filter and task_filter not in tid:
-            continue
+    task_ids = [t for t in pool.eligible(skill) if not task_filter or task_filter in t]
+    if max_tasks is not None and max_tasks < len(task_ids):
+        task_ids = [task_ids[i] for i in select_indices(len(task_ids), max_tasks)]
+    for tid in task_ids:
         task = pool.tasks[tid]
         valid = task.valid_instances
         for k in select_indices(len(valid), per_task):
@@ -124,6 +133,7 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--arch", default=None)
     ap.add_argument("--task-filter", default=None, help="only tasks whose id contains this")
+    ap.add_argument("--max-tasks", type=int, default=None, help="tasks spread evenly over the list")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--summarize-only", action="store_true")
     args = ap.parse_args()
@@ -132,7 +142,7 @@ def main() -> int:
     pool = Pool.load(args.pool)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    units = sweep_units(pool, spec, args.skill, args.instances, args.task_filter)
+    units = sweep_units(pool, spec, args.skill, args.instances, args.task_filter, args.max_tasks)
     if not args.summarize_only:
         from icilval.duel.side_runner import run_side
 
