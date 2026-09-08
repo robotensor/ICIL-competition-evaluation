@@ -20,6 +20,7 @@ from typing import Any
 
 from ..ids import unit_id, unit_seed
 from ..rng import HashRng
+from ..simulators import for_skill
 from ..spec import Spec
 from .schema import Pool, PoolTask
 
@@ -96,11 +97,14 @@ def derive_units(pool: Pool, spec: Spec, duel: str, size: str | None = None) -> 
 def _unit(pool: Pool, spec: Spec, duel: str, skill: str, index: int, entry: str, rng: HashRng):
     task = pool.tasks[entry]
     seed = unit_seed(duel, skill, index)
-    if spec.simulator(skill) == "draw":
-        return _draw_unit(spec, skill, index, task, seed, rng)
+    return for_skill(spec, skill).make_unit(spec, skill, index, task, seed, rng)
+
+
+def libero_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng: HashRng):
+    """One of the task's benchmark initial states, and a demonstration that did not start there."""
     valid = task.valid_instances
     if not valid:
-        raise ValueError(f"{entry} has no valid initial states")
+        raise ValueError(f"{task.task_id} has no valid initial states")
     instance = valid[rng.below(len(valid))]
     candidates = [d for d in task.demos if task.demo_init_index.get(d) != instance] or list(
         task.demos
@@ -126,7 +130,8 @@ def _unit(pool: Pool, spec: Spec, duel: str, skill: str, index: int, entry: str,
     )
 
 
-def _draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng: HashRng):
+def draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng: HashRng):
+    """A board angle and pen start derived from the ids, and any of the task's demonstrations."""
     env = spec.env(skill)
     valid = task.valid_instances
     if not valid:

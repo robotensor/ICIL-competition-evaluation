@@ -251,13 +251,10 @@ def stage_skill(
     fetch_missing: bool = False,
     evict_demos: bool = False,
 ) -> None:
-    """The pool stage of one skill, chosen by its simulator."""
-    if spec.simulator(skill) == "draw":
-        from .build_draw import stage_draw
+    """The pool stage of one skill, from its simulator."""
+    from ..simulators import for_skill
 
-        stage_draw(pool, spec, src, skill=skill, limit=limit, fetch_missing=fetch_missing)
-        return
-    stage_libero_gen(
+    for_skill(spec, skill).build_stage(
         pool,
         spec,
         src,
