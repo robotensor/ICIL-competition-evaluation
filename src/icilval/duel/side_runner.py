@@ -18,9 +18,9 @@ from typing import Any
 
 from ..canon import sha256_file
 from ..pools.schema import Pool
-from ..sim.video import VideoWriter
 from ..simulators import for_skill, make_policy
 from ..spec import Spec
+from ..video import VideoWriter
 
 log = logging.getLogger(__name__)
 

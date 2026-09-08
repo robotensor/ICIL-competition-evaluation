@@ -12,7 +12,7 @@ from typing import Any
 
 import numpy as np
 
-from ..spec import Spec
+from ...spec import Spec
 
 log = logging.getLogger(__name__)
 

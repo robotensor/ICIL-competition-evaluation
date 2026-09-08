@@ -8,7 +8,7 @@ from .. import Simulator, register
 
 
 def _make_policy(model_dir: Any, arch_dir: Any, spec: Any, skill: str, device: str = "cuda"):
-    from ...model.bpp import BPPPolicy
+    from .policy import BPPPolicy
 
     return BPPPolicy(model_dir, arch_dir, spec, skill, device=device)
 
@@ -20,19 +20,19 @@ def _run_units(ctx, skill, policy, pool, units, spec, media_dir, record_video) -
 
 
 def _build_stage(pool, spec, src, skill, **kw) -> None:
-    from ...pools.build import stage_libero_gen
+    from .pool import stage_libero_gen
 
     stage_libero_gen(pool, spec, src, skill, **kw)
 
 
 def _make_unit(spec, skill, index, task, seed, rng):
-    from ...pools.units import libero_unit
+    from .units import libero_unit
 
     return libero_unit(spec, skill, index, task, seed, rng)
 
 
 def _demo_frames(demo: dict[str, Any]) -> list[Any]:
-    from ...pools.demos import demo_frames
+    from .demos import demo_frames
 
     return demo_frames(demo)
 
