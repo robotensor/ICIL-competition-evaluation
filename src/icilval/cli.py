@@ -141,10 +141,9 @@ def cmd_units(args) -> int:
 def cmd_pools(args) -> int:
     import logging
 
-    from .pools.build import finalize, open_pool, stage_pick_and_place, summary, verify_pool
-    from .pools.build_draw import stage_draw
+    from .pools.build import finalize, open_pool, stage_skill, summary, verify_pool
     from .pools.schema import Pool
-    from .pools.sources import STAGE_SOURCES, Sources
+    from .pools.sources import Sources
     from .spec import _repo_root
 
     logging.basicConfig(
@@ -155,37 +154,42 @@ def cmd_pools(args) -> int:
     def sources() -> Sources:
         src = Sources.default(_repo_root() or Path.cwd())
         if getattr(args, "raw", None):
-            raw = Path(args.raw)
-            src.gen_goal_chain = raw / "libero_gen_goal_chain"
-            src.gen_spatial_combination = raw / "libero_gen_spatial_combination"
-            src.drawanything = raw / "drawanything_sim"
+            src.raw = Path(args.raw)
         return src
 
     if args.pools_cmd == "build":
         out = Path(args.out)
         src = sources()
-        stages = args.stage or ["pick_and_place", "draw", "finalize"]
-        needed = tuple(dict.fromkeys(n for st in stages for n in STAGE_SOURCES.get(st, ())))
+        stages = args.stage or [*spec.skills, "finalize"]
+        unknown = [st for st in stages if st != "finalize" and st not in spec.skills]
+        if unknown:
+            print("unknown stage(s):", *unknown, "- stages are the skill ids and finalize")
+            return 2
+        datasets = tuple(
+            dict.fromkeys(str(spec.tasks(st)["dataset"]) for st in stages if st != "finalize")
+        )
         if args.fetch:
-            src.gen_spatial_combination.mkdir(parents=True, exist_ok=True)
-        missing = src.check(needed)
+            for d in datasets:
+                src.dataset_root(d).mkdir(parents=True, exist_ok=True)
+        missing = src.missing(datasets)
         if missing:
             print("missing sources:", *missing, sep="\n  ")
             return 1
         pool = open_pool(out, spec, args.version or str(spec.pools["version"]))
-        kw = {"limit": args.limit, "validate": not args.no_validate}
         for stage in stages:
-            if stage == "pick_and_place":
-                stage_pick_and_place(
-                    pool, spec, src, fetch_missing=args.fetch, evict_demos=args.evict, **kw
-                )
-            elif stage == "draw":
-                stage_draw(pool, spec, src, limit=args.limit)
-            elif stage == "finalize":
+            if stage == "finalize":
                 print("eligible:", json.dumps(finalize(pool, spec)))
-            else:
-                print("unknown stage", stage)
-                return 2
+                continue
+            stage_skill(
+                pool,
+                spec,
+                src,
+                stage,
+                limit=args.limit,
+                validate=not args.no_validate,
+                fetch_missing=args.fetch,
+                evict_demos=args.evict,
+            )
         pool.save()
         print(json.dumps(summary(pool), indent=1))
         return 0
@@ -241,7 +245,7 @@ def cmd_pools(args) -> int:
         if args.pool and not args.dry_run:
             pool = Pool.load(args.pool)
             pool.pool_id = None
-            got = import_generated_draw(pool, spec, run_dir, limit=args.limit)
+            got = import_generated_draw(pool, spec, run_dir, skill=args.skill, limit=args.limit)
             print("imported", got)
             print("eligible:", json.dumps(finalize(pool, spec)))
         return 0
@@ -609,7 +613,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--stage",
         nargs="*",
         default=None,
-        help="pick_and_place draw finalize",
+        help="skill ids (spec order) and finalize; default: all",
     )
     po_b.add_argument("--limit", type=int, default=None, help="tasks per view (smoke builds)")
     po_b.add_argument(
@@ -645,6 +649,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     po_gd.add_argument("--run-dir", required=True)
     po_gd.add_argument("--pool", default=None)
+    po_gd.add_argument("--skill", default="draw_anything", help="the drawing skill the run feeds")
     po_gd.add_argument("--n-tasks", type=int, default=50)
     po_gd.add_argument("--demos-per-task", type=int, default=10)
     po_gd.add_argument("--base-seed", type=int, required=True, help="the organizer's secret seed")

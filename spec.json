@@ -16,6 +16,15 @@
       "architecture": "bpp_libero_v1",
       "simulator": "libero",
       "max_steps": 550,
+      "tasks": {
+        "dataset": "austinpatel/libero_gen_spatial_combination_hdf5",
+        "views": [
+          "libero_spatial_selected_combinations_view",
+          "libero_spatial_selected_combinations_inverse_view"
+        ],
+        "kind": "combination",
+        "_comment": "Every task in these views of BPP's LIBERO-Gen Combination release: bddl_files/<view>/<task>.bddl, init_files/<view>/<task>.pruned_init, demonstration_data/<view>/<task>_demo.hdf5. The pool holds demos_per_task demonstrations of each and treats the views alike."
+      },
       "environment": {
         "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
         "libero_commit": "8f1084e3132a39270c3a13ebe37270a43ece2a01",
@@ -46,6 +55,15 @@
       "architecture": "bpp_draw_v1",
       "simulator": "draw",
       "max_steps": 400,
+      "tasks": {
+        "dataset": "austinpatel/drawanything_sim",
+        "files": {
+          "drawanything_handmade": "eval_handmade.zarr",
+          "drawanything_procedural_2000_10": "procedural_2000_10.zarr.zip"
+        },
+        "kind": "drawing",
+        "_comment": "BPP's DrawAnything-Sim replay buffers, one pool group per file: the human-drawn evaluation set (50 drawings, 5 demonstrations each) and the procedural training set (2000 drawings, 10 each), treated alike."
+      },
       "environment": {
         "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
         "control_freq": 10,

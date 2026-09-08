@@ -22,12 +22,10 @@ from typing import Any
 from ..spec import Spec
 from .demos import draw_task_names, import_draw_task, open_replay_buffer
 from .schema import Pool, PoolTask
-from .sources import Sources
+from .sources import Sources, fetch
 
 log = logging.getLogger(__name__)
 
-HANDMADE_GROUP = "drawanything_handmade"
-PROCEDURAL_GROUP = "drawanything_procedural_2000_10"
 GENERATED_GROUP = "drawanything_generated"
 SYMBOLS = {
     "!": "bang",
@@ -110,31 +108,35 @@ def stage_draw(
     spec: Spec,
     src: Sources,
     *,
-    skill: str = "draw_anything",
+    skill: str,
     limit: int | None = None,
+    fetch_missing: bool = False,
 ) -> list[str]:
-    """Both public DrawAnything-Sim sets, each under its own group; `limit` applies per set."""
-    sets = (
-        (src.draw_handmade, HANDMADE_GROUP, "DrawAnything-Sim eval_handmade (public)"),
-        (src.draw_procedural, PROCEDURAL_GROUP, "DrawAnything-Sim procedural_2000_10 (public)"),
-    )
+    """Every replay-buffer file `spec.json` lists for the skill, each under its own group;
+    `limit` applies per file. A `.zarr.zip` is read in place through zarr's ZipStore."""
+    tasks_cfg = spec.tasks(skill)
+    dataset = str(tasks_cfg["dataset"])
+    root = src.dataset_root(dataset)
     got: list[str] = []
-    for path, group, source in sets:
+    for group, filename in tasks_cfg["files"].items():
+        path = root / filename
+        if not path.exists() and fetch_missing and filename.endswith(".zip"):
+            path = fetch(root, dataset, filename)
         if not path.exists():
             log.warning("draw: %s missing, skipping %s", path, group)
             continue
-        root = open_replay_buffer(path)
+        buffer = open_replay_buffer(path)
         got += import_draw_buffer(
             pool,
             spec,
-            root,
+            buffer,
             skill=skill,
             group=group,
             source=path.name,
-            provenance={"source": source, "dataset": "austinpatel/drawanything_sim"},
+            provenance={"source": f"DrawAnything-Sim {filename} (public)", "dataset": dataset},
             limit=limit,
         )
-        pool.sources.setdefault("drawanything", {})[group] = str(path)
+        pool.sources.setdefault(root.name, {})[group] = str(path)
         pool.save()
     return got
 
@@ -186,7 +188,7 @@ def import_generated_draw(
     spec: Spec,
     run_dir: Path,
     *,
-    skill: str = "draw_anything",
+    skill: str,
     limit: int | None = None,
 ) -> list[str]:
     imported: list[str] = []
