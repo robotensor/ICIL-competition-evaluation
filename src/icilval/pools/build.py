@@ -1,13 +1,12 @@
 """`icilval pools build`: turn raw benchmark assets into a content-addressed pool.
 
 Stages (each idempotent, each appends to pool.json):
-  base         LIBERO spatial/goal/object/10 tasks that are pick-and-place: bddl, init npz, k demos
-  object       LIBERO-Gen novel pairings (spatial combinations + first-step novelties)
-  draw         DrawAnything-Sim: the human-drawn evaluation set (and generated tasks, see build_draw)
-  finalize     the eligible tasks per skill, pool_id
+  pick_and_place  LIBERO-Gen Combination, both views: bddl, init npz, k demos per task
+  draw            DrawAnything-Sim: the human-drawn evaluation set (see build_draw)
+  finalize        the eligible tasks per skill, pool_id
 
-Which tasks count as pick-and-place is `spec.json`'s `skills.pick_and_place.task_filter`:
-BPP's one Grasp stage then one Place stage.
+The pick-and-place tasks are exactly the ones BPP generated demonstrations for; the pool does
+not distinguish the view a task came from beyond recording it in `meta.source_split`.
 """
 
 from __future__ import annotations
@@ -16,24 +15,24 @@ import logging
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from ..sim import bddl as B
 from ..spec import Spec
 from . import validate as V
-from .demos import import_hdf5
+from .demos import import_hdf5, load_demo
 from .schema import POOL_SCHEMA, Pool, PoolTask
-from .sources import (
-    LIBERO_GOAL_ORIGINALS,
-    LIBERO_SUITES,
-    SUITE_MAX_STEPS,
-    Sources,
-    convert_init,
-    copy_bddl,
-)
+from .sources import Sources, convert_init, copy_bddl, evict, fetch
 
 log = logging.getLogger(__name__)
 
 LIBERO_SKILL = "pick_and_place"
 DRAW_SKILL = "draw_anything"
+COMBINATION_GROUP = "libero_gen_spatial_combination"
+COMBINATION_VIEWS = (
+    "libero_spatial_selected_combinations_view",
+    "libero_spatial_selected_combinations_inverse_view",
+)
 
 
 def open_pool(out: Path, spec: Spec, version: str) -> Pool:
@@ -50,18 +49,6 @@ def open_pool(out: Path, spec: Spec, version: str) -> Pool:
         skills={s: {"eligible": []} for s in spec.skills},
         root=out,
     )
-
-
-# ---------------------------------------------------------------- the pick-and-place filter
-def is_pick_and_place(goal: list[list[str]], language: str, filt: dict[str, Any]) -> bool:
-    """BPP's definition: one Grasp then one Place - a single On/In goal, no other stage."""
-    if not goal or len(goal) > int(filt["max_goal_predicates"]):
-        return False
-    allowed = {p.lower() for p in filt["goal_predicates"]}
-    if not {g[0].lower() for g in goal} <= allowed:
-        return False
-    lang = " ".join(language.lower().split())
-    return not any(verb in lang for verb in filt["exclude_verbs"])
 
 
 def _task_from_bddl(
@@ -106,56 +93,6 @@ def _import_demos(h5: Path, pool: Pool, task_id: str, k: int) -> list[str]:
     return [m.demo_id for m in metas]
 
 
-# ---------------------------------------------------------------- base
-def stage_base(
-    pool: Pool,
-    spec: Spec,
-    src: Sources,
-    *,
-    skill: str = LIBERO_SKILL,
-    suites: tuple[str, ...] = LIBERO_SUITES,
-    limit: int | None = None,
-) -> None:
-    k = int(spec.pools["demos_per_task"])
-    filt = spec.skill(skill)["task_filter"]
-    for suite in suites:
-        bddls = sorted((src.libero_root / "bddl_files" / suite).glob("*.bddl"))[:limit]
-        for bddl in bddls:
-            name = bddl.stem
-            task_id = f"{suite}/{name}"
-            if task_id in pool.tasks:
-                continue
-            tree = B.load(bddl)
-            if not is_pick_and_place(B.goal_predicates(tree), B.language(tree), filt):
-                log.info("skip %s: not pick-and-place", task_id)
-                continue
-            h5 = src.libero_datasets / suite / f"{name}_demo.hdf5"
-            init_src = src.libero_root / "init_files" / suite / f"{name}.pruned_init"
-            if not h5.exists() or not init_src.exists():
-                log.warning("skip %s: missing demos or init", task_id)
-                continue
-            bddl_rel, init_rel = f"bddl/{suite}/{name}.bddl", f"init/{suite}/{name}.npz"
-            copy_bddl(bddl, pool.path(bddl_rel))
-            n_init = convert_init(init_src, pool.path(init_rel))
-            demos = _import_demos(h5, pool, task_id, k)
-            _task_from_bddl(
-                task_id,
-                skill,
-                "base",
-                suite,
-                bddl_rel,
-                init_rel,
-                n_init,
-                demos,
-                SUITE_MAX_STEPS[suite],
-                pool,
-                provenance={"source": "LIBERO", "suite": suite, "demos": h5.name},
-            )
-            log.info("base %s: %d inits, %d demos", task_id, n_init, len(demos))
-    pool.sources["libero"] = {"root": str(src.libero_root), "datasets": str(src.libero_datasets)}
-    pool.save()
-
-
 def _gen_task(
     pool: Pool,
     spec: Spec,
@@ -168,24 +105,35 @@ def _gen_task(
     max_steps: int,
     meta: dict[str, Any],
     validate: bool,
+    *,
+    source_key: str | None = None,
+    evict_demos: bool = False,
 ) -> PoolTask | None:
-    bddl = split_root / "bddl_files" / split / f"{name}.bddl"
-    init = split_root / "init_files" / split / f"{name}.pruned_init"
-    h5 = split_root / "demonstration_data" / split / f"{name}_demo.hdf5"
+    """One LIBERO-Gen task from `split_root` (bddl_files/, init_files/, demonstration_data/).
+
+    With `source_key` the three files are fetched from the hub when missing; with
+    `evict_demos` the demonstration file is deleted once its demos are in the pool.
+    """
+    rels = (
+        f"bddl_files/{split}/{name}.bddl",
+        f"init_files/{split}/{name}.pruned_init",
+        f"demonstration_data/{split}/{name}_demo.hdf5",
+    )
+    if source_key is not None:
+        bddl, init, h5 = (fetch(split_root, source_key, r) for r in rels)
+    else:
+        bddl, init, h5 = (split_root / r for r in rels)
     if not (bddl.exists() and init.exists() and h5.exists()):
         log.warning("skip %s: missing bddl/init/demos", task_id)
-        return None
-    tree = B.load(bddl)
-    if not is_pick_and_place(
-        B.goal_predicates(tree), B.language(tree), spec.skill(skill)["task_filter"]
-    ):
-        log.info("skip %s: not pick-and-place", task_id)
         return None
     group = task_id.split("/", 1)[0]
     bddl_rel, init_rel = f"bddl/{group}/{name}.bddl", f"init/{group}/{name}.npz"
     copy_bddl(bddl, pool.path(bddl_rel))
     n_init = convert_init(init, pool.path(init_rel))
     demos = _import_demos(h5, pool, task_id, int(spec.pools["demos_per_task"]))
+    if evict_demos:
+        evict(h5)
+    init_index = demo_init_indices(pool, demos, V.load_init_states(pool.path(init_rel)))
     task = _task_from_bddl(
         task_id,
         skill,
@@ -199,6 +147,7 @@ def _gen_task(
         pool,
         provenance={"source": "LIBERO-Gen (public)", "split": split, "demos": h5.name},
         meta=meta,
+        demo_init_index=init_index,
     )
     if validate:
         env = V.build_task_env(pool.path(bddl_rel), spec, skill)
@@ -208,6 +157,25 @@ def _gen_task(
         task.instances = V.valid_instances(env, V.load_init_states(pool.path(init_rel)))
         env.close()
     return task
+
+
+def demo_init_indices(
+    pool: Pool, demos: list[str], states: np.ndarray, atol: float = 1e-6
+) -> dict[str, int | None]:
+    """Which of the task's initial states each demonstration started from (None: none of them).
+
+    Unit derivation never prompts with a demonstration that starts from the scored state.
+    """
+    out: dict[str, int | None] = {}
+    for demo_id in demos:
+        start = load_demo(pool.path("demos") / f"{demo_id}.npz")["init_state"]
+        hit = None
+        if states.ndim == 2 and states.shape[1] == start.shape[0]:
+            close = np.all(np.abs(states - start[None, :]) <= atol, axis=1)
+            idx = np.flatnonzero(close)
+            hit = int(idx[0]) if idx.size else None
+        out[demo_id] = hit
+    return out
 
 
 def _swap_from_goal(goal: list[list[str]]) -> dict[str, Any]:
@@ -222,7 +190,7 @@ def _swap_from_goal(goal: list[list[str]]) -> dict[str, Any]:
     return {}
 
 
-def stage_object(
+def stage_pick_and_place(
     pool: Pool,
     spec: Spec,
     src: Sources,
@@ -230,54 +198,57 @@ def stage_object(
     skill: str = LIBERO_SKILL,
     limit: int | None = None,
     validate: bool = True,
+    fetch_missing: bool = False,
+    evict_demos: bool = False,
 ) -> None:
-    combo = "libero_spatial_selected_combinations_view"
-    names = sorted(
-        p.stem for p in (src.gen_spatial_combination / "bddl_files" / combo).glob("*.bddl")
-    )[:limit]
-    for name in names:
-        task_id = f"libero_gen_spatial_combination/{name}"
-        if task_id in pool.tasks:
-            continue
-        goal = V.goal_from_bddl(src.gen_spatial_combination / "bddl_files" / combo / f"{name}.bddl")
-        t = _gen_task(
-            pool,
-            spec,
-            src.gen_spatial_combination,
-            combo,
-            name,
-            task_id,
-            skill,
-            "object_swap",
-            spec.max_steps(skill),
-            {"swap": _swap_from_goal(goal), "source_split": combo},
-            validate,
-        )
-        if t:
-            log.info("object %s: %d demos", task_id, len(t.demos))
-    first = "libero_goal_chain_firststep_view"
-    names = sorted(p.stem for p in (src.gen_goal_chain / "bddl_files" / first).glob("*.bddl"))
-    names = [n for n in names if n not in LIBERO_GOAL_ORIGINALS][:limit]
-    for name in names:
-        task_id = f"libero_gen_goal_firststep/{name}"
-        if task_id in pool.tasks:
-            continue
-        goal = V.goal_from_bddl(src.gen_goal_chain / "bddl_files" / first / f"{name}.bddl")
-        t = _gen_task(
-            pool,
-            spec,
-            src.gen_goal_chain,
-            first,
-            name,
-            task_id,
-            skill,
-            "object_swap",
-            SUITE_MAX_STEPS["libero_goal"],
-            {"swap": _swap_from_goal(goal), "source_split": first},
-            validate,
-        )
-        if t:
-            log.info("object %s: %d demos", task_id, len(t.demos))
+    """Every LIBERO-Gen Combination task with demonstrations, from both of BPP's views.
+
+    The task list is the hub's `demonstration_data/<view>/` when fetching (only tasks that
+    have demonstrations), else the local `bddl_files/<view>/`.
+    """
+    root = src.gen_spatial_combination
+    key = "gen_spatial_combination" if fetch_missing else None
+    for view in COMBINATION_VIEWS:
+        if fetch_missing:
+            from .sources import hub_files
+
+            names = [
+                Path(f).name[: -len("_demo.hdf5")]
+                for f in hub_files(key or "", f"demonstration_data/{view}/")
+                if f.endswith("_demo.hdf5")
+            ][:limit]
+        else:
+            names = sorted(p.stem for p in (root / "bddl_files" / view).glob("*.bddl"))[:limit]
+        for name in names:
+            task_id = f"{COMBINATION_GROUP}/{name}"
+            if task_id in pool.tasks:
+                continue
+            bddl = root / "bddl_files" / view / f"{name}.bddl"
+            if key is not None:
+                bddl = fetch(root, key, f"bddl_files/{view}/{name}.bddl")
+            goal = V.goal_from_bddl(bddl)
+            t = _gen_task(
+                pool,
+                spec,
+                root,
+                view,
+                name,
+                task_id,
+                skill,
+                "combination",
+                spec.max_steps(skill),
+                {"swap": _swap_from_goal(goal), "source_split": view},
+                validate,
+                source_key=key,
+                evict_demos=evict_demos,
+            )
+            if t:
+                log.info("%s %s: %d inits, %d demos", skill, task_id, t.n_init, len(t.demos))
+        pool.save()
+    pool.sources["libero_gen_spatial_combination"] = {
+        "root": str(root),
+        "views": list(COMBINATION_VIEWS),
+    }
     pool.save()
 
 
@@ -342,9 +313,7 @@ def summary(pool: Pool) -> dict[str, Any]:
 
 __all__ = [
     "open_pool",
-    "is_pick_and_place",
-    "stage_base",
-    "stage_object",
+    "stage_pick_and_place",
     "eligible_tasks",
     "finalize",
     "verify_pool",

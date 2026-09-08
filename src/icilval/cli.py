@@ -141,17 +141,10 @@ def cmd_units(args) -> int:
 def cmd_pools(args) -> int:
     import logging
 
-    from .pools.build import (
-        finalize,
-        open_pool,
-        stage_base,
-        stage_object,
-        summary,
-        verify_pool,
-    )
+    from .pools.build import finalize, open_pool, stage_pick_and_place, summary, verify_pool
     from .pools.build_draw import stage_draw
     from .pools.schema import Pool
-    from .pools.sources import DRAW_SOURCES, LIBERO_SOURCES, Sources
+    from .pools.sources import STAGE_SOURCES, Sources
     from .spec import _repo_root
 
     logging.basicConfig(
@@ -161,42 +154,31 @@ def cmd_pools(args) -> int:
 
     def sources() -> Sources:
         src = Sources.default(_repo_root() or Path.cwd())
-        if getattr(args, "libero_root", None):
-            src.libero_root = Path(args.libero_root)
         if getattr(args, "raw", None):
             raw = Path(args.raw)
-            src.libero_datasets = raw / "libero_datasets"
-            src.gen_goal_chain, src.gen_spatial_combination = (
-                raw / "libero_gen_goal_chain",
-                raw / "libero_gen_spatial_combination",
-            )
+            src.gen_goal_chain = raw / "libero_gen_goal_chain"
+            src.gen_spatial_combination = raw / "libero_gen_spatial_combination"
             src.drawanything = raw / "drawanything_sim"
         return src
 
     if args.pools_cmd == "build":
         out = Path(args.out)
         src = sources()
-        stages = args.stage or ["base", "object", "draw", "finalize"]
-        needed = tuple(
-            n
-            for n in LIBERO_SOURCES + DRAW_SOURCES
-            if (n in DRAW_SOURCES and "draw" in stages)
-            or (n in LIBERO_SOURCES and any(st in stages for st in ("base", "object")))
-        )
+        stages = args.stage or ["pick_and_place", "draw", "finalize"]
+        needed = tuple(dict.fromkeys(n for st in stages for n in STAGE_SOURCES.get(st, ())))
+        if args.fetch:
+            src.gen_spatial_combination.mkdir(parents=True, exist_ok=True)
         missing = src.check(needed)
         if missing:
             print("missing sources:", *missing, sep="\n  ")
             return 1
         pool = open_pool(out, spec, args.version or str(spec.pools["version"]))
-        suites = tuple(args.suites) if args.suites else None
         kw = {"limit": args.limit, "validate": not args.no_validate}
         for stage in stages:
-            if stage == "base":
-                stage_base(
-                    pool, spec, src, **({"suites": suites} if suites else {}), limit=args.limit
+            if stage == "pick_and_place":
+                stage_pick_and_place(
+                    pool, spec, src, fetch_missing=args.fetch, evict_demos=args.evict, **kw
                 )
-            elif stage == "object":
-                stage_object(pool, spec, src, **kw)
             elif stage == "draw":
                 stage_draw(pool, spec, src, limit=args.limit)
             elif stage == "finalize":
@@ -237,34 +219,6 @@ def cmd_pools(args) -> int:
                 revision=args.revision,
             )
         )
-        return 0
-    if args.pools_cmd == "generate":
-        from .pools.build_gen import generate, import_generated
-        from .spec import _repo_root as rr
-
-        root = rr() or Path.cwd()
-        bpp = Path(args.bpp_root) if args.bpp_root else root / "vendor" / "behavior_prompting"
-        views = ["libero_goal_icil_object_view"]
-        run_dir = Path(args.run_dir)
-        if not args.import_only:
-            generate(
-                bpp,
-                root / "affordance.yaml",
-                splits=["libero_goal"],
-                views=views,
-                suffix=args.suffix,
-                run_dir=run_dir,
-                n_demos=args.n_demos,
-                workers=args.workers,
-                python=args.python,
-                dry_run=args.dry_run,
-            )
-        if args.pool and not args.dry_run:
-            pool = Pool.load(args.pool)
-            pool.pool_id = None
-            got = import_generated(pool, spec, run_dir, views, validate=not args.no_validate)
-            print("imported", got)
-            print("eligible:", json.dumps(finalize(pool, spec)))
         return 0
     if args.pools_cmd == "generate-draw":
         from .pools.build_draw import generate_draw, import_generated_draw
@@ -655,17 +609,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--stage",
         nargs="*",
         default=None,
-        help="base object draw finalize",
+        help="pick_and_place draw finalize",
     )
-    po_b.add_argument("--suites", nargs="*", default=None)
-    po_b.add_argument(
-        "--limit", type=int, default=None, help="tasks per suite/split (smoke builds)"
-    )
+    po_b.add_argument("--limit", type=int, default=None, help="tasks per view (smoke builds)")
     po_b.add_argument(
         "--no-validate", action="store_true", help="skip simulator validation (no instance lists)"
     )
     po_b.add_argument("--raw", default=None, help="raw cache dir (default ~/.cache/icilval/raw)")
-    po_b.add_argument("--libero-root", default=None)
+    po_b.add_argument(
+        "--fetch", action="store_true", help="download missing LIBERO-Gen files from the hub"
+    )
+    po_b.add_argument(
+        "--evict",
+        action="store_true",
+        help="delete each demonstration hdf5 after its demos are imported (they total ~160 GB)",
+    )
     po_b.add_argument("--version", default=None)
     po_u = po_sub.add_parser(
         "upgrade", help="schema-2 pool (perturbation groups) -> schema-3 pool (tasks only)"
@@ -682,19 +640,6 @@ def build_parser() -> argparse.ArgumentParser:
     po_l.add_argument("--repo", default=None)
     po_l.add_argument("--version", default=None)
     po_l.add_argument("--revision", default=None)
-    po_g = po_sub.add_parser(
-        "generate", help="run BPP's LIBERO-Gen scripts with affordance.yaml, then import"
-    )
-    po_g.add_argument("--run-dir", required=True)
-    po_g.add_argument("--pool", default=None)
-    po_g.add_argument("--suffix", default="icil")
-    po_g.add_argument("--n-demos", type=int, default=12)
-    po_g.add_argument("--workers", type=int, default=8)
-    po_g.add_argument("--python", default="python")
-    po_g.add_argument("--bpp-root", default=None)
-    po_g.add_argument("--dry-run", action="store_true")
-    po_g.add_argument("--import-only", action="store_true")
-    po_g.add_argument("--no-validate", action="store_true")
     po_gd = po_sub.add_parser(
         "generate-draw", help="run BPP's procedural drawing generator, then import"
     )

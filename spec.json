@@ -12,7 +12,7 @@
     "pick_and_place": {
       "code": "pp",
       "title": "Pick and place",
-      "blurb": "Grasp one object and place it at a destination, as BPP's LIBERO pick-and-place domain defines it: one grasp stage followed by one place stage. Every unit starts from one of the task's benchmark initial states; the demonstration is another episode of the same task and never starts from the scored state.",
+      "blurb": "Grasp one object and place it at a destination: BPP's LIBERO-Gen Combination domain. Every task moves the black bowl from one pick location to one placement in the LIBERO-Spatial scene; the pool holds every combination BPP generated demonstrations for, and a unit starts from one of the task's initial states with another episode of the same task as the demonstration.",
       "architecture": "bpp_libero_v1",
       "simulator": "libero",
       "max_steps": 550,
@@ -37,20 +37,6 @@
         "warmup_open_gripper_steps": 12,
         "prompt_actions_per_chunk": 20,
         "prompt_pad_end": "zeros"
-      },
-      "task_filter": {
-        "goal_predicates": [
-          "On",
-          "In"
-        ],
-        "max_goal_predicates": 1,
-        "exclude_verbs": [
-          "open",
-          "close",
-          "turn on",
-          "push"
-        ],
-        "_comment": "A task belongs to the skill iff its goal is a single On/In predicate and its language names no open/close/turn-on/push stage - BPP's Grasp then Place, nothing else."
       }
     },
     "draw_anything": {

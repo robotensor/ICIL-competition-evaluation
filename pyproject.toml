@@ -33,7 +33,6 @@ packages = ["src/icilval"]
 [tool.hatch.build.targets.wheel.force-include]
 "spec.json" = "icilval/data/spec.json"
 "store-schema.json" = "icilval/data/store-schema.json"
-"affordance.yaml" = "icilval/data/affordance.yaml"
 
 [tool.ruff]
 line-length = 100
