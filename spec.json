@@ -48,6 +48,45 @@
         "prompt_pad_end": "zeros"
       }
     },
+    "goal_chain": {
+      "code": "gc",
+      "title": "Goal chain",
+      "blurb": "Do two things in order - open a drawer, turn on the stove or push a plate, then place an object - as BPP's LIBERO-Gen Chain domain defines it. The pool holds every two-step chain BPP generated demonstrations for; a unit starts from one of the task's initial states with another episode of the same task as the demonstration, and succeeds when both goals hold.",
+      "architecture": "bpp_libero_v1",
+      "simulator": "libero",
+      "max_steps": 550,
+      "tasks": {
+        "dataset": "austinpatel/libero_gen_goal_chain_hdf5",
+        "views": [
+          "libero_goal_chain_selected_view",
+          "libero_goal_chain_selected_inverse_view"
+        ],
+        "kind": "chain",
+        "_comment": "The two chain views of BPP's LIBERO-Gen Chain release; the first-step and second-step views are single steps, not chains, and stay out."
+      },
+      "environment": {
+        "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
+        "libero_commit": "8f1084e3132a39270c3a13ebe37270a43ece2a01",
+        "mujoco": "3.3.0",
+        "robosuite": "1.4.0",
+        "controller": "OSC_POSE",
+        "control_delta": true,
+        "control_freq": 20,
+        "cameras": [
+          "agentview",
+          "robot0_eye_in_hand"
+        ],
+        "camera_resolution": 128,
+        "policy_image_resolution": 224,
+        "action_dim": 7,
+        "obs_history": 2,
+        "action_horizon": 16,
+        "exec_horizon": 12,
+        "warmup_open_gripper_steps": 12,
+        "prompt_actions_per_chunk": 20,
+        "prompt_pad_end": "zeros"
+      }
+    },
     "draw_anything": {
       "code": "da",
       "title": "Draw anything",
