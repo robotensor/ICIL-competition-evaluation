@@ -16,6 +16,7 @@ from ...rng import HashRng
 from ...spec import Spec
 from ...video import VideoWriter
 from ..result import EpisodeResult
+from .changes import ObservationChange, apply_change
 from .env import LiberoEnv
 
 log = logging.getLogger(__name__)
@@ -72,12 +73,20 @@ def run_episode(
         else:
             obs = env.reset(int(unit["seed"]), init_state)
             result.instance_applied = {"init_state_index": int(unit["instance"])}
+        # the unit's one change to the scored scene; an infeasible one voids the unit
+        change = unit.get("change") or {"kind": "none"}
+        result.change_applied = apply_change(env, change)
+        if result.change_applied["kind"] in ("displace", "camera", "lighting"):
+            obs = env.current_observation()
+        see = ObservationChange(change)
+        obs = see(obs)
         # prompt
         info = policy.set_prompt(demo)
         result.prompt_steps, result.prompt_chunks = info.steps, info.chunks
         # warm-up: open gripper, no motion (as BPP does)
         for _ in range(warmup):
             obs, _, _ = env.step(OPEN_GRIPPER)
+            obs = see(obs)
         initially = env.goal_status()
         history: deque = deque(maxlen=int(env_cfg["obs_history"]))
         history.append(obs)
@@ -109,7 +118,7 @@ def run_episode(
             for a in np.asarray(actions, dtype=np.float64)[:exec_h]:
                 obs, _, _ = env.step(a)
                 last_gripper = float(a[6])
-                history.append(obs)
+                history.append(see(obs))
                 steps += 1
                 if video is not None:
                     video.write(env.render())

@@ -159,6 +159,7 @@ def _record(unit: dict[str, Any], res: Any, clip: Path, out_dir: Path, record_vi
         "prompt_steps": res.prompt_steps,
         "prompt_chunks": res.prompt_chunks,
         "instance_applied": res.instance_applied,
+        "change_applied": res.change_applied,
         "video": None,
         "video_sha256": None,
     }

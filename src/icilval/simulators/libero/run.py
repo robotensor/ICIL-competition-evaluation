@@ -1,4 +1,4 @@
-"""Run a skill's units on LIBERO: one environment per task scene, units grouped by scene."""
+"""Run a skill's units on LIBERO: one environment per task scene (and joint-noise setting), units grouped by it."""
 
 from __future__ import annotations
 
@@ -23,27 +23,37 @@ def run_units(
     media_dir: Path,
     record_video: bool,
 ) -> None:
+    from .changes import init_noise_of
     from .env import LiberoEnv, load_init_states
     from .episode import run_episode
 
     video_cfg = spec.media["video"]
     fps = int(spec.env(skill)["control_freq"])
     env: LiberoEnv | None = None
-    env_key: str | None = None
+    env_key: tuple[str, float | None] | None = None
     init_cache: dict[str, np.ndarray] = {}
+
+    def key_of(unit: dict[str, Any]) -> tuple[str, float | None]:
+        # a scene, built with the joint noise the unit's change asks for (if any)
+        return (str(unit["bddl"]), init_noise_of(unit.get("change")))
+
     try:
-        # keep env switches rare: run units grouped by task scene, in unit order within a group
-        order = sorted(range(len(units)), key=lambda i: (units[i]["bddl"], i))
+        # keep env switches rare: run units grouped by scene and noise, in unit order within
+        order = sorted(
+            range(len(units)), key=lambda i: (key_of(units[i])[0], str(key_of(units[i])[1]), i)
+        )
         for i in order:
             unit = units[i]
             if ctx.out_of_time():
                 ctx.finish(unit, ctx.timed_out(unit), None)
                 continue
-            key = unit["bddl"]
+            key = key_of(unit)
             if env is None or env_key != key:
                 if env is not None:
                     env.close()
-                env = LiberoEnv(pool.path(unit["bddl"]), spec, skill=skill)
+                env = LiberoEnv(
+                    pool.path(unit["bddl"]), spec, skill=skill, init_noise_magnitude=key[1]
+                )
                 env_key = key
             init_state = None
             if unit.get("init"):
