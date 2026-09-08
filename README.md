@@ -3,7 +3,7 @@
 Validator for the RoboTensor **one-demonstration in-context imitation learning** competition.
 A submission holds one Behavior Prompting Policy (BPP) checkpoint per **skill** — pick and place
 (LIBERO) and draw anything (DrawAnything-Sim). For every unit the model is shown one demonstration
-of the task, no language, and must do it under a change the demonstration did not show. Each skill
+of the task, no language, and must do it from another initial state. Each skill
 is one success rate; the final score is their mean; a challenger takes the crown by beating the
 reigning model's average by `duel.score_margin` points on an identical unit list. Everything
 published is signed and reproducible from `spec.json`, the pool id and the two model references.
@@ -34,7 +34,7 @@ icilval store verify /tmp/store
 src/icilval/
   spec.py canon.py ids.py rng.py        contract, canonical JSON + ed25519, ids, hash RNG
   model/   rotations prompt fingerprint convert bpp draw
-  sim/     bddl libero_env perturb lighting episode draw_env draw_episode video
+  sim/     bddl libero_env episode draw_env draw_episode video
   pools/   schema sources validate build build_gen build_draw upgrade demos units hub
   duel/    score side_runner orchestrate
   store/   records writer verify mirror

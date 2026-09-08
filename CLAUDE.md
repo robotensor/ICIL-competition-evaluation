@@ -2,7 +2,8 @@
 
 Python 3.10, package `icilval` under `src/`. Scores BPP-architecture submissions one success
 rate per skill (`spec.json` `skills`: pick_and_place on LIBERO, draw_anything on DrawAnything-Sim;
-each skill's units are spread over its perturbations, which are published but never scored), runs
+a unit is one task, one initial state, one prompt demonstration and a seed, spread evenly over a
+skill's eligible tasks), runs
 King-of-the-Hill duels on the mean over skills, publishes a signed append-only store, mirrors it
 to a Hugging Face dataset, and posts live frames to the dashboard. Follows the conventions in
 `../CLAUDE.md`.
