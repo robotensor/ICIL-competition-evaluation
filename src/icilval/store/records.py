@@ -37,6 +37,8 @@ def index_record(
     duel_size: str | None = None,
     duel_id: str | None = None,
     pool_id: str | None = None,
+    sub_scores: dict[str, Any] | None = None,
+    diagnostics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     t = tally or {"wins": 0, "losses": 0, "ties": 0, "decided": 0, "void": 0}
     return {
@@ -63,6 +65,8 @@ def index_record(
         "decided": t["decided"],
         "void": t["void"],
         "media_count": media_count,
+        "sub_scores": sub_scores,
+        "diagnostics": diagnostics,
     }
 
 
@@ -106,7 +110,15 @@ def unit_verdict_from_unit(unit: dict[str, Any]) -> dict[str, Any]:
         "instance": unit["instance"],
         "seed": unit["seed"],
         "instance_params": dict(unit.get("instance_params") or {}),
-        "prompt": {"demo_id": unit["demo"], "steps": 0, "chunks": 0},
+        "change": dict(unit.get("change") or {"kind": "none"}),
+        "substituted_from": unit.get("substituted_from"),
+        "diagnostic": bool(unit.get("diagnostic", False)),
+        "prompt": {
+            "demo_id": unit["demo"],
+            "steps": 0,
+            "chunks": 0,
+            "sha256": unit.get("prompt_sha256"),
+        },
         "demo_video": None,
         "king_video": None,
         "challenger_video": None,

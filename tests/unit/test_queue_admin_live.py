@@ -209,6 +209,23 @@ def test_live_frame_and_reporter(spec):
         and frame["units"][0]["outcome"] is None
         and frame["schema"] == spec.live["schema"]
     )
+    generating = build_frame(
+        spec,
+        validator_key="k",
+        event_id="e" * 64,
+        kind="duel",
+        duel_size="smoke",
+        king=None,
+        challenger=None,
+        phase="materializing",
+        side=None,
+        units=units,
+        current=None,
+        recent_media=None,
+        message="generating prompts",
+        started_at="2026-01-01T00:00:00Z",
+    )
+    assert generating["phase"] == "materializing" and generating["done"] == 0
     with pytest.raises(ValueError):
         build_frame(
             spec,

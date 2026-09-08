@@ -158,6 +158,55 @@ def test_schema_rejects_axis_scores(spec, tmp_path):
     assert any("schema" in e for e in report.errors)
 
 
+def test_schema_4_unit_fields(spec, tmp_path):
+    """A unit publishes its change, substitution and diagnostic flag, and the prompt's hash."""
+    sp = small_spec(spec, tmp_path, lines_per_part=1000)
+    signer = Signer.generate()
+    store = Store(tmp_path / "store", sp, signer)
+    store.init(signer.verify_key_hex, None)
+    king = ModelRef.make("org/genesis", "a" * 40)
+    ch = ModelRef.make("org/ch", "b" * 40)
+    unit = unit_verdict_from_unit(
+        {
+            "unit_id": "pp-000",
+            "skill": "pick_and_place",
+            "index": 0,
+            "task": "t",
+            "instance": 1,
+            "seed": 5,
+            "instance_params": {},
+            "demo": "t/demo_00",
+            "change": {"kind": "camera", "pos": [0.01, 0.0, 0.02]},
+            "substituted_from": "u",
+            "diagnostic": False,
+            "prompt_sha256": "c" * 64,
+        }
+    )
+    assert unit["change"]["kind"] == "camera" and unit["substituted_from"] == "u"
+    assert unit["prompt"]["sha256"] == "c" * 64 and unit["diagnostic"] is False
+    bare = unit_verdict_from_unit(
+        {
+            "unit_id": "da-000",
+            "skill": "draw_anything",
+            "index": 0,
+            "task": "t",
+            "instance": 0,
+            "seed": 1,
+            "instance_params": {"family": "glyph"},
+            "demo": "t/demo_00",
+        }
+    )
+    assert bare["change"] == {"kind": "none"} and bare["substituted_from"] is None
+    assert bare["prompt"]["sha256"] is None and bare["diagnostic"] is False
+    rec = make_record(sp, "duel", 1, king, ch)
+    rec["sub_scores"] = {"king": {"pick_and_place": {"camera": 1.0}}}
+    publish(store, sp, rec, units=[unit, bare])
+    assert verify_store(tmp_path / "store", sp).ok
+    del unit["change"]
+    publish(store, sp, make_record(sp, "duel", 2, king, ch), units=[unit])
+    assert any("change" in e for e in verify_store(tmp_path / "store", sp).errors)
+
+
 def test_store_lock_is_exclusive(tmp_path):
     import pytest
 

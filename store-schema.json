@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://robotensor.ai/icil-competition/store-schema.json",
   "title": "ICIL competition result store",
-  "description": "Shapes of every file the validator publishes. Records may carry extra fields; readers ignore what they do not know. Schema 2: scores are per skill (see spec.json `skills`), not per perturbation axis. Schema 3: a unit is a task, an initial state, a prompt demonstration and a seed; it carries instance_params instead of a perturbation group.",
+  "description": "Shapes of every file the validator publishes. Records may carry extra fields; readers ignore what they do not know. Schema 2: scores are per skill (see spec.json `skills`), not per perturbation axis. Schema 3: a unit is a task, an initial state, a prompt demonstration and a seed; it carries instance_params instead of a perturbation group. Schema 4: the prompt is generated at duel time and published by hash; a unit carries the one change applied to its scored scene, whether it was substituted for a task whose prompt could not be generated, and whether it is an unscored diagnostic; records carry sub-scores and diagnostics.",
   "$defs": {
     "sha256": {
       "type": "string",
@@ -99,6 +99,17 @@
         "chunks": {
           "type": "integer",
           "minimum": 0
+        },
+        "sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "sha256 of the published prompt npz (media/<sha[:2]>/<sha>.npz); null until it is generated."
         }
       }
     },
@@ -116,7 +127,10 @@
         "king_success",
         "challenger_success",
         "outcome",
-        "void"
+        "void",
+        "change",
+        "substituted_from",
+        "diagnostic"
       ],
       "properties": {
         "unit_id": {
@@ -145,7 +159,30 @@
         },
         "instance_params": {
           "type": "object",
-          "description": "How the unit's initial state was set up beyond the instance index: empty on LIBERO (the instance is one of the task's benchmark initial states); on the drawing board the board angle (angle_rad), the pen start (cursor_px) and the demonstration's own board angle (demo_angle_rad)."
+          "description": "How the unit's scene was set up beyond the change: on the drawing board the board angle (angle_rad), the pen start (cursor_px), the demonstration's own board angle (demo_angle_rad) and the target's primitive family (family); empty on LIBERO."
+        },
+        "change": {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string"
+            }
+          },
+          "description": "The one change applied to the scored scene and what it applied; kind is an entry of spec.json skills.<skill>.changes, or 'none'."
+        },
+        "substituted_from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The task the unit was first derived for when its prompt could not be generated within generation.max_attempts; null otherwise."
+        },
+        "diagnostic": {
+          "type": "boolean",
+          "description": "True on units of an unscored diagnostic (spec.json diagnostics); they never enter a score."
         },
         "prompt": {
           "$ref": "#/$defs/Prompt"
@@ -406,6 +443,20 @@
         "media_count": {
           "type": "integer",
           "minimum": 0
+        },
+        "sub_scores": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Per side, per skill: success rate per group of spec.json skills.<skill>.sub_scores.by (a change kind, a drawing family). Published, never scored."
+        },
+        "diagnostics": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Per side: success rate of each unscored diagnostic in spec.json diagnostics."
         }
       }
     },
@@ -731,6 +782,7 @@
           "enum": [
             "fetching",
             "checking",
+            "materializing",
             "evaluating",
             "publishing",
             "done",
