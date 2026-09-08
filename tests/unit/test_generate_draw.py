@@ -83,7 +83,9 @@ def test_actions_from_parts_shape_pen_and_hold(spec):
         }
     ]
     acts = actions_from_parts(poly, np.random.default_rng(1), 10, 100.0, BOARD, MARGIN_PX)
-    assert len(acts) >= 8 + FINAL_HOLD_STEPS and np.allclose(acts[-1, :2], [200.0, 100.0])
+    assert len(acts) >= 8 + FINAL_HOLD_STEPS
+    # the part's own last action is noise-free and lands on its end; the hold after it is noised
+    assert np.allclose(acts[-FINAL_HOLD_STEPS - 1, :2], [200.0, 100.0])
 
 
 def test_rotate_actions_about_the_centre_and_along():
