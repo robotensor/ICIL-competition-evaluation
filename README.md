@@ -12,7 +12,7 @@ references, and every generated prompt is published by hash.
 
 - `spec.json`, `store-schema.json` — the contract (also vendored by the dashboard).
 - `arch/` — the allow-listed architecture templates, one per architecture, exported from the genesis checkpoints.
-- `docs/` — protocol, submissions, pools, operations.
+- `docs/` — protocol, submissions, the catalogue (`pools.md`), operations.
 - `vendor/behavior_prompting` — BPP pinned as a git submodule (`git submodule update --init --recursive`).
 
 ## Quick start (organizer)
@@ -22,10 +22,10 @@ uv venv --python 3.10 .venv && uv pip install -e ".[dev]"          # host tools,
 pytest -m "not sim and not gpu and not container"                   # pure tests
 
 # simulator work happens in the BPP conda environment (see docs/pools.md)
-MUJOCO_GL=egl icilval pools build --out pools/<version> --version <version> --fetch --evict
+MUJOCO_GL=egl icilval catalogue build --out catalogues/<version> --version <version> --fetch
 MUJOCO_GL=egl icilval convert-ckpt --ckpt liberogen_spatial_combination_behavior_prompting.ckpt --arch-name bpp_libero_v1 --out models/genesis/pick_and_place
 icilval convert-ckpt --ckpt drawanything_sim_behavior_prompting.ckpt --arch-name bpp_draw_v1 --out models/genesis/draw_anything
-MUJOCO_GL=egl SDL_VIDEODRIVER=dummy icilval smoke --store /tmp/store --pool pools/smoke --model-dir models/genesis --same-model
+MUJOCO_GL=egl SDL_VIDEODRIVER=dummy icilval smoke --store /tmp/store --pool catalogues/smoke --model-dir models/genesis --same-model
 icilval store verify /tmp/store
 ```
 
