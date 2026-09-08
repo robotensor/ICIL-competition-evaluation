@@ -22,10 +22,17 @@ def draw_instance(task_id: str, instance: int, env: dict[str, Any]) -> dict[str,
     }
 
 
+def sample_draw_change(spec: Spec, skill: str, rng: HashRng) -> dict[str, Any]:
+    """One entry of the skill's menu (`board_angle` or `pen_start`), uniform. Which quantity the
+    scored board keeps from the demonstration follows from the kind once the prompt exists."""
+    menu = sorted(spec.changes(skill))
+    return {"kind": menu[rng.below(len(menu))]}
+
+
 def draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng: HashRng):
-    """A board angle and pen start derived from the ids. A generated task's prompt is generated
-    for the unit later and carries the task's primitive family; a diagnostic task is prompted
-    with one of its stored demonstrations."""
+    """A board angle and pen start derived from the ids, and one change from the menu. A
+    generated task's prompt is generated for the unit later and carries the task's primitive
+    family; a diagnostic task is prompted with one of its stored demonstrations."""
     env = spec.env(skill)
     valid = task.valid_instances
     if not valid:
@@ -43,6 +50,7 @@ def draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng
     else:
         demo = f"generated/{uid}"
         params["family"] = str(task.meta.get("family", ""))
+    change = {"kind": "none"} if task.diagnostic else sample_draw_change(spec, skill, rng)
     return Unit(
         unit_id=uid,
         skill=skill,
@@ -58,5 +66,6 @@ def draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng
         init=None,
         goal=[],
         steps=[],
+        change=change,
         diagnostic=task.diagnostic,
     )
