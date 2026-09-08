@@ -2,14 +2,15 @@
 
 Validator for the RoboTensor **one-demonstration in-context imitation learning** competition.
 A submission holds one Behavior Prompting Policy (BPP) checkpoint per **skill** — pick and place
-(LIBERO) and draw anything (DrawAnything-Sim). For every unit the model is shown one demonstration
-of the task, no language, and must do it from another initial state. Each skill
+(BPP's LIBERO-Gen Combination), goal chain (LIBERO-Gen Chain) and draw anything
+(DrawAnything-Sim). For every unit the model is shown one demonstration of the task, no
+language, and must do it from another initial state. Each skill
 is one success rate; the final score is their mean; a challenger takes the crown by beating the
 reigning model's average by `duel.score_margin` points on an identical unit list. Everything
 published is signed and reproducible from `spec.json`, the pool id and the two model references.
 
 - `spec.json`, `store-schema.json` — the contract (also vendored by the dashboard).
-- `arch/` — the allow-listed architecture templates, one per skill, exported from the genesis checkpoints.
+- `arch/` — the allow-listed architecture templates, one per architecture, exported from the genesis checkpoints.
 - `docs/` — protocol, submissions, pools, operations.
 - `vendor/behavior_prompting` — BPP pinned as a git submodule (`git submodule update --init --recursive`).
 

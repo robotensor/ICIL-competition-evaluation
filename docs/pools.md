@@ -14,12 +14,14 @@ Build (needs the BPP conda environment; raw inputs live under `~/.cache/icilval/
 
 ```bash
 MUJOCO_GL=egl icilval pools build --out pools/<version> --version <version> --fetch --evict \
-    [--stage pick_and_place draw finalize] [--limit N]
+    [--stage pick_and_place goal_chain draw_anything finalize] [--limit N]
 icilval pools verify pools/<version>
 icilval pools push pools/<version> --repo <owner>/icil-competition-pools
 ```
 
-Stages are named after the skills, plus `finalize`. `--fetch` downloads each task's files from the
+Stages are named after the skills, plus `finalize`; where a skill's tasks come from is
+`spec.json` `skills.<skill>.tasks` (the Hugging Face dataset and its LIBERO-Gen views or
+DrawAnything-Sim files), so a new LIBERO-Gen or drawing skill is a spec entry. `--fetch` downloads each task's files from the
 Hugging Face dataset on demand and `--evict` deletes a demonstration hdf5 once its
 `demos_per_task` demonstrations are npz in the pool - the Combination release alone is about
 160 GB of hdf5, more than a build host has to hold. A task is eligible when it has at least one
@@ -34,7 +36,12 @@ spread over the file. BPP collected those demonstrations by motion planning from
 own, so none coincides with an evaluation initial state; `demo_init_index` records that
 (every entry `null`), and unit derivation would skip a coincidence if there were one.
 
-The `draw` stage imports both public DrawAnything-Sim sets (`austinpatel/drawanything_sim`):
+The goal-chain tasks are the two chain views of BPP's LIBERO-Gen Chain release
+(`austinpatel/libero_gen_goal_chain_hdf5`): the 10 chains BPP held out and the 144 it trained on,
+154 two-step tasks, imported and sampled alike. Its first-step and second-step views are single
+steps, not chains, and stay out.
+
+The `draw_anything` stage imports both public DrawAnything-Sim sets (`austinpatel/drawanything_sim`):
 the human-drawn evaluation set (`eval_handmade.zarr`, 50 drawings, 5 demonstrations each) and
 the procedural training set (`procedural_2000_10.zarr.zip`, 2000 drawings, 10 each, read in place
 from the zip through zarr's `ZipStore`), each under its own group and sampled alike. A drawing

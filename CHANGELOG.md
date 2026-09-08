@@ -4,6 +4,11 @@
 
 ### Spec v3: BPP's unit protocol (pool schema 3, store schema 3, live schema 3)
 
+- (feat): a third skill, `goal_chain`: the two chain views of BPP's LIBERO-Gen Chain release
+  (154 two-step tasks), scored like the others; the converted `austinpatel/liberogen_goal_chain`
+  checkpoint is its genesis and fits `bpp_libero_v1` unchanged (#5). Pool stages are named after
+  the skills and driven by `spec.json` `skills.<skill>.tasks` (dataset, views or files), so
+  adding a LIBERO-Gen or drawing skill is a spec entry.
 - (feat): the draw pool imports BPP's `procedural_2000_10` set (2000 drawings, 10 demonstrations
   each) beside the 50 handmade drawings, read straight from the zip; both are sampled alike (#4).
 - (feat): pick and place is BPP's LIBERO-Gen Combination domain, both views (174 tasks), sampled
