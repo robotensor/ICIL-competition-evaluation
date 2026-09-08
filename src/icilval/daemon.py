@@ -161,16 +161,17 @@ def make_runtime(
     hf_token: str | None = None,
     enforce_pool_id: bool = True,
 ) -> Runtime:
-    """`enforce_pool_id`: the daemon and the publishing commands refuse a pool other than the one
-    pinned in spec.json; the smoke test runs a small local pool and turns the check off."""
+    """`enforce_pool_id`: the daemon and the publishing commands refuse a catalogue other than the
+    one pinned in spec.json; the smoke test runs a small local catalogue and turns the check off."""
     from .live import LiveReporter
     from .pools.schema import Pool
 
     signer = Signer.from_file(key_file)
     pool = Pool.load(pool_dir)
-    if enforce_pool_id and spec.pools.get("pool_id") and spec.pools["pool_id"] != pool.pool_id:
+    pinned = spec.catalogue.get("pool_id")
+    if enforce_pool_id and pinned and pinned != pool.pool_id:
         raise RuntimeError(
-            f"pool {pool.pool_id} does not match spec.pools.pool_id {spec.pools['pool_id']}"
+            f"catalogue {pool.pool_id} does not match spec catalogue.pool_id {pinned}"
         )
     store = Store(store_root, spec, signer)
     if store.manifest() is None:
