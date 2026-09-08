@@ -13,6 +13,13 @@
 
 ### Spec v3: BPP's unit protocol (pool schema 3, store schema 3, live schema 3)
 
+- baseline on pool `2026.09-v3` (`scripts/baseline.py`, 956 episodes, none void): pick_and_place
+  0.876, goal_chain 0.860, draw_anything 0.900, average 0.879. On both LIBERO skills the view BPP
+  held out scores within noise of the view it trained on (0.900 vs 0.875; 0.850 vs 0.861), so
+  importing both views costs no difficulty; on drawing the gap is real (0.911 procedural vs 0.500
+  handmade on 8 episodes). The 4 px Chamfer threshold is unchanged and re-measured: the genesis
+  passes 0.900 of drawing units at it, against 0.79 on the v2 pool, because the distribution moved
+  left with the procedural drawings. See `docs/pools.md`.
 - published: pool `2026.09-v3` (`73a98b08…`, 2378 tasks, 23530 demonstrations) as
   `robotensor/icil-competition-pools`, and the three-skill genesis as
   `robotensor/bpp-genesis@aa24179bcc6d18185b4b07c995bbd0d15ac10b8a`; both pinned in `spec.json`.
