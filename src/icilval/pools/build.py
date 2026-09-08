@@ -15,10 +15,12 @@ import logging
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from ..sim import bddl as B
 from ..spec import Spec
 from . import validate as V
-from .demos import import_hdf5
+from .demos import import_hdf5, load_demo
 from .schema import POOL_SCHEMA, Pool, PoolTask
 from .sources import Sources, convert_init, copy_bddl, evict, fetch
 
@@ -131,6 +133,7 @@ def _gen_task(
     demos = _import_demos(h5, pool, task_id, int(spec.pools["demos_per_task"]))
     if evict_demos:
         evict(h5)
+    init_index = demo_init_indices(pool, demos, V.load_init_states(pool.path(init_rel)))
     task = _task_from_bddl(
         task_id,
         skill,
@@ -144,6 +147,7 @@ def _gen_task(
         pool,
         provenance={"source": "LIBERO-Gen (public)", "split": split, "demos": h5.name},
         meta=meta,
+        demo_init_index=init_index,
     )
     if validate:
         env = V.build_task_env(pool.path(bddl_rel), spec, skill)
@@ -153,6 +157,25 @@ def _gen_task(
         task.instances = V.valid_instances(env, V.load_init_states(pool.path(init_rel)))
         env.close()
     return task
+
+
+def demo_init_indices(
+    pool: Pool, demos: list[str], states: np.ndarray, atol: float = 1e-6
+) -> dict[str, int | None]:
+    """Which of the task's initial states each demonstration started from (None: none of them).
+
+    Unit derivation never prompts with a demonstration that starts from the scored state.
+    """
+    out: dict[str, int | None] = {}
+    for demo_id in demos:
+        start = load_demo(pool.path("demos") / f"{demo_id}.npz")["init_state"]
+        hit = None
+        if states.ndim == 2 and states.shape[1] == start.shape[0]:
+            close = np.all(np.abs(states - start[None, :]) <= atol, axis=1)
+            idx = np.flatnonzero(close)
+            hit = int(idx[0]) if idx.size else None
+        out[demo_id] = hit
+    return out
 
 
 def _swap_from_goal(goal: list[list[str]]) -> dict[str, Any]:
