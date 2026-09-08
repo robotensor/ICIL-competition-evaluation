@@ -8,7 +8,7 @@ from .. import Simulator, register
 
 
 def _make_policy(model_dir: Any, arch_dir: Any, spec: Any, skill: str, device: str = "cuda"):
-    from ...model.draw import DrawPolicy
+    from .policy import DrawPolicy
 
     return DrawPolicy(model_dir, arch_dir, spec, skill, device=device)
 
@@ -20,19 +20,19 @@ def _run_units(ctx, skill, policy, pool, units, spec, media_dir, record_video) -
 
 
 def _build_stage(pool, spec, src, skill, *, limit=None, fetch_missing=False, **_ignored) -> None:
-    from ...pools.build_draw import stage_draw
+    from .pool import stage_draw
 
     stage_draw(pool, spec, src, skill=skill, limit=limit, fetch_missing=fetch_missing)
 
 
 def _make_unit(spec, skill, index, task, seed, rng):
-    from ...pools.units import draw_unit
+    from .units import draw_unit
 
     return draw_unit(spec, skill, index, task, seed, rng)
 
 
 def _demo_frames(demo: dict[str, Any]) -> list[Any]:
-    from ...pools.demos import draw_demo_frames
+    from .demos import draw_demo_frames
 
     return draw_demo_frames(demo)
 

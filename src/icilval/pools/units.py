@@ -18,7 +18,7 @@ import math
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from ..ids import unit_id, unit_seed
+from ..ids import unit_seed
 from ..rng import HashRng
 from ..simulators import for_skill
 from ..spec import Spec
@@ -68,18 +68,6 @@ def _spread(n: int, entries: list[str], rng: HashRng) -> list[str]:
     return picks
 
 
-# ---------------------------------------------------------------- drawing board instances
-def draw_instance(task_id: str, instance: int, env: dict[str, Any]) -> dict[str, Any]:
-    """The board angle and cursor start of one drawing instance: a pure function of the ids."""
-    rng = HashRng("draw-instance", task_id, instance)
-    lo, hi = (float(x) for x in env["board_angle_range_rad"])
-    c_lo, c_hi = (int(x) for x in env["cursor_start_range_px"])
-    return {
-        "angle_rad": round(rng.uniform(lo, hi), 6),
-        "cursor_px": [c_lo + rng.below(c_hi - c_lo + 1), c_lo + rng.below(c_hi - c_lo + 1)],
-    }
-
-
 # ---------------------------------------------------------------- derivation
 def derive_units(pool: Pool, spec: Spec, duel: str, size: str | None = None) -> list[Unit]:
     per_skill = spec.units_per_skill(size)
@@ -100,69 +88,5 @@ def _unit(pool: Pool, spec: Spec, duel: str, skill: str, index: int, entry: str,
     return for_skill(spec, skill).make_unit(spec, skill, index, task, seed, rng)
 
 
-def libero_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng: HashRng):
-    """One of the task's benchmark initial states, and a demonstration that did not start there."""
-    valid = task.valid_instances
-    if not valid:
-        raise ValueError(f"{task.task_id} has no valid initial states")
-    instance = valid[rng.below(len(valid))]
-    candidates = [d for d in task.demos if task.demo_init_index.get(d) != instance] or list(
-        task.demos
-    )
-    if not candidates:
-        raise ValueError(f"task {task.task_id} has no demonstrations")
-    demo = candidates[rng.below(len(candidates))]
-    return Unit(
-        unit_id=unit_id(spec.skill_code(skill), index),
-        skill=skill,
-        index=index,
-        task=task.task_id,
-        task_label=task.label,
-        instance=instance,
-        demo=demo,
-        seed=seed,
-        instance_params={},
-        max_steps=_max_steps(task, spec, skill),
-        bddl=task.bddl,
-        init=task.init,
-        goal=task.goal,
-        steps=task.steps,
-    )
-
-
-def draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng: HashRng):
-    """A board angle and pen start derived from the ids, and any of the task's demonstrations."""
-    env = spec.env(skill)
-    valid = task.valid_instances
-    if not valid:
-        raise ValueError(f"{task.task_id} has no instances")
-    if not task.demos:
-        raise ValueError(f"task {task.task_id} has no demonstrations")
-    instance = valid[rng.below(len(valid))]
-    state = draw_instance(task.task_id, instance, env)
-    demo = task.demos[rng.below(len(task.demos))]
-    demo_angle = float(task.meta.get("demo_angles", {}).get(demo, 0.0))
-    return Unit(
-        unit_id=unit_id(spec.skill_code(skill), index),
-        skill=skill,
-        index=index,
-        task=task.task_id,
-        task_label=task.label,
-        instance=instance,
-        demo=demo,
-        seed=seed,
-        instance_params={
-            "angle_rad": state["angle_rad"],
-            "cursor_px": state["cursor_px"],
-            "demo_angle_rad": round(demo_angle, 6),
-        },
-        max_steps=_max_steps(task, spec, skill),
-        bddl=None,
-        init=None,
-        goal=[],
-        steps=[],
-    )
-
-
-def _max_steps(task: PoolTask, spec: Spec, skill: str) -> int:
+def max_steps_of(task: PoolTask, spec: Spec, skill: str) -> int:
     return min(task.max_steps, spec.max_steps(skill)) if task.max_steps else spec.max_steps(skill)

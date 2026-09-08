@@ -7,9 +7,9 @@ from pathlib import Path
 
 import numpy as np
 
-from ..sim import bddl as B
-from ..sim.libero_env import LiberoEnv, load_init_states, save_init_states
-from ..spec import Spec
+from ...spec import Spec
+from . import bddl as B
+from .env import LiberoEnv, load_init_states, save_init_states
 
 log = logging.getLogger(__name__)
 

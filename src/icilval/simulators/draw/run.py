@@ -7,8 +7,8 @@ from typing import Any
 
 from ...pools.demos import load_demo
 from ...pools.schema import Pool
-from ...sim.video import VideoWriter
 from ...spec import Spec
+from ...video import VideoWriter
 
 
 def run_units(
@@ -21,8 +21,8 @@ def run_units(
     media_dir: Path,
     record_video: bool,
 ) -> None:
-    from ...sim.draw_env import DrawBoard
-    from ...sim.draw_episode import run_draw_episode
+    from .env import DrawBoard
+    from .episode import run_draw_episode
 
     video_cfg = spec.media["video"]
     fps = int(spec.env(skill)["control_freq"])

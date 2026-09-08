@@ -9,8 +9,8 @@ import numpy as np
 
 from ...pools.demos import load_demo
 from ...pools.schema import Pool
-from ...sim.video import VideoWriter
 from ...spec import Spec
+from ...video import VideoWriter
 
 
 def run_units(
@@ -23,8 +23,8 @@ def run_units(
     media_dir: Path,
     record_video: bool,
 ) -> None:
-    from ...sim.episode import run_episode
-    from ...sim.libero_env import LiberoEnv, load_init_states
+    from .env import LiberoEnv, load_init_states
+    from .episode import run_episode
 
     video_cfg = spec.media["video"]
     fps = int(spec.env(skill)["control_freq"])

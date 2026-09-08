@@ -8,13 +8,13 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from icilval.model.bpp import BPPPolicy
-from icilval.model.draw import DrawPolicy
 from icilval.model.fingerprint import check_submission
-from icilval.sim.draw_env import DrawBoard
-from icilval.sim.draw_episode import run_draw_episode
-from icilval.sim.episode import run_episode
-from icilval.sim.libero_env import LiberoEnv, load_init_states
+from icilval.simulators.draw.env import DrawBoard
+from icilval.simulators.draw.episode import run_draw_episode
+from icilval.simulators.draw.policy import DrawPolicy
+from icilval.simulators.libero.env import LiberoEnv, load_init_states
+from icilval.simulators.libero.episode import run_episode
+from icilval.simulators.libero.policy import BPPPolicy
 from icilval.spec import _repo_root
 
 pytestmark = [pytest.mark.gpu, pytest.mark.slow]
