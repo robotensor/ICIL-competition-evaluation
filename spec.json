@@ -1,6 +1,6 @@
 {
-  "spec_version": 2,
-  "_comment": "Normative constants for the RoboTensor one-demonstration in-context imitation learning competition. The validator and the dashboard both read this file; nothing in it may be duplicated as a literal in code. spec_fingerprint = sha256 of the canonical JSON of this file. Changing spec_version changes every derived duel_id and therefore every draw; bump it only deliberately. Version 2 replaced the four perturbation axes with skills: every skill is scored as one success rate and the final score is the mean over skills.",
+  "spec_version": 3,
+  "_comment": "Normative constants for the RoboTensor one-demonstration in-context imitation learning competition. The validator and the dashboard both read this file; nothing in it may be duplicated as a literal in code. spec_fingerprint = sha256 of the canonical JSON of this file. Changing spec_version changes every derived duel_id and therefore every draw; bump it only deliberately. Version 2 replaced the four perturbation axes with skills: every skill is scored as one success rate and the final score is the mean over skills. Version 3 removed the organizer perturbation groups: a unit is one task, one of its initial states, one prompt demonstration and a seed, exactly as BPP's own runner evaluates.",
   "track": {
     "id": "icil_1demo",
     "title": "One-demo in-context imitation",
@@ -12,7 +12,7 @@
     "pick_and_place": {
       "code": "pp",
       "title": "Pick and place",
-      "blurb": "Grasp one object and place it at a destination, as BPP's LIBERO pick-and-place domain defines it: one grasp stage followed by one place stage. Every unit perturbs the demonstrated scene - positions, room and lights, or the object pairing - and the demonstration never starts from the scored initial state.",
+      "blurb": "Grasp one object and place it at a destination, as BPP's LIBERO pick-and-place domain defines it: one grasp stage followed by one place stage. Every unit starts from one of the task's benchmark initial states; the demonstration is another episode of the same task and never starts from the scored state.",
       "architecture": "bpp_libero_v1",
       "simulator": "libero",
       "max_steps": 550,
@@ -38,92 +38,6 @@
         "prompt_actions_per_chunk": 20,
         "prompt_pad_end": "zeros"
       },
-      "perturbations": {
-        "spatial": {
-          "title": "Spatial change",
-          "blurb": "Same task as the demonstration, but the objects and the robot start somewhere else. Positions come from LIBERO-PRO's swap and pose perturbations plus an explicit displacement ladder.",
-          "variant_kinds": [
-            "pro_swap",
-            "pro_pose",
-            "level"
-          ],
-          "levels": {
-            "L1": {
-              "radius_m": 0.05,
-              "min_delta_m": 0.03
-            },
-            "L2": {
-              "radius_m": 0.1,
-              "min_delta_m": 0.06
-            },
-            "L3": {
-              "radius_m": 0.15,
-              "min_delta_m": 0.1
-            },
-            "L4": {
-              "radius_m": 0.2,
-              "min_delta_m": 0.14,
-              "all_objects": true
-            },
-            "L5": {
-              "radius_m": 0.25,
-              "min_delta_m": 0.18,
-              "all_objects": true
-            }
-          },
-          "yaw_max_rad": 0.7853981633974483,
-          "robot_init_noise": 0.02,
-          "_selects": "variants of these kinds"
-        },
-        "environment": {
-          "title": "Environment change",
-          "blurb": "Same task and layout, but the scene sits on a different table in a different room, and the lights are randomized.",
-          "variant_kinds": [
-            "table",
-            "lighting"
-          ],
-          "tables": [
-            "kitchen_table",
-            "living_room_table",
-            "study_table"
-          ],
-          "lighting": {
-            "diffuse_scale": [
-              0.3,
-              1.5
-            ],
-            "ambient_add": [
-              0.0,
-              0.35
-            ],
-            "specular_scale": [
-              0.0,
-              1.5
-            ],
-            "pos_jitter_m": 1.0,
-            "dir_jitter_rad": 0.5,
-            "headlight_scale": [
-              0.4,
-              1.2
-            ],
-            "light_drop_prob": 0.25
-          },
-          "_selects": "variants of these kinds"
-        },
-        "object": {
-          "title": "Object change",
-          "blurb": "Same operation, but the grasped object or its destination is swapped for another that affords it. The demonstration shows the new pairing; the pairing was never published as training data.",
-          "source_splits": [
-            "generated",
-            "libero_goal_chain_secondstep_view",
-            "libero_spatial_selected_combinations_view"
-          ],
-          "task_kinds": [
-            "object_swap"
-          ],
-          "_selects": "tasks of these kinds"
-        }
-      },
       "task_filter": {
         "goal_predicates": [
           "On",
@@ -142,7 +56,7 @@
     "draw_anything": {
       "code": "da",
       "title": "Draw anything",
-      "blurb": "Reproduce a drawing shown once, on a whiteboard that has since been rotated. The demonstration is a human drawing the shape; the model draws it again on the turned board. BPP's DrawAnything-Sim domain.",
+      "blurb": "Reproduce a drawing shown once. The demonstration is a human drawing the shape on a square whiteboard; the model draws it again on a board turned to a random angle, with the pen starting at a random place, as BPP's DrawAnything-Sim domain evaluates it.",
       "architecture": "bpp_draw_v1",
       "simulator": "draw",
       "max_steps": 400,
@@ -159,27 +73,17 @@
         "exec_horizon": 12,
         "prompt_actions_per_chunk": 10,
         "prompt_pad_end": "no",
+        "board_angle_range_rad": [
+          -0.7853981633974483,
+          0.7853981633974483
+        ],
         "cursor_start_range_px": [
           50,
           450
         ],
         "idle_stop_steps": 20,
         "idle_stop_px": 20,
-        "_comment": "DrawAnything-Sim as BPP evaluates it: a 512 px canvas with a 350 px square board, 10 Hz position control of a pen (x, y, pen_down), one 224 px observation, prompts chunked every 10 actions with the trailing partial chunk dropped. An episode also ends when the pen has not moved idle_stop_px for idle_stop_steps steps, as in BPP's runner."
-      },
-      "perturbations": {
-        "rotation": {
-          "title": "Board rotation",
-          "blurb": "The board the model draws on is turned to a different angle than the board in the demonstration, by at least min_delta_rad.",
-          "task_kinds": [
-            "drawing"
-          ],
-          "angle_range_rad": [
-            -0.7853981633974483,
-            0.7853981633974483
-          ],
-          "min_delta_rad": 0.2617993877991494
-        }
+        "_comment": "DrawAnything-Sim as BPP evaluates it: a 512 px canvas with a 350 px square board, 10 Hz position control of a pen (x, y, pen_down), one 224 px observation, prompts chunked every 10 actions with the trailing partial chunk dropped. A unit's board angle is uniform in board_angle_range_rad and its pen start uniform in cursor_start_range_px, the ranges DrawEnv samples from; both are derived from the task id and instance index. An episode also ends when the pen has not moved idle_stop_px for idle_stop_steps steps, as in BPP's runner."
       },
       "success": {
         "metric": "chamfer_px",
@@ -194,7 +98,7 @@
     "pool_id": "ae9645cdbc2ed24cdbea436d6677925070f0a4221c604a09e18c96dbd0dad83a",
     "demos_per_task": 10,
     "init_states_per_task": 50,
-    "_comment": "pool_id is filled by `icilval pools build` (or `pools upgrade`) and must equal pool.json's id; the validator refuses to run on a mismatch. init_states_per_task also sizes the draw skill's table of (board angle, cursor start) instances."
+    "_comment": "pool_id is filled by `icilval pools build` (or `pools upgrade`) and must equal pool.json's id; the validator refuses to run on a mismatch. init_states_per_task also sizes the draw skill's table of (board angle, cursor start) instances. The pinned id is the v2 pool until the spec v3 pool is built and pinned at the end of the milestone."
   },
   "duel": {
     "default_size": "heavy",
@@ -214,7 +118,7 @@
     },
     "score_margin": 3.0,
     "max_void_fraction": 0.1,
-    "_crown_comment": "Both sides run the identical unit list (same tasks, initial states, prompt demonstrations and seeds). Per-skill success rate is stored as a fraction in [0, 1]; the final score is the mean over skills. A skill's units are spread evenly over its perturbations, which are published per unit and never scored separately. The challenger takes the crown iff challenger.average >= king.average + score_margin / 100. Paired per-unit outcomes are published as a diagnostic and never decide the crown.",
+    "_crown_comment": "Both sides run the identical unit list (same tasks, initial states, prompt demonstrations and seeds). Per-skill success rate is stored as a fraction in [0, 1]; the final score is the mean over skills. A skill's units are spread evenly over its eligible tasks. The challenger takes the crown iff challenger.average >= king.average + score_margin / 100. Paired per-unit outcomes are published as a diagnostic and never decide the crown.",
     "derivation": {
       "duel_id": "sha256(spec_version|track|challenger.key|challenger.revision|king.key|king.revision)",
       "unit_seed": "int(sha256(duel_id|skill|index)[:8], 16)",

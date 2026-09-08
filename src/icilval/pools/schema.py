@@ -2,10 +2,9 @@
 
 A pool is a directory holding `pool.json` plus, per skill, the files its
 simulator needs: `bddl/`, `init/` and `demos/` for LIBERO, `demos/` for the
-drawing board. Tasks are the things a prompt demonstration exists for;
-variants are perturbed copies of a LIBERO task's scene (same goal, different
-BDDL + init states). Eligibility is kept per skill and per perturbation
-group, in the order `spec.json` lists them.
+drawing board. Tasks are the things a prompt demonstration exists for; a unit
+is one task, one of its initial states, one of its demonstrations and a seed.
+Eligibility is one list of task ids per skill, sealed into the pool id.
 """
 
 from __future__ import annotations
@@ -17,7 +16,7 @@ from typing import Any
 
 from ..canon import canonical_sha256
 
-POOL_SCHEMA = 2
+POOL_SCHEMA = 3
 
 
 @dataclass
@@ -36,7 +35,6 @@ class PoolTask:
     steps: list[list[str]] = field(default_factory=list)
     demo_init_index: dict[str, int | None] = field(default_factory=dict)
     provenance: dict[str, Any] = field(default_factory=dict)
-    perturbation: dict[str, Any] = field(default_factory=dict)
     instances: list[int] | None = None
     meta: dict[str, Any] = field(default_factory=dict)
 
@@ -50,32 +48,13 @@ class PoolTask:
 
 
 @dataclass
-class PoolVariant:
-    variant_id: str
-    skill: str
-    base_task: str
-    kind: str
-    params: dict[str, Any]
-    bddl: str
-    init: str
-    n_init: int
-    validated: bool = True
-    instances: list[int] | None = None
-
-    @property
-    def valid_instances(self) -> list[int]:
-        return list(self.instances) if self.instances is not None else list(range(self.n_init))
-
-
-@dataclass
 class Pool:
     schema: int
     pool_version: str
     spec_version: int
     sources: dict[str, Any]
     tasks: dict[str, PoolTask]
-    variants: dict[str, PoolVariant]
-    skills: dict[str, dict[str, dict[str, list[str]]]]
+    skills: dict[str, dict[str, list[str]]]  # skill -> {"eligible": [task_id, ...]}
     pool_id: str | None = None
     root: Path | None = None
 
@@ -91,20 +70,14 @@ class Pool:
             k: PoolTask(task_id=k, **{kk: vv for kk, vv in v.items() if kk != "task_id"})
             for k, v in d.get("tasks", {}).items()
         }
-        variants = {
-            k: PoolVariant(variant_id=k, **{kk: vv for kk, vv in v.items() if kk != "variant_id"})
-            for k, v in d.get("variants", {}).items()
-        }
         return cls(
             schema=schema,
             pool_version=str(d["pool_version"]),
             spec_version=int(d["spec_version"]),
             sources=dict(d.get("sources", {})),
             tasks=tasks,
-            variants=variants,
             skills={
-                s: {g: {"eligible": list(e.get("eligible", []))} for g, e in groups.items()}
-                for s, groups in d.get("skills", {}).items()
+                s: {"eligible": list(e.get("eligible", []))} for s, e in d.get("skills", {}).items()
             },
             pool_id=d.get("pool_id"),
             root=root,
@@ -126,22 +99,8 @@ class Pool:
                 "demo_init_index": t.demo_init_index,
                 "max_steps": t.max_steps,
                 "provenance": t.provenance,
-                "perturbation": t.perturbation,
                 "instances": t.instances,
                 "meta": t.meta,
-            }
-
-        def variant_dict(v: PoolVariant) -> dict[str, Any]:
-            return {
-                "skill": v.skill,
-                "base_task": v.base_task,
-                "kind": v.kind,
-                "params": v.params,
-                "bddl": v.bddl,
-                "init": v.init,
-                "n_init": v.n_init,
-                "validated": v.validated,
-                "instances": v.instances,
             }
 
         d: dict[str, Any] = {
@@ -150,10 +109,8 @@ class Pool:
             "spec_version": self.spec_version,
             "sources": self.sources,
             "tasks": {k: task_dict(t) for k, t in sorted(self.tasks.items())},
-            "variants": {k: variant_dict(v) for k, v in sorted(self.variants.items())},
             "skills": {
-                s: {g: {"eligible": sorted(e["eligible"])} for g, e in groups.items()}
-                for s, groups in sorted(self.skills.items())
+                s: {"eligible": sorted(e["eligible"])} for s, e in sorted(self.skills.items())
             },
         }
         if with_id:
@@ -187,17 +144,8 @@ class Pool:
         return path
 
     # -- lookups
-    def groups(self, skill: str) -> list[str]:
-        return list(self.skills.get(skill, {}).keys())
-
-    def eligible(self, skill: str, group: str) -> list[str]:
-        return sorted(self.skills.get(skill, {}).get(group, {}).get("eligible", []))
-
-    def resolve(self, entry: str) -> tuple[PoolTask, PoolVariant | None]:
-        if entry in self.variants:
-            v = self.variants[entry]
-            return self.tasks[v.base_task], v
-        return self.tasks[entry], None
+    def eligible(self, skill: str) -> list[str]:
+        return sorted(self.skills.get(skill, {}).get("eligible", []))
 
     def tasks_of(self, skill: str) -> list[PoolTask]:
         return [t for _, t in sorted(self.tasks.items()) if t.skill == skill]

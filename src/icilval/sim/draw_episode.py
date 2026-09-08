@@ -48,7 +48,7 @@ def run_draw_episode(
     own_executor = executor is None
     executor = executor or concurrent.futures.ThreadPoolExecutor(max_workers=1)
     try:
-        p = unit["perturbation"]
+        p = unit["instance_params"]
         policy.seed(int(unit["seed"]))
         obs = board.reset(
             int(unit["seed"]),

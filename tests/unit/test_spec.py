@@ -6,7 +6,7 @@ from icilval.spec import load_spec_file, validate_spec
 
 
 def test_spec_loads_and_fingerprints(spec):
-    assert spec.version == 2
+    assert spec.version == 3
     assert spec.track_id == "icil_1demo"
     assert spec.skills == ("pick_and_place", "draw_anything")
     assert (
@@ -15,8 +15,9 @@ def test_spec_loads_and_fingerprints(spec):
     assert (
         spec.simulator("pick_and_place") == "libero" and spec.simulator("draw_anything") == "draw"
     )
-    assert list(spec.perturbations("pick_and_place")) == ["spatial", "environment", "object"]
-    assert list(spec.perturbations("draw_anything")) == ["rotation"]
+    assert "perturbations" not in spec.skill("pick_and_place")
+    lo, hi = spec.env("draw_anything")["board_angle_range_rad"]
+    assert lo < 0 < hi
     assert spec.units_per_duel("smoke") == 2 * spec.units_per_skill("smoke")
     assert spec.size_of("bogus") == spec.default_size
     assert len(spec.fingerprint) == 64
@@ -43,8 +44,11 @@ def test_validate_rejects_bad_specs(spec, tmp_path):
     del doc["skills"]["draw_anything"]["success"]
     assert any("threshold" in e for e in validate_spec(doc))
     doc = json.loads(json.dumps(spec.raw))
-    doc["skills"]["pick_and_place"]["perturbations"]["spatial"].pop("variant_kinds")
-    assert any("selects" in e for e in validate_spec(doc))
+    doc["skills"]["pick_and_place"]["perturbations"] = {"spatial": {}}
+    assert any("perturbations removed" in e for e in validate_spec(doc))
+    doc = json.loads(json.dumps(spec.raw))
+    doc["skills"]["draw_anything"]["environment"]["board_angle_range_rad"] = [0.5, -0.5]
+    assert any("board_angle_range_rad" in e for e in validate_spec(doc))
     doc = json.loads(json.dumps(spec.raw))
     doc["duel"]["default_size"] = "gigantic"
     p = tmp_path / "spec.json"

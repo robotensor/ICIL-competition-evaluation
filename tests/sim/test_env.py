@@ -109,7 +109,7 @@ def test_draw_episode_with_replaying_policy(spec, smoke_pool, tmp_path):
         u for u in derive_units(smoke_pool, spec, did, "smoke") if u.skill == "draw_anything"
     ).as_dict()
     demo = load_demo(smoke_pool.path("demos") / f"{unit['demo']}.npz")
-    theta = float(unit["perturbation"]["angle_rad"]) - float(demo["boundary_angle"])
+    theta = float(unit["instance_params"]["angle_rad"]) - float(demo["boundary_angle"])
     c, s = np.cos(theta), np.sin(theta)
     rotated = demo["actions"].copy()
     rotated[:, 0] = (demo["actions"][:, 0] - 256) * c - (demo["actions"][:, 1] - 256) * s + 256

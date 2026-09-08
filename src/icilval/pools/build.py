@@ -2,11 +2,9 @@
 
 Stages (each idempotent, each appends to pool.json):
   base         LIBERO spatial/goal/object/10 tasks that are pick-and-place: bddl, init npz, k demos
-  spatial      LIBERO-PRO swap + pose variants, our level ladder; validated per instance/slot
-  environment  table swaps (init states regenerated) and pure lighting
   object       LIBERO-Gen novel pairings (spatial combinations + first-step novelties)
   draw         DrawAnything-Sim: the human-drawn evaluation set (and generated tasks, see build_draw)
-  finalize     eligibility per skill and perturbation group, pool_id
+  finalize     the eligible tasks per skill, pool_id
 
 Which tasks count as pick-and-place is `spec.json`'s `skills.pick_and_place.task_filter`:
 BPP's one Grasp stage then one Place stage.
@@ -14,18 +12,15 @@ BPP's one Grasp stage then one Place stage.
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 from typing import Any
-
-import numpy as np
 
 from ..sim import bddl as B
 from ..spec import Spec
 from . import validate as V
 from .demos import import_hdf5
-from .schema import POOL_SCHEMA, Pool, PoolTask, PoolVariant
+from .schema import POOL_SCHEMA, Pool, PoolTask
 from .sources import (
     LIBERO_GOAL_ORIGINALS,
     LIBERO_SUITES,
@@ -37,7 +32,6 @@ from .sources import (
 
 log = logging.getLogger(__name__)
 
-TABLE_INIT_STATES = 20
 LIBERO_SKILL = "pick_and_place"
 DRAW_SKILL = "draw_anything"
 
@@ -53,8 +47,7 @@ def open_pool(out: Path, spec: Spec, version: str) -> Pool:
         spec_version=spec.version,
         sources={},
         tasks={},
-        variants={},
-        skills={s: {g: {"eligible": []} for g in spec.perturbations(s)} for s in spec.skills},
+        skills={s: {"eligible": []} for s in spec.skills},
         root=out,
     )
 
@@ -163,254 +156,6 @@ def stage_base(
     pool.save()
 
 
-# ---------------------------------------------------------------- spatial
-def stage_spatial(
-    pool: Pool,
-    spec: Spec,
-    src: Sources,
-    *,
-    skill: str = LIBERO_SKILL,
-    suites: tuple[str, ...] = LIBERO_SUITES,
-    limit: int | None = None,
-    validate: bool = True,
-) -> None:
-    cfg = spec.perturbation(skill, "spatial")
-    levels: dict[str, dict[str, Any]] = cfg["levels"]
-    directions = 8
-    for suite in suites:
-        tasks = [
-            t
-            for t in sorted(pool.tasks)
-            if t.startswith(suite + "/") and pool.tasks[t].skill == skill
-        ][:limit]
-        for task_id in tasks:
-            task = pool.tasks[task_id]
-            name = task_id.split("/", 1)[1]
-            base_states = V.load_init_states(pool.path(task.init))
-            env = V.build_variant_env(pool.path(task.bddl), spec, skill) if validate else None
-            movable = env.movable_objects() if env else []
-            tree = B.load(pool.path(task.bddl))
-            interest = [o for o in B.obj_of_interest(tree) if o in B.objects(tree)]
-            target = next(
-                (o for o in interest if not movable or o in movable),
-                interest[0] if interest else None,
-            )
-
-            # LIBERO-PRO swap: shipped bddl + init
-            vid = f"{task_id}#pro_swap"
-            swap_bddl = src.libero_pro / "bddl_files" / f"{suite}_swap" / f"{name}.bddl"
-            swap_init = src.libero_pro / "init_files" / f"{suite}_swap" / f"{name}.pruned_init"
-            if vid not in pool.variants and swap_bddl.exists() and swap_init.exists():
-                bddl_rel, init_rel = (
-                    f"bddl/{suite}_swap/{name}.bddl",
-                    f"init/{suite}_swap/{name}.npz",
-                )
-                copy_bddl(swap_bddl, pool.path(bddl_rel))
-                n = convert_init(swap_init, pool.path(init_rel))
-                inst = None
-                if validate:
-                    venv = V.build_variant_env(pool.path(bddl_rel), spec, skill)
-                    if venv is None:
-                        n = 0
-                    else:
-                        inst = V.valid_instances(venv, V.load_init_states(pool.path(init_rel)))
-                        venv.close()
-                if n:
-                    pool.variants[vid] = PoolVariant(
-                        variant_id=vid,
-                        skill=skill,
-                        base_task=task_id,
-                        kind="pro_swap",
-                        params={"source": "LIBERO-PRO position (swap)"},
-                        bddl=bddl_rel,
-                        init=init_rel,
-                        n_init=n,
-                        validated=validate,
-                        instances=inst,
-                    )
-                    log.info("spatial %s: %s valid", vid, len(inst) if inst is not None else n)
-
-            # LIBERO-PRO initial pose: delta on the target object, applied at reset
-            vid = f"{task_id}#pro_pose"
-            pose_bddl = (
-                src.libero_pro
-                / "bddl_files"
-                / "07_initial_pose_position_angle"
-                / "bddl"
-                / suite
-                / f"{name}.bddl"
-            )
-            if vid not in pool.variants and pose_bddl.exists():
-                pose = B.libero_pro_initial_pose(B.load(pose_bddl))
-                if pose:
-                    inst = None
-                    if env is not None:
-                        inst = V.pose_instances(
-                            env,
-                            base_states,
-                            pose["target"],
-                            pose["delta_xy"],
-                            pose["yaw"],
-                            pose["min_delta_norm"],
-                        )
-                    pool.variants[vid] = PoolVariant(
-                        variant_id=vid,
-                        skill=skill,
-                        base_task=task_id,
-                        kind="pro_pose",
-                        params={**pose, "source": "LIBERO-PRO 07_initial_pose_position_angle"},
-                        bddl=task.bddl,
-                        init=task.init,
-                        n_init=task.n_init,
-                        validated=validate,
-                        instances=inst,
-                    )
-                    log.info(
-                        "spatial %s: %s valid", vid, len(inst) if inst is not None else task.n_init
-                    )
-
-            # level ladder
-            if target:
-                for level, lv in levels.items():
-                    vid = f"{task_id}#{level}"
-                    if vid in pool.variants:
-                        continue
-                    targets = movable if lv.get("all_objects") and movable else [target]
-                    slots = None
-                    if env is not None:
-                        slots = V.level_slots(
-                            env,
-                            base_states,
-                            targets,
-                            float(lv["radius_m"]),
-                            float(lv["min_delta_m"]),
-                            directions,
-                        )
-                    params = {
-                        "level": level,
-                        "radius_m": lv["radius_m"],
-                        "min_delta_m": lv["min_delta_m"],
-                        "all_objects": bool(lv.get("all_objects")),
-                        "target": target,
-                        "yaw_max_rad": cfg["yaw_max_rad"],
-                        "directions": directions,
-                    }
-                    pool.variants[vid] = PoolVariant(
-                        variant_id=vid,
-                        skill=skill,
-                        base_task=task_id,
-                        kind="level",
-                        params=params,
-                        bddl=task.bddl,
-                        init=task.init,
-                        n_init=task.n_init * directions,
-                        validated=validate,
-                        instances=slots,
-                    )
-                    log.info(
-                        "spatial %s: %s valid slots",
-                        vid,
-                        len(slots) if slots is not None else task.n_init * directions,
-                    )
-            if env is not None:
-                env.close()
-            pool.save()
-
-
-# ---------------------------------------------------------------- environment
-def stage_environment(
-    pool: Pool,
-    spec: Spec,
-    src: Sources,
-    *,
-    skill: str = LIBERO_SKILL,
-    suites: tuple[str, ...] = LIBERO_SUITES,
-    limit: int | None = None,
-    validate: bool = True,
-) -> None:
-    cfg = spec.perturbation(skill, "environment")
-    for suite in suites:
-        tasks = [
-            t
-            for t in sorted(pool.tasks)
-            if t.startswith(suite + "/") and pool.tasks[t].skill == skill
-        ][:limit]
-        for task_id in tasks:
-            task = pool.tasks[task_id]
-            name = task_id.split("/", 1)[1]
-            base_tree = B.load(pool.path(task.bddl))
-            base_states = V.load_init_states(pool.path(task.init))
-            base_env = V.build_variant_env(pool.path(task.bddl), spec, skill) if validate else None
-
-            # table swaps: scene moves onto another LIBERO table; init states regenerated
-            for table in cfg["tables"]:
-                vid = f"{task_id}#table:{table}"
-                if vid in pool.variants:
-                    continue
-                tree = json.loads(json.dumps(base_tree))
-                try:
-                    old = B.swap_table(tree, table)
-                except (KeyError, ValueError) as exc:
-                    log.warning("%s: %s", vid, exc)
-                    continue
-                if old == table:
-                    continue
-                bddl_rel, init_rel = (
-                    f"bddl/{suite}_table_{table}/{name}.bddl",
-                    f"init/{suite}_table_{table}/{name}.npz",
-                )
-                pool.path(bddl_rel).parent.mkdir(parents=True, exist_ok=True)
-                B.dump(tree, pool.path(bddl_rel))
-                inst = None
-                n = 0
-                if validate:
-                    venv = V.build_variant_env(pool.path(bddl_rel), spec, skill)
-                    if venv is None:
-                        continue
-                    states = V.regenerate_init_states(venv, TABLE_INIT_STATES)
-                    venv.close()
-                    if states.size == 0:
-                        log.warning("%s: no initial states could be sampled", vid)
-                        continue
-                    V.save_init_states(pool.path(init_rel), states)
-                    n = int(states.shape[0])
-                    inst = list(range(n))
-                pool.variants[vid] = PoolVariant(
-                    variant_id=vid,
-                    skill=skill,
-                    base_task=task_id,
-                    kind="table",
-                    params={"table": table, "from": old},
-                    bddl=bddl_rel,
-                    init=init_rel,
-                    n_init=n,
-                    validated=validate,
-                    instances=inst,
-                )
-                log.info("environment %s: %d inits", vid, n)
-
-            # lighting only
-            vid = f"{task_id}#lighting"
-            if vid not in pool.variants:
-                inst = V.valid_instances(base_env, base_states) if base_env is not None else None
-                pool.variants[vid] = PoolVariant(
-                    variant_id=vid,
-                    skill=skill,
-                    base_task=task_id,
-                    kind="lighting",
-                    params={},
-                    bddl=task.bddl,
-                    init=task.init,
-                    n_init=task.n_init,
-                    validated=validate,
-                    instances=inst,
-                )
-            if base_env is not None:
-                base_env.close()
-            pool.save()
-
-
-# ---------------------------------------------------------------- object (LIBERO-Gen)
 def _gen_task(
     pool: Pool,
     spec: Spec,
@@ -421,7 +166,7 @@ def _gen_task(
     skill: str,
     kind: str,
     max_steps: int,
-    perturbation: dict[str, Any],
+    meta: dict[str, Any],
     validate: bool,
 ) -> PoolTask | None:
     bddl = split_root / "bddl_files" / split / f"{name}.bddl"
@@ -453,10 +198,10 @@ def _gen_task(
         max_steps,
         pool,
         provenance={"source": "LIBERO-Gen (public)", "split": split, "demos": h5.name},
-        perturbation=perturbation,
+        meta=meta,
     )
     if validate:
-        env = V.build_variant_env(pool.path(bddl_rel), spec, skill)
+        env = V.build_task_env(pool.path(bddl_rel), spec, skill)
         if env is None:
             del pool.tasks[task_id]
             return None
@@ -466,15 +211,15 @@ def _gen_task(
 
 
 def _swap_from_goal(goal: list[list[str]]) -> dict[str, Any]:
+    """What the task grasps and where it goes, read off its single On/In goal."""
     for p in goal:
         if len(p) == 3 and p[0].lower() in ("on", "in"):
             return {
-                "kind": "object_swap",
                 "operator": "place_in" if p[0].lower() == "in" else "place_on",
                 "object": p[1],
                 "target": p[2],
             }
-    return {"kind": "object_swap"}
+    return {}
 
 
 def stage_object(
@@ -505,7 +250,7 @@ def stage_object(
             skill,
             "object_swap",
             spec.max_steps(skill),
-            {**_swap_from_goal(goal), "source_split": combo},
+            {"swap": _swap_from_goal(goal), "source_split": combo},
             validate,
         )
         if t:
@@ -528,7 +273,7 @@ def stage_object(
             skill,
             "object_swap",
             SUITE_MAX_STEPS["libero_goal"],
-            {**_swap_from_goal(goal), "source_split": first},
+            {"swap": _swap_from_goal(goal), "source_split": first},
             validate,
         )
         if t:
@@ -537,45 +282,19 @@ def stage_object(
 
 
 # ---------------------------------------------------------------- finalize
-def _draw_usable(task: PoolTask, spec: Spec) -> bool:
-    from .units import draw_demo_candidates, draw_instance
-
-    cfg = spec.perturbation(task.skill, "rotation")
-    env = spec.env(task.skill)
-    return any(
-        draw_demo_candidates(
-            task, draw_instance(task.task_id, i, cfg, env)["angle_rad"], float(cfg["min_delta_rad"])
-        )
-        for i in task.valid_instances
+def eligible_tasks(pool: Pool, skill: str) -> list[str]:
+    """Tasks of a skill a unit can be drawn for: at least one usable initial state and one demo."""
+    return sorted(
+        t.task_id for t in pool.tasks.values() if t.skill == skill and t.valid_instances and t.demos
     )
 
 
-def finalize(pool: Pool, spec: Spec) -> dict[str, dict[str, int]]:
-    skills: dict[str, dict[str, dict[str, list[str]]]] = {}
-    for skill in spec.skills:
-        skills[skill] = {}
-        for group, cfg in spec.perturbations(skill).items():
-            eligible: list[str] = []
-            for kind in cfg.get("variant_kinds", []) or []:
-                eligible += [
-                    vid
-                    for vid, v in pool.variants.items()
-                    if v.skill == skill and v.kind == kind and v.valid_instances
-                ]
-            for kind in cfg.get("task_kinds", []) or []:
-                for tid, t in pool.tasks.items():
-                    if t.skill != skill or t.kind != kind or not t.valid_instances or not t.demos:
-                        continue
-                    if spec.simulator(skill) == "draw" and not _draw_usable(t, spec):
-                        log.warning("%s: no instance far enough from every demonstration", tid)
-                        continue
-                    eligible.append(tid)
-            skills[skill][group] = {"eligible": sorted(set(eligible))}
-    pool.skills = skills
+def finalize(pool: Pool, spec: Spec) -> dict[str, int]:
+    pool.skills = {skill: {"eligible": eligible_tasks(pool, skill)} for skill in spec.skills}
     pool.spec_version = spec.version
     pool.seal()
     pool.save()
-    return {s: {g: len(e["eligible"]) for g, e in groups.items()} for s, groups in skills.items()}
+    return {s: len(e["eligible"]) for s, e in pool.skills.items()}
 
 
 def verify_pool(root: Path, spec: Spec | None = None) -> list[str]:
@@ -595,56 +314,39 @@ def verify_pool(root: Path, spec: Spec | None = None) -> list[str]:
                 errors.append(f"{tid}: bddl unparsable: {exc}")
         if spec is not None and t.skill not in spec.skills:
             errors.append(f"{tid}: unknown skill {t.skill}")
-    for vid, v in pool.variants.items():
-        if v.base_task not in pool.tasks:
-            errors.append(f"{vid}: base task missing")
-        for rel in (v.bddl, v.init):
-            if not pool.path(rel).exists():
-                errors.append(f"{vid}: missing {rel}")
-    groups = (
-        {s: list(spec.perturbations(s)) for s in spec.skills}
-        if spec is not None
-        else {s: list(g) for s, g in pool.skills.items()}
-    )
-    for skill, names in groups.items():
-        for group in names:
-            if not pool.eligible(skill, group):
-                errors.append(f"{skill}/{group}: nothing eligible")
-            for e in pool.eligible(skill, group):
-                if e not in pool.variants and e not in pool.tasks:
-                    errors.append(f"{skill}/{group}: unknown entry {e}")
+    skills = list(spec.skills) if spec is not None else list(pool.skills)
+    for skill in skills:
+        if not pool.eligible(skill):
+            errors.append(f"{skill}: nothing eligible")
+        for e in pool.eligible(skill):
+            if e not in pool.tasks:
+                errors.append(f"{skill}: unknown task {e}")
+            elif pool.tasks[e].skill != skill:
+                errors.append(f"{skill}: task {e} belongs to {pool.tasks[e].skill}")
     return errors
 
 
 def summary(pool: Pool) -> dict[str, Any]:
-    by_kind: dict[str, int] = {}
-    for v in pool.variants.values():
-        by_kind[v.kind] = by_kind.get(v.kind, 0) + 1
+    kinds: dict[str, dict[str, int]] = {}
+    for t in pool.tasks.values():
+        kinds.setdefault(t.skill, {})
+        kinds[t.skill][t.kind] = kinds[t.skill].get(t.kind, 0) + 1
     return {
         "pool_id": pool.pool_id,
         "tasks": {s: len(pool.tasks_of(s)) for s in pool.skills} | {"total": len(pool.tasks)},
-        "variants": by_kind,
-        "eligible": {
-            s: {g: len(e["eligible"]) for g, e in groups.items()}
-            for s, groups in pool.skills.items()
-        },
+        "kinds": kinds,
+        "eligible": {s: len(e["eligible"]) for s, e in pool.skills.items()},
         "demos": sum(len(t.demos) for t in pool.tasks.values()),
     }
-
-
-def init_counts(pool: Pool) -> dict[str, int]:
-    return {vid: len(v.valid_instances) for vid, v in pool.variants.items()}
 
 
 __all__ = [
     "open_pool",
     "is_pick_and_place",
     "stage_base",
-    "stage_spatial",
-    "stage_environment",
     "stage_object",
+    "eligible_tasks",
     "finalize",
     "verify_pool",
     "summary",
-    "np",
 ]
