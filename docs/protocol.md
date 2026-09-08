@@ -14,7 +14,7 @@ its units; the **final score** is the mean over skills.
 | Skill | What the model does | Simulator / architecture | What a unit varies |
 |---|---|---|---|
 | `pick_and_place` | Grasp one object and place it at a destination: BPP's LIBERO-Gen Combination domain. Every task moves the black bowl from one pick location to one placement in the LIBERO-Spatial scene; the pool holds every combination BPP generated demonstrations for. | LIBERO (MuJoCo) / `bpp_libero_v1` | The task and one of its initial states; the prompt is another demonstration of the same task. |
-| `draw_anything` | Reproduce a drawing shown once: BPP's DrawAnything-Sim domain. The demonstration is a person drawing a shape on a square whiteboard; the model draws it again on a blank board. | DrawAnything-Sim (pygame/pymunk) / `bpp_draw_v1` | The drawing, the board angle (uniform in `environment.board_angle_range_rad`, the range `DrawEnv` samples from) and the pen start (`cursor_start_range_px`). |
+| `draw_anything` | Reproduce a drawing shown once: BPP's DrawAnything-Sim domain, its 50 human drawings and its 2000 procedural ones. The demonstration is someone drawing a shape on a square whiteboard; the model draws it again on a blank board. | DrawAnything-Sim (pygame/pymunk) / `bpp_draw_v1` | The drawing, the board angle (uniform in `environment.board_angle_range_rad`, the range `DrawEnv` samples from) and the pen start (`cursor_start_range_px`). |
 
 A **unit** is one skill + one task + one initial state + one prompt demonstration + one seed,
 exactly what BPP's own runner evaluates. A skill's units are spread evenly over its eligible
