@@ -1,8 +1,11 @@
 from icilval.duel.score import (
     SCORE_EPSILON,
     crown_moves,
+    diagnostic_rates,
+    lookup,
     paired_outcome,
     skill_scores,
+    sub_scores,
     tally,
     verdict,
     void_fraction,
@@ -99,3 +102,39 @@ def test_verdict_edge_cases():
         )
         == 0.5
     )
+
+
+def test_diagnostic_units_never_score_but_are_reported():
+    units = [unit("draw_anything", True, False, i=0), unit("draw_anything", False, False, i=1)]
+    units[1]["diagnostic"] = True
+    units[1]["task"] = "drawanything_handmade/draw_x"
+    assert skill_scores(units, "king", SKILLS)["draw_anything"] == 1.0
+    assert skill_scores(units, "challenger", SKILLS)["draw_anything"] == 0.0
+    diag = {"handmade_drawings": {"skill": "draw_anything", "group": "drawanything_handmade"}}
+    assert diagnostic_rates(units, "king", diag) == {"handmade_drawings": 0.0}
+    assert diagnostic_rates(units[:1], "king", diag) == {"handmade_drawings": None}
+    assert verdict(units, 3.0, SKILLS).tally.units == 2
+
+
+def test_sub_scores_group_by_dotted_key():
+    pp = [
+        unit("pick_and_place", True, True, i=0),
+        unit("pick_and_place", True, False, i=1),
+        unit("pick_and_place", False, True, i=2),
+    ]
+    pp[0]["change"] = {"kind": "camera", "pos": [0.0, 0.0, 0.0]}
+    pp[1]["change"] = {"kind": "camera"}
+    pp[2]["change"] = {"kind": "lighting"}
+    da = [unit("draw_anything", True, True, i=3)]
+    da[0]["instance_params"] = {"family": "glyph"}
+    keys = {"pick_and_place": "change.kind", "draw_anything": "instance_params.family"}
+    king = sub_scores(pp + da, "king", keys)
+    assert king["pick_and_place"] == {"camera": 1.0, "lighting": 0.0}
+    assert king["draw_anything"] == {"glyph": 1.0}
+    assert sub_scores(pp + da, "challenger", keys)["pick_and_place"]["camera"] == 0.5
+    assert lookup(pp[0], "change.kind") == "camera" and lookup(pp[0], "change.pos.x") is None
+    pp[2].pop("change")
+    assert "none" in sub_scores(pp, "king", keys)["pick_and_place"]
+    pp[0]["diagnostic"] = True
+    assert "camera" in sub_scores(pp, "king", keys)["pick_and_place"]  # pp[1] still counts
+    assert sub_scores(pp[:1], "king", keys)["pick_and_place"] == {}

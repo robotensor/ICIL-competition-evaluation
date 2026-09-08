@@ -346,6 +346,12 @@ class Orchestrator:
             v = score.verdict(state["units"], spec.score_margin, spec.skills)
             if score.void_fraction(state["units"]) > spec.max_void_fraction:
                 raise DuelFailed(f"{v.tally.void} of {len(state['units'])} units void")
+            keys = {s: spec.sub_score_key(s) for s in spec.skills}
+            ran = [s for s in score.SIDES if s in dirs]
+            sub_scores = {s: score.sub_scores(state["units"], s, keys) for s in ran}
+            diagnostics = {
+                s: score.diagnostic_rates(state["units"], s, spec.diagnostics) for s in ran
+            }
             # ---- publishing
             self._post(
                 state, force=True, phase="publishing", side=None, message="publishing the record"
@@ -369,6 +375,8 @@ class Orchestrator:
                 duel_size=size,
                 duel_id=did,
                 pool_id=self.rt.pool.pool_id,
+                sub_scores=sub_scores,
+                diagnostics=diagnostics,
             )
             event = duel_event(
                 record,
