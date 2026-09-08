@@ -229,8 +229,9 @@ def render_demo(path: str | Path, out_mp4: str | Path, spec: Spec, skill: str) -
     """A demonstration clip at the skill's control rate: both LIBERO cameras side by side,
     or the drawing board as the policy saw it."""
     from ..sim.video import encode_frames
+    from ..simulators import for_skill
 
     demo = load_demo(path)
     fps = int(spec.env(skill)["control_freq"])
-    frames = draw_demo_frames(demo) if spec.simulator(skill) == "draw" else demo_frames(demo)
+    frames = for_skill(spec, skill).demo_frames(demo)
     return encode_frames(frames, out_mp4, fps, spec.media["video"])

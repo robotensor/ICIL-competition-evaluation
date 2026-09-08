@@ -175,14 +175,3 @@ class BPPPolicy(PolicyBase):
             out = self.policy.predict_action(obs_dict)
         a10 = out["action"][0].detach().float().cpu().numpy()
         return actions_10_to_7(a10)[: self.exec_horizon]
-
-
-def make_policy(
-    model_dir: str | Path, arch_dir: str | Path, spec: Spec, skill: str, device: str = "cuda"
-) -> PolicyBase:
-    """The policy class for a skill's simulator."""
-    if spec.simulator(skill) == "draw":
-        from .draw import DrawPolicy
-
-        return DrawPolicy(model_dir, arch_dir, spec, skill, device=device)
-    return BPPPolicy(model_dir, arch_dir, spec, skill, device=device)
