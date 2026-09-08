@@ -4,6 +4,8 @@
 
 ### Spec v3: BPP's unit protocol (pool schema 3, store schema 3, live schema 3)
 
+- (feat): the draw pool imports BPP's `procedural_2000_10` set (2000 drawings, 10 demonstrations
+  each) beside the 50 handmade drawings, read straight from the zip; both are sampled alike (#4).
 - (feat): pick and place is BPP's LIBERO-Gen Combination domain, both views (174 tasks), sampled
   uniformly; the original-LIBERO base tasks, the pick-and-place goal filter, the Goal-Chain
   first-step import and the organizer task generator (`affordance.yaml`, `pools generate`) are

@@ -34,9 +34,12 @@ spread over the file. BPP collected those demonstrations by motion planning from
 own, so none coincides with an evaluation initial state; `demo_init_index` records that
 (every entry `null`), and unit derivation would skip a coincidence if there were one.
 
-The `draw` stage imports BPP's human-drawn evaluation set (`eval_handmade.zarr`, 50 drawings, 5
-demonstrations each); a drawing task has no initial-state file: its `init_states_per_task`
-instances are board angles and cursor starts derived from the task id.
+The `draw` stage imports both public DrawAnything-Sim sets (`austinpatel/drawanything_sim`):
+the human-drawn evaluation set (`eval_handmade.zarr`, 50 drawings, 5 demonstrations each) and
+the procedural training set (`procedural_2000_10.zarr.zip`, 2000 drawings, 10 each, read in place
+from the zip through zarr's `ZipStore`), each under its own group and sampled alike. A drawing
+task has no initial-state file: its `init_states_per_task` instances are board angles and
+cursor starts derived from the task id.
 
 Organizer-generated drawings, never published as training data: `icilval pools generate-draw
 --base-seed <secret>` runs BPP's `procedural_generate_drawings.py` and imports its drawings under
