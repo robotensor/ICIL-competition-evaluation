@@ -49,7 +49,6 @@ def build_frame(
         {
             "unit_id": u.get("unit_id"),
             "skill": u.get("skill"),
-            "kind": u.get("kind"),
             "task": u.get("task"),
             "task_label": u.get("task_label"),
             "instance": u.get("instance"),

@@ -80,15 +80,17 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
         env = s.get("environment") or {}
         for key in ("obs_history", "action_horizon", "exec_horizon", "prompt_actions_per_chunk"):
             need(f"skills.{sid}.environment.{key}", isinstance(env.get(key), int) and env[key] > 0)
-        perts = s.get("perturbations") or {}
-        need(f"skills.{sid}.perturbations non-empty", isinstance(perts, dict) and bool(perts))
-        for pid, p in perts.items():
-            need(f"skills.{sid}.perturbations.{pid} id", bool(SKILL_ID_RE.match(pid)))
-            need(
-                f"skills.{sid}.perturbations.{pid} selects",
-                isinstance(p, dict) and (bool(p.get("variant_kinds")) or bool(p.get("task_kinds"))),
-            )
+        need(f"skills.{sid}.perturbations removed", "perturbations" not in s)
         if s.get("simulator") == "draw":
+            for key in ("board_angle_range_rad", "cursor_start_range_px"):
+                rng = env.get(key)
+                need(
+                    f"skills.{sid}.environment.{key} range",
+                    isinstance(rng, list)
+                    and len(rng) == 2
+                    and all(isinstance(x, (int, float)) for x in rng)
+                    and rng[0] < rng[1],
+                )
             success = s.get("success") or {}
             need(
                 f"skills.{sid}.success.threshold>0",
@@ -169,12 +171,6 @@ class Spec:
 
     def env(self, name: str) -> dict[str, Any]:
         return self.skill(name)["environment"]
-
-    def perturbations(self, name: str) -> dict[str, dict[str, Any]]:
-        return self.skill(name)["perturbations"]
-
-    def perturbation(self, skill: str, group: str) -> dict[str, Any]:
-        return self.perturbations(skill)[group]
 
     def success(self, name: str) -> dict[str, Any] | None:
         return self.skill(name).get("success")

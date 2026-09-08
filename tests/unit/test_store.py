@@ -111,12 +111,11 @@ def test_media_and_torn_line(spec, tmp_path):
         {
             "unit_id": "pp-000",
             "skill": "pick_and_place",
-            "kind": "spatial",
             "index": 0,
             "task": "t",
             "instance": 1,
             "seed": 5,
-            "perturbation": {"kind": "level"},
+            "instance_params": {},
             "demo": "t/demo_00",
         }
     )

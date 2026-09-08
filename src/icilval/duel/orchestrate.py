@@ -134,7 +134,6 @@ class Orchestrator:
                     state["recent_media"] = {
                         "unit": {
                             "skill": u["skill"],
-                            "kind": u.get("kind"),
                             "task": u["task"],
                             "task_label": u.get("task_label"),
                             "instance": u["instance"],

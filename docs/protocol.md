@@ -1,28 +1,27 @@
 # Protocol
 
 The competition scores a submission on one track: for every skill, the model is shown **one
-demonstration** of a task and **no language**, then must perform the task under a change the
-demonstration did not show. Every constant below comes from `spec.json`; nothing here is
+demonstration** of a task and **no language**, then must perform the task from another initial
+state. Every constant below comes from `spec.json`; nothing here is
 normative on its own.
 
 ## Skills
 
-A **skill** is what is scored. Each has its own simulator, its own Behavior Prompting Policy
-architecture (one checkpoint per skill in a submission) and its own perturbations. A skill's score
-is one success rate over its units; the **final score** is the mean over skills.
+A **skill** is what is scored. Each has its own simulator and its own Behavior Prompting Policy
+architecture (one checkpoint per skill in a submission). A skill's score is one success rate over
+its units; the **final score** is the mean over skills.
 
-| Skill | What the model does | Simulator / architecture | Perturbations a unit carries |
+| Skill | What the model does | Simulator / architecture | What a unit varies |
 |---|---|---|---|
-| `pick_and_place` | Grasp one object and place it at a destination: BPP's LIBERO pick-and-place domain, one Grasp stage then one Place stage. Tasks with an open / close / turn-on / push stage or two placements are excluded (`skills.pick_and_place.task_filter`). | LIBERO (MuJoCo) / `bpp_libero_v1` | `spatial` (LIBERO-PRO swap and pose perturbations plus the displacement ladder L1..L5), `environment` (another LIBERO table and room, lights drawn per unit), `object` (LIBERO-Gen novel object pairings; the demonstration shows the new pairing) |
-| `draw_anything` | Reproduce a drawing shown once: BPP's DrawAnything-Sim domain. The demonstration is a person drawing a shape on a square whiteboard; the model draws it again on a blank board. | DrawAnything-Sim (pygame/pymunk) / `bpp_draw_v1` | `rotation` (the board is turned to a different angle than the demonstration's, by at least `min_delta_rad`; the pen starts elsewhere) |
+| `pick_and_place` | Grasp one object and place it at a destination: BPP's LIBERO pick-and-place domain, one Grasp stage then one Place stage. | LIBERO (MuJoCo) / `bpp_libero_v1` | The task and one of its benchmark initial states; the prompt is another demonstration of the same task. |
+| `draw_anything` | Reproduce a drawing shown once: BPP's DrawAnything-Sim domain. The demonstration is a person drawing a shape on a square whiteboard; the model draws it again on a blank board. | DrawAnything-Sim (pygame/pymunk) / `bpp_draw_v1` | The drawing, the board angle (uniform in `environment.board_angle_range_rad`, the range `DrawEnv` samples from) and the pen start (`cursor_start_range_px`). |
 
-A **unit** is one skill + one perturbation group + one task (or variant) + one initial state + one
-prompt demonstration + one seed. A skill's units are spread evenly over its perturbation groups
-(`pools/units.py`, `group_sizes`), and within a group over the eligible tasks or variants. The
-group and the perturbation's details are published on every unit and are never scored
-separately. Both sides of a duel run the identical unit list. The demonstration never starts from
-the scored initial state: on the drawing skill that means its board angle differs from the unit's
-by at least `min_delta_rad`.
+A **unit** is one skill + one task + one initial state + one prompt demonstration + one seed,
+exactly what BPP's own runner evaluates. A skill's units are spread evenly over its eligible
+tasks (`pools/units.py`). The initial state and, on the drawing board, the angle and pen start
+are published on every unit (`instance`, `instance_params`); nothing is scored below the skill.
+Both sides of a duel run the identical unit list. The demonstration never starts from the scored
+initial state.
 
 ## Success
 
@@ -57,8 +56,8 @@ instance's board angle and cursor start are a pure function of the task id and i
 
 ## What is published
 
-For every duel: the signed index record, the full event (every unit with both outcomes, the
-perturbation, the prompt length and, on the drawing skill, both sides' Chamfer distances) and three
+For every duel: the signed index record, the full event (every unit with both outcomes, its
+instance, the prompt length and, on the drawing skill, both sides' Chamfer distances) and three
 clips per unit: the prompt demonstration, the reigning model's rollout and the challenger's
 rollout. Drawing clips show the board with the demonstrated strokes overlaid in red and the
 model's in blue. See `store-schema.json`.
@@ -66,6 +65,6 @@ model's in blue. See `store-schema.json`.
 ## Adding a skill
 
 A skill is an entry in `spec.json` `skills` (code, title, architecture, simulator, environment,
-perturbations, success rule), an architecture template under `arch/`, a pool stage that imports
+success rule), an architecture template under `arch/`, a pool stage that imports
 its tasks, a simulator wrapper and episode loop under `sim/`, and a policy under `model/`. Adding
 one bumps `spec_version`, since it changes every duel id and every submission's layout.

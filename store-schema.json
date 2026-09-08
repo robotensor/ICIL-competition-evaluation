@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://robotensor.ai/icil-competition/store-schema.json",
   "title": "ICIL competition result store",
-  "description": "Shapes of every file the validator publishes. Records may carry extra fields; readers ignore what they do not know. Schema 2: scores are per skill (see spec.json `skills`), not per perturbation axis.",
+  "description": "Shapes of every file the validator publishes. Records may carry extra fields; readers ignore what they do not know. Schema 2: scores are per skill (see spec.json `skills`), not per perturbation axis. Schema 3: a unit is a task, an initial state, a prompt demonstration and a seed; it carries instance_params instead of a perturbation group.",
   "$defs": {
     "sha256": {
       "type": "string",
@@ -111,7 +111,7 @@
         "task",
         "instance",
         "seed",
-        "perturbation",
+        "instance_params",
         "prompt",
         "king_success",
         "challenger_success",
@@ -125,10 +125,6 @@
         "skill": {
           "$ref": "#/$defs/skill"
         },
-        "kind": {
-          "type": "string",
-          "description": "The perturbation group the unit was drawn for (a key of spec.json skills.<skill>.perturbations). Published, never scored on its own."
-        },
         "index": {
           "type": "integer",
           "minimum": 0
@@ -139,12 +135,6 @@
         "task_label": {
           "type": "string"
         },
-        "variant": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "instance": {
           "type": "integer",
           "minimum": 0
@@ -153,16 +143,9 @@
           "type": "integer",
           "minimum": 0
         },
-        "perturbation": {
+        "instance_params": {
           "type": "object",
-          "required": [
-            "kind"
-          ],
-          "properties": {
-            "kind": {
-              "type": "string"
-            }
-          }
+          "description": "How the unit's initial state was set up beyond the instance index: empty on LIBERO (the instance is one of the task's benchmark initial states); on the drawing board the board angle (angle_rad), the pen start (cursor_px) and the demonstration's own board angle (demo_angle_rad)."
         },
         "prompt": {
           "$ref": "#/$defs/Prompt"

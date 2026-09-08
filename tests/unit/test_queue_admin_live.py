@@ -161,7 +161,6 @@ def test_live_frame_and_reporter(spec):
         {
             "unit_id": "pp-000",
             "skill": "pick_and_place",
-            "kind": "spatial",
             "task": "t",
             "instance": 0,
             "king_success": True,
@@ -172,7 +171,6 @@ def test_live_frame_and_reporter(spec):
         {
             "unit_id": "da-000",
             "skill": "draw_anything",
-            "kind": "rotation",
             "task": "t2",
             "instance": 1,
             "king_success": None,
@@ -203,7 +201,8 @@ def test_live_frame_and_reporter(spec):
     )
     assert frame["skill_progress"]["challenger"]["pick_and_place"]["done"] == 0
     assert (
-        frame["units"][0]["skill"] == "pick_and_place" and frame["units"][1]["kind"] == "rotation"
+        frame["units"][0]["skill"] == "pick_and_place"
+        and frame["units"][1]["skill"] == "draw_anything"
     )
     assert (
         len(frame["message"]) == 300

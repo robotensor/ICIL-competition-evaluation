@@ -148,7 +148,7 @@ def _record(unit: dict[str, Any], res: Any, clip: Path, out_dir: Path, record_vi
         "void": res.void,
         "prompt_steps": res.prompt_steps,
         "prompt_chunks": res.prompt_chunks,
-        "perturbation_applied": res.perturbation_applied,
+        "instance_applied": res.instance_applied,
         "video": None,
         "video_sha256": None,
     }
@@ -180,38 +180,26 @@ def _run_libero(
     record_video: bool,
 ) -> None:
     from ..sim.episode import run_episode
-    from ..sim.libero_env import LiberoEnv, load_init_states, scene_properties_of
+    from ..sim.libero_env import LiberoEnv, load_init_states
 
     video_cfg = spec.media["video"]
     fps = int(spec.env(skill)["control_freq"])
     env: LiberoEnv | None = None
-    env_key: tuple[str, str] | None = None
+    env_key: str | None = None
     init_cache: dict[str, np.ndarray] = {}
     try:
-        # keep env switches rare: run units grouped by scene, in unit order within a group
-        order = sorted(
-            range(len(units)),
-            key=lambda i: (
-                units[i]["bddl"],
-                json.dumps(scene_properties_of(units[i]), sort_keys=True),
-                i,
-            ),
-        )
+        # keep env switches rare: run units grouped by task scene, in unit order within a group
+        order = sorted(range(len(units)), key=lambda i: (units[i]["bddl"], i))
         for i in order:
             unit = units[i]
             if ctx.out_of_time():
                 ctx.finish(unit, _timed_out(unit), None)
                 continue
-            key = (unit["bddl"], json.dumps(scene_properties_of(unit), sort_keys=True))
+            key = unit["bddl"]
             if env is None or env_key != key:
                 if env is not None:
                     env.close()
-                env = LiberoEnv(
-                    pool.path(unit["bddl"]),
-                    spec,
-                    skill=skill,
-                    scene_properties=scene_properties_of(unit),
-                )
+                env = LiberoEnv(pool.path(unit["bddl"]), spec, skill=skill)
                 env_key = key
             if unit["init"] not in init_cache:
                 init_cache[unit["init"]] = load_init_states(pool.path(unit["init"]))

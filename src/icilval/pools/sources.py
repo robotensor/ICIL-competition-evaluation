@@ -40,7 +40,6 @@ DRAW_HANDMADE = "eval_handmade.zarr"
 LIBERO_SOURCES = (
     "libero_root",
     "libero_datasets",
-    "libero_pro",
     "gen_goal_chain",
     "gen_spatial_combination",
 )
@@ -51,7 +50,6 @@ DRAW_SOURCES = ("drawanything",)
 class Sources:
     libero_root: Path  # .../deps/LIBERO/libero/libero  (bddl_files/, init_files/)
     libero_datasets: Path  # raw/libero_datasets/<suite>/<task>_demo.hdf5
-    libero_pro: Path  # raw/libero_pro (bddl_files/, init_files/)
     gen_goal_chain: Path  # raw/libero_gen_goal_chain
     gen_spatial_combination: Path  # raw/libero_gen_spatial_combination
     drawanything: Path  # raw/drawanything_sim (eval_handmade.zarr, unpacked)
@@ -64,7 +62,6 @@ class Sources:
         return cls(
             libero_root=bpp / "deps" / "LIBERO" / "libero" / "libero",
             libero_datasets=raw / "libero_datasets",
-            libero_pro=raw / "libero_pro",
             gen_goal_chain=raw / "libero_gen_goal_chain",
             gen_spatial_combination=raw / "libero_gen_spatial_combination",
             drawanything=raw / "drawanything_sim",

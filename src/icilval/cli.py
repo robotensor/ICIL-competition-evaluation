@@ -145,9 +145,7 @@ def cmd_pools(args) -> int:
         finalize,
         open_pool,
         stage_base,
-        stage_environment,
         stage_object,
-        stage_spatial,
         summary,
         verify_pool,
     )
@@ -167,7 +165,7 @@ def cmd_pools(args) -> int:
             src.libero_root = Path(args.libero_root)
         if getattr(args, "raw", None):
             raw = Path(args.raw)
-            src.libero_datasets, src.libero_pro = raw / "libero_datasets", raw / "libero_pro"
+            src.libero_datasets = raw / "libero_datasets"
             src.gen_goal_chain, src.gen_spatial_combination = (
                 raw / "libero_gen_goal_chain",
                 raw / "libero_gen_spatial_combination",
@@ -178,15 +176,12 @@ def cmd_pools(args) -> int:
     if args.pools_cmd == "build":
         out = Path(args.out)
         src = sources()
-        stages = args.stage or ["base", "spatial", "environment", "object", "draw", "finalize"]
+        stages = args.stage or ["base", "object", "draw", "finalize"]
         needed = tuple(
             n
             for n in LIBERO_SOURCES + DRAW_SOURCES
             if (n in DRAW_SOURCES and "draw" in stages)
-            or (
-                n in LIBERO_SOURCES
-                and any(st in stages for st in ("base", "spatial", "environment", "object"))
-            )
+            or (n in LIBERO_SOURCES and any(st in stages for st in ("base", "object")))
         )
         missing = src.check(needed)
         if missing:
@@ -200,10 +195,6 @@ def cmd_pools(args) -> int:
                 stage_base(
                     pool, spec, src, **({"suites": suites} if suites else {}), limit=args.limit
                 )
-            elif stage == "spatial":
-                stage_spatial(pool, spec, src, **({"suites": suites} if suites else {}), **kw)
-            elif stage == "environment":
-                stage_environment(pool, spec, src, **({"suites": suites} if suites else {}), **kw)
             elif stage == "object":
                 stage_object(pool, spec, src, **kw)
             elif stage == "draw":
@@ -219,19 +210,8 @@ def cmd_pools(args) -> int:
     if args.pools_cmd == "upgrade":
         from .pools.upgrade import upgrade_pool
 
-        out = Path(args.out)
-        pool = upgrade_pool(Path(args.old), out, spec)
-        stages = args.stage if args.stage is not None else ["draw", "finalize"]
-        if "draw" in stages:
-            src = sources()
-            missing = src.check(DRAW_SOURCES)
-            if missing:
-                print("missing sources:", *missing, sep="\n  ")
-                return 1
-            stage_draw(pool, spec, src, limit=args.limit)
-        if "finalize" in stages:
-            print("eligible:", json.dumps(finalize(pool, spec)))
-        pool.save()
+        pool = upgrade_pool(Path(args.old), Path(args.out), spec)
+        print("eligible:", json.dumps(finalize(pool, spec)))
         print(json.dumps(summary(pool), indent=1))
         return 0
     if args.pools_cmd == "verify":
@@ -675,7 +655,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--stage",
         nargs="*",
         default=None,
-        help="base spatial environment object draw finalize",
+        help="base object draw finalize",
     )
     po_b.add_argument("--suites", nargs="*", default=None)
     po_b.add_argument(
@@ -688,13 +668,10 @@ def build_parser() -> argparse.ArgumentParser:
     po_b.add_argument("--libero-root", default=None)
     po_b.add_argument("--version", default=None)
     po_u = po_sub.add_parser(
-        "upgrade", help="schema-1 pool (four axes) -> schema-2 pool (skills) + the draw stage"
+        "upgrade", help="schema-2 pool (perturbation groups) -> schema-3 pool (tasks only)"
     )
-    po_u.add_argument("--old", required=True, help="the schema-1 pool directory")
+    po_u.add_argument("--old", required=True, help="the schema-2 pool directory")
     po_u.add_argument("--out", required=True)
-    po_u.add_argument("--stage", nargs="*", default=None, help="draw finalize (default: both)")
-    po_u.add_argument("--limit", type=int, default=None)
-    po_u.add_argument("--raw", default=None, help="raw cache dir (default ~/.cache/icilval/raw)")
     po_v = po_sub.add_parser("verify")
     po_v.add_argument("pool")
     po_p = po_sub.add_parser("push")

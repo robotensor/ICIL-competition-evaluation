@@ -56,7 +56,8 @@ def test_parity_libero_spatial(spec, genesis_dir, smoke_pool_or_skip):
                 "skill": "pick_and_place",
                 "seed": 1000 + i,
                 "max_steps": task.max_steps,
-                "perturbation": {"kind": "none"},
+                "instance": i,
+                "instance_params": {},
             }
             res = run_episode(env, policy, unit, np.asarray(states[i]), demo, spec)
             assert not res.void, res.error

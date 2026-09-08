@@ -1,10 +1,7 @@
 import numpy as np
 import pytest
 
-from icilval.rng import HashRng
-from icilval.sim import perturb
 from icilval.sim.libero_env import LiberoEnv, load_init_states
-from icilval.sim.lighting import sample_lighting
 from icilval.sim.video import VideoWriter, is_faststart
 
 pytestmark = pytest.mark.sim
@@ -31,48 +28,6 @@ def test_env_reset_observe_render_and_predicates(spec, smoke_pool):
     # restoring the same state twice gives the same observation
     again = env.reset(7, states[0])
     assert np.array_equal(again["agentview"], obs["agentview"])
-    env.close()
-
-
-def test_lighting_changes_render_and_restores(spec, smoke_pool):
-    task = first_base_task(smoke_pool)
-    env = LiberoEnv(smoke_pool.path(task.bddl), spec, skill="pick_and_place")
-    states = load_init_states(smoke_pool.path(task.init))
-    env.reset(7, states[0])
-    base = env.render().astype(int)
-    snap = perturb.snapshot_lighting(env)
-    perturb.apply_lighting(
-        env,
-        sample_lighting(
-            HashRng("t"), spec.perturbation("pick_and_place", "environment")["lighting"]
-        ),
-    )
-    assert np.abs(env.render().astype(int) - base).mean() > 2.0
-    perturb.restore_lighting(env, snap)
-    assert np.abs(env.render().astype(int) - base).mean() < 0.5
-    env.close()
-
-
-def test_displacement_feasibility(spec, smoke_pool):
-    task = first_base_task(smoke_pool)
-    env = LiberoEnv(smoke_pool.path(task.bddl), spec, skill="pick_and_place")
-    states = load_init_states(smoke_pool.path(task.init))
-    target = env.movable_objects()[0]
-    env.reset(7, states[0])
-    real = perturb.displace_objects(
-        env, {target: {"delta_xy": [0.08, 0.0], "yaw": 0.3}}, min_delta_m=0.05
-    )
-    assert real[target]["distance_m"] >= 0.05
-    env.reset(7, states[0])
-    with pytest.raises(perturb.Infeasible):
-        perturb.displace_objects(
-            env, {target: {"delta_xy": [0.9, 0.0], "yaw": 0.0}}, min_delta_m=0.05
-        )
-    env.reset(7, states[0])
-    with pytest.raises(perturb.Infeasible):
-        perturb.displace_objects(
-            env, {target: {"delta_xy": [0.001, 0.0], "yaw": 0.0}}, min_delta_m=0.05
-        )
     env.close()
 
 
@@ -154,7 +109,7 @@ def test_draw_episode_with_replaying_policy(spec, smoke_pool, tmp_path):
         u for u in derive_units(smoke_pool, spec, did, "smoke") if u.skill == "draw_anything"
     ).as_dict()
     demo = load_demo(smoke_pool.path("demos") / f"{unit['demo']}.npz")
-    theta = float(unit["perturbation"]["angle_rad"]) - float(demo["boundary_angle"])
+    theta = float(unit["instance_params"]["angle_rad"]) - float(demo["boundary_angle"])
     c, s = np.cos(theta), np.sin(theta)
     rotated = demo["actions"].copy()
     rotated[:, 0] = (demo["actions"][:, 0] - 256) * c - (demo["actions"][:, 1] - 256) * s + 256

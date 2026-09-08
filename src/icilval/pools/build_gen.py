@@ -105,8 +105,8 @@ def import_generated(
                 else _shim_root(run_dir, view)
             )
             goal = goal_from_bddl(bddl)
-            perturbation: dict[str, Any] = {
-                **_swap_from_goal(goal),
+            meta: dict[str, Any] = {
+                "swap": _swap_from_goal(goal),
                 "source_split": view,
                 "generated": True,
             }
@@ -120,7 +120,7 @@ def import_generated(
                 skill,
                 "object_swap",
                 max_steps or spec.max_steps(skill),
-                perturbation,
+                meta,
                 validate,
             )
             if t:

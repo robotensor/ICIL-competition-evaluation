@@ -91,7 +91,6 @@ def import_draw_buffer(
             demos=[m.demo_id for m in metas],
             max_steps=spec.max_steps(skill),
             provenance={**provenance, "task": name},
-            perturbation={"kind": "rotation"},
             meta={
                 "demo_angles": {m.demo_id: round(float(m.boundary_angle or 0.0), 6) for m in metas},
                 "demo_steps": {m.demo_id: m.steps for m in metas},

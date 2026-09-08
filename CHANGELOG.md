@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Spec v3: BPP's unit protocol (pool schema 3, store schema 3, live schema 3)
+
+- (feat): the organizer perturbation groups are gone. A unit is one task, one of its benchmark
+  initial states, one prompt demonstration and a seed, spread evenly over a skill's eligible
+  tasks - what BPP's own runner evaluates. Removed: the L1..L5 displacement ladder, LIBERO-PRO
+  swap and pose variants, table swaps, lighting draws and the drawing board's 15° minimum angle
+  delta; the board angle range moves to `environment.board_angle_range_rad`, the range `DrawEnv`
+  samples from (#3).
+- (feat): pool schema 3 has no variants and one eligible task list per skill; `pools upgrade`
+  converts a schema-2 pool without re-simulation. Published units carry `instance_params`
+  (empty on LIBERO; angle, pen start and demonstration angle on the drawing board) instead of a
+  group, a variant and a perturbation object.
+- (refactor): `sim/perturb.py`, `sim/lighting.py`, `sim/perturb_math.py` and the BDDL rewriters
+  are deleted (about 1.4k lines); `sim/bddl.py` is a reader.
+- `pools.pool_id` still pins pool `2026.09-v2` until the spec v3 pool is built and pinned at the
+  end of the milestone.
+
 ### Skills (spec v2, store schema 2, live schema 2)
 
 - (feat): the four perturbation axes become **skills**: `pick_and_place` (LIBERO, `bpp_libero_v1`) and `draw_anything` (DrawAnything-Sim, `bpp_draw_v1`). Each skill is one success rate; the final score is the mean over skills; a skill's units are spread evenly over its perturbation groups (spatial / environment / object; rotation), which are published per unit and never scored. Composition is dropped (BPP's separate chain domain).
