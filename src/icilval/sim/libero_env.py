@@ -19,12 +19,6 @@ log = logging.getLogger(__name__)
 RESET_ATTEMPTS = 20
 
 
-def scene_properties_of(unit: dict[str, Any]) -> dict[str, str]:
-    """floor/wall styles a unit asks for (environment `style` variants)."""
-    p = unit.get("perturbation", {})
-    return {k: str(p[k]) for k in ("floor_style", "wall_style") if p.get(k)}
-
-
 def load_init_states(path: str | Path) -> np.ndarray:
     with np.load(path, allow_pickle=False) as z:
         return np.asarray(z["states"], dtype=np.float64)
@@ -46,15 +40,12 @@ class LiberoEnv:
         skill: str,
         render_size: int | None = None,
         gpu_id: int = -1,
-        scene_properties: dict[str, str] | None = None,
     ):
         from libero.libero.envs import OffScreenRenderEnv
 
         env_cfg = spec.env(skill)
         self.skill = skill
         self.bddl_path = str(bddl_path)
-        self.scene_properties = dict(scene_properties or {})
-        extra = {"scene_properties": self.scene_properties} if self.scene_properties else {}
         self.camera_res = int(env_cfg["camera_resolution"])
         self.render_size = int(render_size or spec.media["video"]["resolution"])
         self.render_camera = str(spec.media["video"]["camera"])
@@ -70,7 +61,6 @@ class LiberoEnv:
             ignore_done=True,
             hard_reset=False,
             render_gpu_device_id=gpu_id,
-            **extra,
         )
         self.raw = self.env.env  # the robosuite/LIBERO problem instance
         self.language = self.env.language_instruction

@@ -1,6 +1,5 @@
-"""One scored LIBERO episode: restore the initial state, apply the unit's perturbation, prompt
-the policy with one demonstration, run action chunks until success or the step cap, record
-video. `EpisodeResult` is shared with the drawing episode (`draw_episode.py`).
+"""One scored LIBERO episode: restore the initial state, prompt the policy with one
+demonstration, run action chunks until success or the step cap, record video. `EpisodeResult` is shared with the drawing episode (`draw_episode.py`).
 """
 
 from __future__ import annotations
@@ -16,14 +15,6 @@ import numpy as np
 
 from ..spec import Spec
 from .libero_env import LiberoEnv
-from .perturb import (
-    Infeasible,
-    apply_lighting,
-    displace_objects,
-    restore_lighting,
-    snapshot_lighting,
-    unit_moves,
-)
 from .video import VideoWriter
 
 log = logging.getLogger(__name__)
@@ -44,7 +35,7 @@ class EpisodeResult:
     void: bool = False
     prompt_steps: int = 0
     prompt_chunks: int = 0
-    perturbation_applied: dict[str, Any] = field(default_factory=dict)
+    instance_applied: dict[str, Any] = field(default_factory=dict)
     video_frames: int = 0
 
 
@@ -81,29 +72,12 @@ def run_episode(
     unit_wall = float(budgets["unit_wall_seconds"])
     result = EpisodeResult()
     t0 = time.monotonic()
-    lighting_snap = None
     own_executor = executor is None
     executor = executor or concurrent.futures.ThreadPoolExecutor(max_workers=1)
     try:
         policy.seed(int(unit["seed"]))
         obs = env.reset(int(unit["seed"]), init_state)
-        # perturbations
-        moves = unit_moves(unit, env)
-        if moves is not None:
-            try:
-                result.perturbation_applied["moves"] = displace_objects(
-                    env, moves[0], min_delta_m=moves[1]
-                )
-            except Infeasible as exc:
-                result.void = True
-                result.error = f"infeasible: {exc}"
-                return result
-            obs = env.observe(env.raw._get_observations())
-        lighting = unit.get("perturbation", {}).get("lighting")
-        if lighting:
-            lighting_snap = snapshot_lighting(env)
-            result.perturbation_applied["lighting"] = apply_lighting(env, lighting)
-            obs = env.observe(env.raw._get_observations())
+        result.instance_applied = {"init_state_index": int(unit["instance"])}
         # prompt
         info = policy.set_prompt(demo)
         result.prompt_steps, result.prompt_chunks = info.steps, info.chunks
@@ -165,8 +139,6 @@ def run_episode(
         result.error = f"{type(exc).__name__}: {exc}"[:300]
         log.exception("episode failed")
     finally:
-        if lighting_snap is not None:
-            restore_lighting(env, lighting_snap)
         if own_executor:
             executor.shutdown(wait=False)
         result.wall_s = time.monotonic() - t0

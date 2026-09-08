@@ -57,7 +57,7 @@ def run_draw_episode(
             target=np.asarray(demo["drawing"], dtype=bool),
             target_angle=float(demo["boundary_angle"]),
         )
-        result.perturbation_applied = {
+        result.instance_applied = {
             "angle_rad": float(p["angle_rad"]),
             "cursor_px": [int(p["cursor_px"][0]), int(p["cursor_px"][1])],
         }
