@@ -141,5 +141,8 @@ def test_draw_episode_with_replaying_policy(spec, smoke_pool, tmp_path):
     board.close()
     assert not res.void, res.error
     assert res.metric is not None and res.metric < spec.success("draw_anything")["threshold"]
-    assert res.success and res.steps >= len(demo["actions"])
+    # the episode may end at BPP's idle stop while the demonstration's tail holds the pen still,
+    # so it must have replayed every stroke, not every action
+    last_stroke = max(i for i, a in enumerate(demo["actions"]) if a[2] > 0.5) + 1
+    assert res.success and res.steps >= last_stroke
     assert out.stat().st_size > 1000 and is_faststart(out)
