@@ -5,12 +5,12 @@ from icilval.pools.schema import Pool, PoolTask
 from icilval.pools.units import derive_units
 from icilval.simulators.draw.units import draw_instance
 
-PP, GC, DA = "pick_and_place", "goal_chain", "draw_anything"
+PP, DA = "pick_and_place", "draw_anything"
 
 
 def make_pool(n_tasks=3, n_init=5, n_demos=4):
     tasks = {}
-    skills = {PP: {"eligible": []}, GC: {"eligible": []}, DA: {"eligible": []}}
+    skills = {PP: {"eligible": []}, DA: {"eligible": []}}
     for t in range(n_tasks):
         tid = f"libero_spatial/task{t}"
         demos = [f"{tid}/demo_{d:02d}" for d in range(n_demos)]
@@ -46,22 +46,6 @@ def make_pool(n_tasks=3, n_init=5, n_demos=4):
             meta={"swap": {"operator": "place_on", "object": "c", "target": "d"}},
         )
         skills[PP]["eligible"].append(oid)
-        cid = f"libero_gen_goal_chain/chain{t}"
-        cdemos = [f"{cid}/demo_{d:02d}" for d in range(n_demos)]
-        tasks[cid] = PoolTask(
-            task_id=cid,
-            skill=GC,
-            kind="chain",
-            suite="libero_goal_chain_selected_view",
-            bddl=f"bddl/chain{t}.bddl",
-            language=f"open the drawer and then put thing {t}",
-            init=f"init/chain{t}.npz",
-            n_init=n_init,
-            goal=[["Open", "drawer"], ["On", "c", "d"]],
-            demos=cdemos,
-            max_steps=550,
-        )
-        skills[GC]["eligible"].append(cid)
         did_ = f"drawanything_handmade/draw_{t}"
         ddemos = [f"{did_}/demo_{d:02d}" for d in range(n_demos)]
         tasks[did_] = PoolTask(
@@ -137,12 +121,12 @@ def test_units_prompt_disjoint_and_instances(spec):
         task = pool.tasks[u.task]
         assert u.max_steps <= spec.max_steps(u.skill)
         assert u.demo in task.demos
-        if u.skill in ("pick_and_place", "goal_chain"):
+        if u.skill == PP:
             assert task.demo_init_index.get(u.demo) != u.instance
             assert 0 <= u.instance < 5
             assert u.bddl and u.init
             assert u.instance_params == {}
-        if u.skill == "draw_anything":
+        if u.skill == DA:
             p = u.instance_params
             lo, hi = env["board_angle_range_rad"]
             assert lo <= p["angle_rad"] <= hi

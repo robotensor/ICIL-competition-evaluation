@@ -99,6 +99,26 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
             (isinstance(tasks.get("views"), list) and bool(tasks["views"]))
             or (isinstance(tasks.get("files"), dict) and bool(tasks["files"])),
         )
+        changes = s.get("changes")
+        kinds = [k for k in changes if not k.startswith("_")] if isinstance(changes, dict) else []
+        need(f"skills.{sid}.changes non-empty", bool(kinds))
+        for kind in kinds:
+            need(f"skills.{sid}.changes.{kind} mapping", isinstance(changes[kind], dict))
+        sub = s.get("sub_scores") or {}
+        need(f"skills.{sid}.sub_scores.by", isinstance(sub.get("by"), str) and bool(sub.get("by")))
+    gen = doc.get("generation") or {}
+    for key in ("max_attempts", "workers"):
+        need(f"generation.{key}>=1", isinstance(gen.get(key), int) and gen[key] >= 1)
+    cat = doc.get("catalogue") or {}
+    need("catalogue.repo", isinstance(cat.get("repo"), str) and "/" in cat.get("repo", ""))
+    need("catalogue.version", isinstance(cat.get("version"), str) and bool(cat.get("version")))
+    need("pools renamed catalogue", "pools" not in doc)
+    for name, diag in (doc.get("diagnostics") or {}).items():
+        if name.startswith("_"):
+            continue
+        need(f"diagnostics.{name}.skill", isinstance(diag, dict) and diag.get("skill") in skills)
+        n = diag.get("units_per_duel") if isinstance(diag, dict) else None
+        need(f"diagnostics.{name}.units_per_duel>=0", isinstance(n, int) and n >= 0)
     duel = doc.get("duel") or {}
     sizes = duel.get("sizes") or {}
     need("duel.default_size in sizes", duel.get("default_size") in sizes)
@@ -182,6 +202,18 @@ class Spec:
     def success(self, name: str) -> dict[str, Any] | None:
         return self.skill(name).get("success")
 
+    def changes(self, name: str) -> dict[str, dict[str, Any]]:
+        """The skill's change menu: kind -> its ranges (comment keys left out)."""
+        return {k: v for k, v in self.skill(name)["changes"].items() if not k.startswith("_")}
+
+    def sub_score_key(self, name: str) -> str:
+        """Dotted path into a unit verdict that groups the skill's sub-scores."""
+        return str(self.skill(name)["sub_scores"]["by"])
+
+    def skill_generation(self, name: str) -> dict[str, Any]:
+        """What the skill's generator draws from (drawing families); empty where not needed."""
+        return self.skill(name).get("generation") or {}
+
     # -- duel
     @property
     def duel(self) -> dict[str, Any]:
@@ -238,8 +270,22 @@ class Spec:
         return self.raw["admin"]
 
     @property
+    def generation(self) -> dict[str, Any]:
+        return self.raw["generation"]
+
+    @property
+    def diagnostics(self) -> dict[str, dict[str, Any]]:
+        """Unscored diagnostics published on every record: name -> its definition."""
+        return {k: v for k, v in self.raw.get("diagnostics", {}).items() if not k.startswith("_")}
+
+    @property
+    def catalogue(self) -> dict[str, Any]:
+        return self.raw["catalogue"]
+
+    @property
     def pools(self) -> dict[str, Any]:
-        return self.raw["pools"]
+        """The catalogue block, under the name the pool builders still read it by."""
+        return self.catalogue
 
     @property
     def baseline(self) -> dict[str, Any]:

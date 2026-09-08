@@ -1,6 +1,6 @@
 {
-  "spec_version": 3,
-  "_comment": "Normative constants for the RoboTensor one-demonstration in-context imitation learning competition. The validator and the dashboard both read this file; nothing in it may be duplicated as a literal in code. spec_fingerprint = sha256 of the canonical JSON of this file. Changing spec_version changes every derived duel_id and therefore every draw; bump it only deliberately. Version 2 replaced the four perturbation axes with skills: every skill is scored as one success rate and the final score is the mean over skills. Version 3 removed the organizer perturbation groups: a unit is one task, one of its initial states, one prompt demonstration and a seed, exactly as BPP's own runner evaluates.",
+  "spec_version": 4,
+  "_comment": "Normative constants for the RoboTensor one-demonstration in-context imitation learning competition. The validator and the dashboard both read this file; nothing in it may be duplicated as a literal in code. spec_fingerprint = sha256 of the canonical JSON of this file. Changing spec_version changes every derived duel_id and therefore every draw; bump it only deliberately. Version 2 replaced the four perturbation axes with skills: every skill is scored as one success rate and the final score is the mean over skills. Version 3 removed the organizer perturbation groups. Version 4 generates every unit's prompt demonstration at duel time with BPP's own generators and scores the unit on a scene that differs from the demonstration by exactly one change drawn from the skill's menu; the pool became a catalogue of task definitions.",
   "track": {
     "id": "icil_1demo",
     "title": "One-demo in-context imitation",
@@ -12,7 +12,7 @@
     "pick_and_place": {
       "code": "pp",
       "title": "Pick and place",
-      "blurb": "Grasp one object and place it at a destination: BPP's LIBERO-Gen Combination domain. Every task moves the black bowl from one pick location to one placement in the LIBERO-Spatial scene; the pool holds every combination BPP generated demonstrations for, and a unit starts from one of the task's initial states with another episode of the same task as the demonstration.",
+      "blurb": "Grasp the black bowl and place it at a destination in the LIBERO-Spatial scene: the 174 LIBERO-Gen Combination tasks BPP generated demonstrations for. A unit's demonstration is generated at duel time on an unchanged scene; the scored episode starts from another initial state with one change from the menu applied.",
       "architecture": "bpp_libero_v1",
       "simulator": "libero",
       "max_steps": 550,
@@ -23,7 +23,12 @@
           "libero_spatial_selected_combinations_inverse_view"
         ],
         "kind": "combination",
-        "_comment": "Every task in these views of BPP's LIBERO-Gen Combination release: bddl_files/<view>/<task>.bddl, init_files/<view>/<task>.pruned_init, demonstration_data/<view>/<task>_demo.hdf5. The pool holds demos_per_task demonstrations of each and treats the views alike."
+        "grasp_sources": {
+          "dataset": "yifengzhu-hf/LIBERO-datasets",
+          "prefix": "libero_spatial/",
+          "_comment": "The ten human teleoperation files every generated demonstration lifts its grasp from. The catalogue records their sha256; they are fetched by hash and never re-hosted."
+        },
+        "_comment": "The task definitions come from these views of BPP's LIBERO-Gen Combination release: bddl_files/<view>/<task>.bddl and task_metadata.yaml (which human demonstration each grasp comes from). No demonstration file is imported; demonstrations are generated."
       },
       "environment": {
         "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
@@ -46,62 +51,77 @@
         "warmup_open_gripper_steps": 12,
         "prompt_actions_per_chunk": 20,
         "prompt_pad_end": "zeros"
-      }
-    },
-    "goal_chain": {
-      "code": "gc",
-      "title": "Goal chain",
-      "blurb": "Do two things in order - open a drawer, turn on the stove or push a plate, then place an object - as BPP's LIBERO-Gen Chain domain defines it. The pool holds every two-step chain BPP generated demonstrations for; a unit starts from one of the task's initial states with another episode of the same task as the demonstration, and succeeds when both goals hold.",
-      "architecture": "bpp_libero_v1",
-      "simulator": "libero",
-      "max_steps": 550,
-      "tasks": {
-        "dataset": "austinpatel/libero_gen_goal_chain_hdf5",
-        "views": [
-          "libero_goal_chain_selected_view",
-          "libero_goal_chain_selected_inverse_view"
-        ],
-        "kind": "chain",
-        "_comment": "The two chain views of BPP's LIBERO-Gen Chain release; the first-step and second-step views are single steps, not chains, and stay out."
       },
-      "environment": {
-        "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
-        "libero_commit": "8f1084e3132a39270c3a13ebe37270a43ece2a01",
-        "mujoco": "3.3.0",
-        "robosuite": "1.4.0",
-        "controller": "OSC_POSE",
-        "control_delta": true,
-        "control_freq": 20,
-        "cameras": [
-          "agentview",
-          "robot0_eye_in_hand"
-        ],
-        "camera_resolution": 128,
-        "policy_image_resolution": 224,
-        "action_dim": 7,
-        "obs_history": 2,
-        "action_horizon": 16,
-        "exec_horizon": 12,
-        "warmup_open_gripper_steps": 12,
-        "prompt_actions_per_chunk": 20,
-        "prompt_pad_end": "zeros"
+      "changes": {
+        "displace": {
+          "radius_m": 0.05,
+          "min_delta_m": 0.03,
+          "yaw_max_rad": 0.7853981633974483,
+          "_comment": "The target bowl moves by at least min_delta_m within radius_m of where it started, turned by up to yaw_max_rad, and never onto another object's named location; the goal must still be unsatisfied afterwards."
+        },
+        "camera": {
+          "pos_jitter_m": 0.05,
+          "angle_jitter_rad": 0.08726646259971647,
+          "_comment": "The agentview camera moves within pos_jitter_m and turns within angle_jitter_rad about each axis; the wrist camera is untouched."
+        },
+        "lighting": {
+          "diffuse_scale": [
+            0.6,
+            1.3
+          ],
+          "ambient_add": [
+            0.0,
+            0.2
+          ],
+          "specular_scale": [
+            0.5,
+            1.3
+          ],
+          "pos_jitter_m": 0.5,
+          "dir_jitter_rad": 0.25,
+          "headlight_scale": [
+            0.7,
+            1.1
+          ],
+          "light_drop_prob": 0.0,
+          "_comment": "Every light of the scene is rescaled and jittered within these ranges."
+        },
+        "observation": {
+          "brightness_scale": [
+            0.8,
+            1.2
+          ],
+          "noise_sigma": [
+            0.0,
+            8.0
+          ],
+          "_comment": "Applied to the images the policy sees only, on both cameras; clips keep the rendered frame."
+        },
+        "robot_pose": {
+          "init_noise_magnitude": 0.05,
+          "_comment": "robosuite initialization_noise magnitude (rad) on the arm joints; LIBERO's default is 0.02."
+        },
+        "_comment": "Exactly one entry per unit, uniform over the entries; the entry and what it applied are published as the unit's change. Ranges are public and calibrated so the genesis checkpoint scores about 0.8 on the skill (docs/pools.md)."
+      },
+      "sub_scores": {
+        "by": "change.kind",
+        "_comment": "Success rate per change kind, published on every record; never part of a score."
       }
     },
     "draw_anything": {
       "code": "da",
       "title": "Draw anything",
-      "blurb": "Reproduce a drawing shown once. The demonstration is a human drawing the shape on a square whiteboard; the model draws it again on a board turned to a random angle, with the pen starting at a random place, as BPP's DrawAnything-Sim domain evaluates it.",
+      "blurb": "Reproduce a drawing shown once. The target and its demonstration are generated at duel time from one of three primitive families; the model draws it again on a board turned to another angle or from another pen start, as BPP's DrawAnything-Sim domain evaluates it.",
       "architecture": "bpp_draw_v1",
       "simulator": "draw",
       "max_steps": 400,
       "tasks": {
         "dataset": "austinpatel/drawanything_sim",
         "files": {
-          "drawanything_handmade": "eval_handmade.zarr",
-          "drawanything_procedural_2000_10": "procedural_2000_10.zarr.zip"
+          "drawanything_handmade": "eval_handmade.zarr"
         },
         "kind": "drawing",
-        "_comment": "BPP's DrawAnything-Sim replay buffers, one pool group per file: the human-drawn evaluation set (50 drawings, 5 demonstrations each) and the procedural training set (2000 drawings, 10 each), treated alike."
+        "_comment": "The human-drawn evaluation set (50 drawings, 5 demonstrations each) is the unscored diagnostic named in `diagnostics`; every scored drawing task is generated."
       },
       "environment": {
         "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
@@ -126,22 +146,72 @@
         ],
         "idle_stop_steps": 20,
         "idle_stop_px": 20,
-        "_comment": "DrawAnything-Sim as BPP evaluates it: a 512 px canvas with a 350 px square board, 10 Hz position control of a pen (x, y, pen_down), one 224 px observation, prompts chunked every 10 actions with the trailing partial chunk dropped. A unit's board angle is uniform in board_angle_range_rad and its pen start uniform in cursor_start_range_px, the ranges DrawEnv samples from; both are derived from the task id and instance index. An episode also ends when the pen has not moved idle_stop_px for idle_stop_steps steps, as in BPP's runner."
+        "_comment": "DrawAnything-Sim as BPP evaluates it: a 512 px canvas with a 350 px square board, 10 Hz position control of a pen (x, y, pen_down), one 224 px observation, prompts chunked every 10 actions with the trailing partial chunk dropped. board_angle_range_rad and cursor_start_range_px are the ranges DrawEnv samples from. An episode also ends when the pen has not moved idle_stop_px for idle_stop_steps steps, as in BPP's runner."
+      },
+      "generation": {
+        "families": {
+          "bpp": {
+            "min_parts": 1,
+            "max_parts": 6,
+            "_comment": "BPP's procedural drawings: lines, curves and ovals."
+          },
+          "polygon": {
+            "vertices": [
+              3,
+              6
+            ],
+            "_comment": "One closed polygon with this many vertices."
+          },
+          "glyph": {
+            "font": "DejaVuSans",
+            "characters": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+            "_comment": "The skeleton of one character of the font, thinned to strokes."
+          }
+        },
+        "_comment": "Each generated target belongs to one family, uniform over the families; the family is published on the unit as instance_params.family."
+      },
+      "changes": {
+        "board_angle": {
+          "min_delta_rad": 0.2617993877991494,
+          "_comment": "The board turns to an angle uniform in environment.board_angle_range_rad and at least min_delta_rad from the demonstration's; the pen starts where the demonstration's did."
+        },
+        "pen_start": {
+          "_comment": "The pen starts at a point uniform in environment.cursor_start_range_px; the board keeps the demonstration's angle."
+        },
+        "_comment": "Exactly one entry per unit, uniform over the entries."
+      },
+      "sub_scores": {
+        "by": "instance_params.family",
+        "_comment": "Success rate per primitive family, published on every record; never part of a score."
       },
       "success": {
         "metric": "chamfer_px",
-        "threshold": 4.0,
-        "_comment": "A unit succeeds iff the lowest symmetric Chamfer distance, in canvas pixels, between the demonstrated strokes and the drawn strokes at any step of the episode is at most threshold (the pen is 12 px wide). Calibrated on 80 units drawn from pool 2026.09-v2 with the genesis checkpoint: best-Chamfer percentiles 10/25/50/75/90 = 0.96/1.39/2.46/3.83/7.21 px; the baseline succeeds on 0.79 of the units at 4 px, its misses being the long multi-part drawings. See docs/pools.md."
+        "threshold": 2.5,
+        "_comment": "A unit succeeds iff the lowest symmetric Chamfer distance, in canvas pixels, between the demonstrated strokes and the drawn strokes at any step of the episode is at most threshold (the pen is 12 px wide). On pool 2026.09-v3 the genesis checkpoint reproduced 0.78 of the units within 2.5 px and 0.90 within 4 px; see docs/pools.md."
       }
     }
   },
-  "pools": {
+  "diagnostics": {
+    "handmade_drawings": {
+      "skill": "draw_anything",
+      "group": "drawanything_handmade",
+      "units_per_duel": 6,
+      "demos_per_task": 5,
+      "_comment": "BPP's 50 human drawings, prompted with a stored human demonstration and scored with the skill's rule. Their rate is published on every record and never enters a score; the units carry diagnostic=true."
+    }
+  },
+  "generation": {
+    "max_attempts": 8,
+    "workers": 4,
+    "prompt_seed": "int(sha256(duel_id|skill|index|attempt)[:8], 16)",
+    "_comment": "A unit's prompt demonstration is attempted with these seeds until one succeeds; after max_attempts the unit takes the next task in the duel's shuffled task order and records substituted_from. Materializing runs on the validator host before either side, never in the model container; both sides read the same prompts."
+  },
+  "catalogue": {
     "repo": "robotensor/icil-competition-pools",
-    "version": "2026.09-v3",
-    "pool_id": "73a98b0821be1fdbb5fb7b08219be6041c644ba35d634a7068688aaf501db843",
-    "demos_per_task": 10,
+    "version": "2026.09-v4",
+    "pool_id": "",
     "init_states_per_task": 50,
-    "_comment": "pool_id is filled by `icilval pools build` and must equal pool.json's id; the validator refuses to run on a mismatch. demos_per_task is how many of a task's demonstrations the pool keeps; init_states_per_task also sizes the drawing skill's table of (board angle, cursor start) instances."
+    "_comment": "The catalogue holds task definitions, not demonstrations: BDDLs, BPP's task metadata, the grasp-source hashes, the diagnostic drawings and the generator version. pool_id is filled by `icilval catalogue build` and must equal catalogue.json's id; the validator refuses a catalogue that does not match. init_states_per_task sizes the diagnostic drawing tasks' table of (board angle, cursor start) instances."
   },
   "duel": {
     "default_size": "heavy",
@@ -161,7 +231,7 @@
     },
     "score_margin": 3.0,
     "max_void_fraction": 0.1,
-    "_crown_comment": "Both sides run the identical unit list (same tasks, initial states, prompt demonstrations and seeds). Per-skill success rate is stored as a fraction in [0, 1]; the final score is the mean over skills. A skill's units are spread evenly over its eligible tasks. The challenger takes the crown iff challenger.average >= king.average + score_margin / 100. Paired per-unit outcomes are published as a diagnostic and never decide the crown.",
+    "_crown_comment": "Both sides run the identical unit list (same tasks, generated prompts, changes and seeds). Per-skill success rate is stored as a fraction in [0, 1]; the final score is the mean over skills. A skill's units are spread evenly over its catalogue tasks. The challenger takes the crown iff challenger.average >= king.average + score_margin / 100. Paired per-unit outcomes, sub-scores and diagnostics are published and never decide the crown.",
     "derivation": {
       "duel_id": "sha256(spec_version|track|challenger.key|challenger.revision|king.key|king.revision)",
       "unit_seed": "int(sha256(duel_id|skill|index)[:8], 16)",
@@ -174,6 +244,7 @@
     "act_hard_timeout_s": 30.0,
     "max_model_errors_per_episode": 3,
     "unit_wall_seconds": 300,
+    "materialize_wall_seconds": 3600,
     "side_wall_seconds": 10800,
     "duel_wall_seconds": 28800,
     "model_load_seconds": 600
@@ -208,7 +279,7 @@
   "baseline": {
     "repo": "robotensor/bpp-genesis",
     "revision": "aa24179bcc6d18185b4b07c995bbd0d15ac10b8a",
-    "label": "BPP public checkpoints, converted (austinpatel/liberogen_spatial_combination, austinpatel/liberogen_goal_chain, austinpatel/drawanything_sim)",
+    "label": "BPP public checkpoints, converted (austinpatel/liberogen_spatial_combination, austinpatel/drawanything_sim)",
     "_comment": "The genesis king: one repo holding one converted public checkpoint per skill, one directory per skill."
   },
   "media": {
@@ -225,16 +296,19 @@
       "scope": "all"
     },
     "demo_video": true,
-    "_comment": "resolution and camera describe LIBERO clips; draw clips are the board render at skills.draw_anything.environment.render_resolution and draw demonstration clips are the 224 px observation frames."
+    "prompt": {
+      "format": "npz"
+    },
+    "_comment": "resolution and camera describe LIBERO clips; draw clips are the board render at skills.draw_anything.environment.render_resolution and draw demonstration clips are the 224 px observation frames. The generated prompt of every unit is published as an npz next to the clips, addressed by its sha256."
   },
   "store": {
-    "schema": 3,
+    "schema": 4,
     "index_lines_per_part": 1000,
     "media_bucket_hex": 2,
-    "_layout_comment": "manifest.json; tracks/{track}/{head.json,queue.json,index-NNNN.jsonl}; events/{track}/{event_id}.json; media/{sha[:2]}/{sha}.mp4. Index lines are '<canonical_json>\\t<ed25519_signature_hex>', append-only."
+    "_layout_comment": "manifest.json; tracks/{track}/{head.json,queue.json,index-NNNN.jsonl}; events/{track}/{event_id}.json; media/{sha[:2]}/{sha}.{mp4,npz}. Index lines are '<canonical_json>\\t<ed25519_signature_hex>', append-only."
   },
   "live": {
-    "schema": 3,
+    "schema": 4,
     "path": "/api/live",
     "media_flush_units": 4,
     "max_frame_bytes": 524288,
