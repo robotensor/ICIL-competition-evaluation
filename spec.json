@@ -137,11 +137,11 @@
   },
   "pools": {
     "repo": "robotensor/icil-competition-pools",
-    "version": "2026.09-v2",
-    "pool_id": "ae9645cdbc2ed24cdbea436d6677925070f0a4221c604a09e18c96dbd0dad83a",
+    "version": "2026.09-v3",
+    "pool_id": "73a98b0821be1fdbb5fb7b08219be6041c644ba35d634a7068688aaf501db843",
     "demos_per_task": 10,
     "init_states_per_task": 50,
-    "_comment": "pool_id is filled by `icilval pools build` (or `pools upgrade`) and must equal pool.json's id; the validator refuses to run on a mismatch. init_states_per_task also sizes the draw skill's table of (board angle, cursor start) instances. The pinned id is the v2 pool until the spec v3 pool is built and pinned at the end of the milestone."
+    "_comment": "pool_id is filled by `icilval pools build` and must equal pool.json's id; the validator refuses to run on a mismatch. demos_per_task is how many of a task's demonstrations the pool keeps; init_states_per_task also sizes the drawing skill's table of (board angle, cursor start) instances."
   },
   "duel": {
     "default_size": "heavy",
@@ -207,9 +207,9 @@
   },
   "baseline": {
     "repo": "robotensor/bpp-genesis",
-    "revision": "213d56f7f3fa6bc89032c44c602dedfe6822b854",
-    "label": "BPP public checkpoints (austinpatel/libero and austinpatel/drawanything_sim, converted)",
-    "_comment": "The genesis king: one repo holding both converted public checkpoints, one directory per skill."
+    "revision": "aa24179bcc6d18185b4b07c995bbd0d15ac10b8a",
+    "label": "BPP public checkpoints, converted (austinpatel/liberogen_spatial_combination, austinpatel/liberogen_goal_chain, austinpatel/drawanything_sim)",
+    "_comment": "The genesis king: one repo holding one converted public checkpoint per skill, one directory per skill."
   },
   "media": {
     "video": {

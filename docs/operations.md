@@ -3,7 +3,7 @@
 ```bash
 icilval keys generate --out keys                      # validator signing key (keep keys/ private)
 icilval store init store --key keys/validator.ed25519 --pool-id <pool_id>
-icilval daemon --store store --pool pools/2026.09-v2 --key keys/validator.ed25519 \
+icilval daemon --store store --pool pools/2026.09-v3 --key keys/validator.ed25519 \
   --queue queue/queue.json --runs runs --admin-token "$ICIL_ADMIN_TOKEN" \
   --live https://<dashboard> --live-token "$ICIL_LIVE_TOKEN" \
   --mirror <owner>/icil-competition-results --docker-image icilval/model:dev
@@ -20,9 +20,9 @@ MUJOCO_GL=egl SDL_VIDEODRIVER=dummy icilval smoke --store /tmp/store --pool pool
 icilval store verify /tmp/store
 ```
 
-Genesis: convert both public checkpoints (`convert-ckpt --arch-name bpp_libero_v1` and
-`--arch-name bpp_draw_v1`) into `<dir>/pick_and_place` and `<dir>/draw_anything`, publish the
-directory as `spec.baseline.repo`, pin the revision, then `icilval genesis --king <repo>@<revision> …`
+Genesis: convert one public checkpoint per skill (`convert-ckpt --arch-name <skills.<skill>.architecture>`)
+into `<dir>/<skill>`, publish the directory as `spec.baseline.repo`, pin the revision, then
+`icilval genesis --king <repo>@<revision> …`
 (or simply queue it on an empty throne).
 
 The drawing board runs pygame headless: `SDL_VIDEODRIVER=dummy` (the container sets it).
@@ -30,7 +30,7 @@ The drawing board runs pygame headless: `SDL_VIDEODRIVER=dummy` (the container s
 ## Publishing
 
 ```bash
-icilval pools push pools/2026.09-v2 --repo robotensor/icil-competition-pools   # then pin pools.pool_id
+icilval pools push pools/2026.09-v3 --repo robotensor/icil-competition-pools   # then pin pools.pool_id
 huggingface-cli upload robotensor/bpp-genesis models/genesis .                  # then pin baseline.revision
 icilval store mirror store --repo robotensor/icil-competition-results --message "publish"
 ```

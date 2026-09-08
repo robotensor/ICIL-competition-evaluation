@@ -22,8 +22,9 @@ pytest -m "not sim and not gpu and not container"                   # pure tests
 
 # simulator work happens in the BPP conda environment (see docs/pools.md)
 MUJOCO_GL=egl icilval pools build --out pools/<version> --version <version> --fetch --evict
-MUJOCO_GL=egl icilval convert-ckpt --ckpt libero_behavior_prompting.ckpt --arch-name bpp_libero_v1 --out models/genesis/pick_and_place --emit-arch arch
-icilval convert-ckpt --ckpt drawanything_sim_behavior_prompting.ckpt --arch-name bpp_draw_v1 --out models/genesis/draw_anything --emit-arch arch
+MUJOCO_GL=egl icilval convert-ckpt --ckpt liberogen_spatial_combination_behavior_prompting.ckpt --arch-name bpp_libero_v1 --out models/genesis/pick_and_place
+MUJOCO_GL=egl icilval convert-ckpt --ckpt liberogen_goal_chain_behavior_prompting.ckpt --arch-name bpp_libero_v1 --out models/genesis/goal_chain
+icilval convert-ckpt --ckpt drawanything_sim_behavior_prompting.ckpt --arch-name bpp_draw_v1 --out models/genesis/draw_anything
 MUJOCO_GL=egl SDL_VIDEODRIVER=dummy icilval smoke --store /tmp/store --pool pools/smoke --model-dir models/genesis --same-model
 icilval store verify /tmp/store
 ```

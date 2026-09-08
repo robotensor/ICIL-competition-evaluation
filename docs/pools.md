@@ -60,11 +60,31 @@ not a way to get the v3 task set:
 icilval pools upgrade --old pools/2026.09-v2 --out pools/<version>
 ```
 
+## Pool 2026.09-v3 (spec v3, schema 3)
+
+`pool_id` `73a98b0821be1fdbb5fb7b08219be6041c644ba35d634a7068688aaf501db843` - 2378 tasks, 23530
+demonstrations, the pinned pool. Built on 2026-09-08 with `--fetch --evict` (the LIBERO-Gen
+releases are ~310 GB of hdf5; the pool keeps `demos_per_task` demonstrations of each task).
+
+| skill | tasks | source |
+|---|---|---|
+| pick_and_place | 174 | LIBERO-Gen Combination, both views (10 `selected_view` + 164 `_inverse_view`) |
+| goal_chain | 154 | LIBERO-Gen Chain, both chain views (10 `selected_view` + 144 `_inverse_view`) |
+| draw_anything | 2050 | DrawAnything-Sim: 50 `eval_handmade` + 2000 `procedural_2000_10` |
+
+Every task is eligible: each has at least one initial state where its goal is not already
+satisfied, and 10 demonstrations. No LIBERO-Gen demonstration starts from an evaluation initial
+state (`demo_init_index` is `null` throughout), so the prompt is never the scored episode.
+
+Genesis for this pool: `robotensor/bpp-genesis@aa24179bcc6d18185b4b07c995bbd0d15ac10b8a`, one
+converted public checkpoint per skill. Both LIBERO-Gen checkpoints instantiate
+`arch/bpp_libero_v1` unchanged (967 tensors, 690,455,718 parameters each).
+
 ## Pool 2026.09-v2 (spec v2, schema 2)
 
 `pool_id` `ae9645cdbc2ed24cdbea436d6677925070f0a4221c604a09e18c96dbd0dad83a` - 98 tasks, 730
-demonstrations. Still the pinned pool until the spec v3 pool is built and pinned at the end of the
-milestone. Its pick-and-place tasks are the organizer selection spec v3 replaces.
+demonstrations. Superseded by `2026.09-v3`; its pick-and-place tasks are the organizer selection
+spec v3 replaces.
 
 | skill | tasks |
 |---|---|
