@@ -47,6 +47,12 @@
   policy's images with a seeded generator, `robot_pose` builds the scene with larger joint
   noise). `LiberoEnv` snapshots its lights and cameras and restores them on every reset; the
   side record carries `change_applied` (#18).
+- (feat): `simulators/draw/generate.py` generates a drawing target and its demonstration in
+  process from one seed: BPP's procedural parts ported (`bpp`), closed polygons (`polygon`) and
+  font-glyph skeleton strokes (`glyph`), BPP's actions conversion, board rotation and recording
+  on `DrawEnv`; one npz in the demo format with family, seed and character in `meta`. Drawing
+  units of generated tasks draw their change kind (`board_angle` or `pen_start`) from the menu.
+  The `sim` extra lists Pillow, scikit-image and matplotlib for the glyph family (#19).
 
 ### Pluggable simulators
 
