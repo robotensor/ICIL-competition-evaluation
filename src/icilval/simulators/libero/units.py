@@ -7,15 +7,18 @@ from ...pools.schema import PoolTask
 from ...pools.units import Unit, max_steps_of
 from ...rng import HashRng
 from ...spec import Spec
+from .changes import sample_change
 
 
 def libero_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng: HashRng):
-    """One of the task's `n_init` numbered resets; the prompt is generated for the unit later."""
+    """One of the task's `n_init` numbered resets and one change from the skill's menu; the
+    prompt is generated for the unit later."""
     valid = task.valid_instances
     if not valid:
         raise ValueError(f"{task.task_id} has no instances")
     instance = valid[rng.below(len(valid))]
     uid = unit_id(spec.skill_code(skill), index)
+    change = {"kind": "none"} if task.diagnostic else sample_change(spec, skill, task.steps, rng)
     return Unit(
         unit_id=uid,
         skill=skill,
@@ -31,5 +34,6 @@ def libero_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, r
         init=task.init,
         goal=task.goal,
         steps=task.steps,
+        change=change,
         diagnostic=task.diagnostic,
     )
