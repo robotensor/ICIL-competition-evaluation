@@ -20,9 +20,9 @@ to a Hugging Face dataset, and posts live frames to the dashboard. Follows the c
 
 - `spec.json` and `store-schema.json` are the contract. No number from them is duplicated as a literal; read through `icilval.spec`.
 - Submissions are `<skill>/model.safetensors` + `<skill>/config.yaml` per skill, nothing else. The validator never unpickles entrant data. Model-side runs happen in a container with `--network none`.
-- Skills are data: iterate `spec.skills`; never name a skill in code paths that should generalise (`side_runner` dispatches on `spec.simulator(skill)`).
+- Skills are data: iterate `spec.skills`; never name a skill or a simulator in generic code. Everything simulator-specific lives in `simulators/<sim>/` behind the `Simulator` record it registers in `icilval.simulators`; generic code (`side_runner`, `pools.units`, `pools.build`, `pools.demos`, `spec.validate_spec`) looks the simulator up by `skills.<skill>.simulator`. Adding a simulator is a new package plus one import in `simulators/__init__.py`.
 - Stored scores are fractions `[0, 1]`; `duel.score_margin` is percentage points; convert only in `icilval.duel.score`.
-- Simulator imports (`libero`, `robosuite`, `pygame`, `torch`, `behavior_prompting`) are function-local so the host CLI imports without them.
+- Simulator imports (`libero`, `robosuite`, `pygame`, `torch`, `behavior_prompting`) are function-local so the host CLI imports without them; a `simulators/<sim>/__init__.py` imports its own modules lazily for the same reason.
 - Pools are built offline (`icilval pools build` / `pools upgrade`); pickled `.pruned_init`/hdf5/zarr are read only at build time; runtime reads npz.
 - Everything published is deterministic from `spec.json` + `pool_id` + the two model refs: unit lists, seeds, ids.
 - BPP is vendored as a pinned git submodule at `vendor/behavior_prompting` (with `deps/LIBERO`); do not import its runner/workspace/dataset code, only the policy/model classes, the LIBERO env utilities and `DrawEnv`. Its generator scripts run as subprocesses at build time.

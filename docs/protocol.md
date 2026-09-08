@@ -66,7 +66,9 @@ model's in blue. See `store-schema.json`.
 
 ## Adding a skill
 
-A skill is an entry in `spec.json` `skills` (code, title, architecture, simulator, environment,
-success rule), an architecture template under `arch/`, a pool stage that imports
-its tasks, a simulator wrapper and episode loop under `sim/`, and a policy under `model/`. Adding
-one bumps `spec_version`, since it changes every duel id and every submission's layout.
+A skill is an entry in `spec.json` `skills` (code, title, architecture, simulator, `tasks`,
+environment, success rule) and an architecture template under `arch/`. If its simulator is
+already registered (`icilval.simulators`), that is all: the simulator's package supplies the
+pool stage, the unit instances, the episode loop and the policy. A new simulator is a new
+package under `simulators/` registering those six things, plus one import. Adding a skill bumps
+`spec_version`, since it changes every duel id and every submission's layout.

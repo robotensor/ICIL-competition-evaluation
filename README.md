@@ -33,12 +33,15 @@ icilval store verify /tmp/store
 
 ```
 src/icilval/
-  spec.py canon.py ids.py rng.py        contract, canonical JSON + ed25519, ids, hash RNG
-  model/   rotations prompt fingerprint convert bpp draw
-  sim/     bddl libero_env episode draw_env draw_episode video
-  pools/   schema sources validate build build_draw upgrade demos units hub
-  duel/    score side_runner orchestrate
-  store/   records writer verify mirror
+  spec.py canon.py ids.py rng.py video.py   contract, canonical JSON + ed25519, ids, hash RNG, clips
+  model/        policy (loading, tensors) prompt (chunking) fingerprint convert
+  simulators/   the registry; one package per simulator, each registering its policy, unit
+                runner, pool stage, unit instances, demo frames and spec checks:
+    libero/     env episode bddl policy prompt rotations demos pool validate units run
+    draw/       env episode policy prompt demos pool units run
+  pools/        schema sources build upgrade demos units hub
+  duel/         score side_runner orchestrate
+  store/        records writer verify mirror
   queue.py admin.py live.py daemon.py submission.py cli.py
 ```
 
