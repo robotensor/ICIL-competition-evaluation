@@ -33,18 +33,17 @@ def make_rt(spec, tmp_path):
     )
 
 
-def unit(skill, kind, i):
+def unit(skill, i):
     code = {"pick_and_place": "pp", "draw_anything": "da"}[skill]
     return unit_verdict_from_unit(
         {
             "unit_id": f"{code}-{i:03d}",
             "skill": skill,
-            "kind": kind,
             "index": i,
             "task": "t",
             "instance": i,
             "seed": i,
-            "perturbation": {"kind": "x"},
+            "instance_params": {},
             "demo": "t/demo_00",
         }
     )
@@ -54,7 +53,7 @@ def test_merge_and_media_flush(spec, tmp_path):
     rt = make_rt(spec, tmp_path)
     orch = Orchestrator(rt)
     state = {
-        "units": [unit("pick_and_place", "spatial", 0), unit("draw_anything", "rotation", 0)],
+        "units": [unit("pick_and_place", 0), unit("draw_anything", 0)],
         "media_done": {},
         "recent_media": None,
         "event_id": "e" * 64,

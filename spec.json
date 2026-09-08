@@ -185,13 +185,13 @@
     "_comment": "resolution and camera describe LIBERO clips; draw clips are the board render at skills.draw_anything.environment.render_resolution and draw demonstration clips are the 224 px observation frames."
   },
   "store": {
-    "schema": 2,
+    "schema": 3,
     "index_lines_per_part": 1000,
     "media_bucket_hex": 2,
     "_layout_comment": "manifest.json; tracks/{track}/{head.json,queue.json,index-NNNN.jsonl}; events/{track}/{event_id}.json; media/{sha[:2]}/{sha}.mp4. Index lines are '<canonical_json>\\t<ed25519_signature_hex>', append-only."
   },
   "live": {
-    "schema": 2,
+    "schema": 3,
     "path": "/api/live",
     "media_flush_units": 4,
     "max_frame_bytes": 524288,
