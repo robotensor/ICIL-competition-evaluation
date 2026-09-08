@@ -39,7 +39,7 @@ src/icilval/
                 runner, pool stage, unit instances, demo frames and spec checks:
     libero/     env episode bddl policy prompt rotations demos pool validate units run
     draw/       env episode policy prompt demos pool units run
-  pools/        schema sources build upgrade demos units hub
+  pools/        schema sources build demos units hub
   duel/         score side_runner orchestrate
   store/        records writer verify mirror
   queue.py admin.py live.py daemon.py submission.py cli.py

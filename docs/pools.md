@@ -52,14 +52,6 @@ Organizer-generated drawings, never published as training data: `icilval pools g
 --base-seed <secret>` runs BPP's `procedural_generate_drawings.py` and imports its drawings under
 `drawanything_generated/`.
 
-Upgrading a schema-2 pool (perturbation groups and variants) keeps every task and its files
-without re-simulating and drops the variants; it is a stop-gap for a pool built before spec v3,
-not a way to get the v3 task set:
-
-```bash
-icilval pools upgrade --old pools/2026.09-v2 --out pools/<version>
-```
-
 ## Pool 2026.09-v3 (spec v3, schema 3)
 
 `pool_id` `73a98b0821be1fdbb5fb7b08219be6041c644ba35d634a7068688aaf501db843` - 2378 tasks, 23530

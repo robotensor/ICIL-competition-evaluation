@@ -159,5 +159,5 @@ def test_instances_roundtrip(tmp_path):
 
 def test_old_pool_schema_is_refused(tmp_path):
     (tmp_path / "pool.json").write_text('{"schema": 2, "pool_version": "x", "spec_version": 2}')
-    with pytest.raises(ValueError, match="upgrade"):
+    with pytest.raises(ValueError, match="rebuild"):
         Pool.load(tmp_path)
