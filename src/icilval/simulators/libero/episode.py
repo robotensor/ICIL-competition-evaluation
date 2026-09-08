@@ -12,6 +12,7 @@ from typing import Any
 
 import numpy as np
 
+from ...rng import HashRng
 from ...spec import Spec
 from ...video import VideoWriter
 from ..result import EpisodeResult
@@ -20,6 +21,12 @@ from .env import LiberoEnv
 log = logging.getLogger(__name__)
 
 OPEN_GRIPPER = np.array([0, 0, 0, 0, 0, 0, -1], dtype=np.float64)
+
+
+def instance_seed(unit: dict[str, Any]) -> int:
+    """The reset seed of a unit's numbered instance: the scored scene is a pure function of the
+    task and the instance index, whatever duel the unit belongs to."""
+    return HashRng("libero-instance", unit["task"], unit["instance"]).below(1 << 31)
 
 
 def _progress(status: list[bool], initially: list[bool]) -> float | None:
@@ -59,8 +66,12 @@ def run_episode(
     executor = executor or concurrent.futures.ThreadPoolExecutor(max_workers=1)
     try:
         policy.seed(int(unit["seed"]))
-        obs = env.reset(int(unit["seed"]), init_state)
-        result.instance_applied = {"init_state_index": int(unit["instance"])}
+        if init_state is None:
+            obs = env.reset(instance_seed(unit), None)
+            result.instance_applied = {"reset_seed": instance_seed(unit)}
+        else:
+            obs = env.reset(int(unit["seed"]), init_state)
+            result.instance_applied = {"init_state_index": int(unit["instance"])}
         # prompt
         info = policy.set_prompt(demo)
         result.prompt_steps, result.prompt_chunks = info.steps, info.chunks

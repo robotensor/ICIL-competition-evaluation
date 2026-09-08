@@ -1,31 +1,29 @@
-"""Simulator-side validation used while building a pool. Runs in the BPP environment."""
+"""Simulator-side checks used while building a catalogue. Runs in the BPP environment."""
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
 
-import numpy as np
-
 from ...spec import Spec
-from . import bddl as B
-from .env import LiberoEnv, load_init_states, save_init_states
+from .env import LiberoEnv
 
 log = logging.getLogger(__name__)
 
+RESET_SEEDS = (0, 1, 2)
 
-def valid_instances(env: LiberoEnv, states: np.ndarray, seed: int = 7) -> list[int]:
-    """Initial states where the goal is not already satisfied."""
-    out = []
-    for i, s in enumerate(states):
+
+def goal_unsatisfied_at_reset(env: LiberoEnv, seeds: tuple[int, ...] = RESET_SEEDS) -> bool:
+    """A task can be scored from its own resets: the goal does not hold right after `reset`."""
+    for seed in seeds:
         try:
-            env.reset(seed, s)
+            env.reset(seed, None)
         except Exception as exc:  # noqa: BLE001
-            log.warning("instance %d: reset failed: %s", i, exc)
-            continue
-        if not env.success():
-            out.append(i)
-    return out
+            log.warning("reset %d failed: %s", seed, exc)
+            return False
+        if env.success():
+            return False
+    return True
 
 
 def build_task_env(bddl_path: Path, spec: Spec, skill: str) -> LiberoEnv | None:
@@ -36,14 +34,14 @@ def build_task_env(bddl_path: Path, spec: Spec, skill: str) -> LiberoEnv | None:
         return None
 
 
-def goal_from_bddl(path: Path) -> list[list[str]]:
-    return B.goal_predicates(B.load(path))
+def generates_from_reset(bddl_path: Path, spec: Spec, skill: str) -> bool:
+    env = build_task_env(bddl_path, spec, skill)
+    if env is None:
+        return False
+    try:
+        return goal_unsatisfied_at_reset(env)
+    finally:
+        env.close()
 
 
-__all__ = [
-    "valid_instances",
-    "build_task_env",
-    "goal_from_bddl",
-    "load_init_states",
-    "save_init_states",
-]
+__all__ = ["goal_unsatisfied_at_reset", "build_task_env", "generates_from_reset"]

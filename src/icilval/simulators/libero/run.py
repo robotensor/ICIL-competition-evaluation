@@ -45,9 +45,11 @@ def run_units(
                     env.close()
                 env = LiberoEnv(pool.path(unit["bddl"]), spec, skill=skill)
                 env_key = key
-            if unit["init"] not in init_cache:
-                init_cache[unit["init"]] = load_init_states(pool.path(unit["init"]))
-            init_state = init_cache[unit["init"]][int(unit["instance"])]
+            init_state = None
+            if unit.get("init"):
+                if unit["init"] not in init_cache:
+                    init_cache[unit["init"]] = load_init_states(pool.path(unit["init"]))
+                init_state = init_cache[unit["init"]][int(unit["instance"])]
             demo = load_demo(pool.path("demos") / f"{unit['demo']}.npz")
             clip = media_dir / f"{unit['unit_id']}.mp4"
             writer = VideoWriter(clip, fps, video_cfg) if record_video else None
