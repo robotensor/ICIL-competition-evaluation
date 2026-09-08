@@ -141,17 +141,10 @@ def cmd_units(args) -> int:
 def cmd_pools(args) -> int:
     import logging
 
-    from .pools.build import (
-        finalize,
-        open_pool,
-        stage_base,
-        stage_object,
-        summary,
-        verify_pool,
-    )
+    from .pools.build import finalize, open_pool, stage_pick_and_place, summary, verify_pool
     from .pools.build_draw import stage_draw
     from .pools.schema import Pool
-    from .pools.sources import DRAW_SOURCES, LIBERO_SOURCES, Sources
+    from .pools.sources import STAGE_SOURCES, Sources
     from .spec import _repo_root
 
     logging.basicConfig(
@@ -161,42 +154,27 @@ def cmd_pools(args) -> int:
 
     def sources() -> Sources:
         src = Sources.default(_repo_root() or Path.cwd())
-        if getattr(args, "libero_root", None):
-            src.libero_root = Path(args.libero_root)
         if getattr(args, "raw", None):
             raw = Path(args.raw)
-            src.libero_datasets = raw / "libero_datasets"
-            src.gen_goal_chain, src.gen_spatial_combination = (
-                raw / "libero_gen_goal_chain",
-                raw / "libero_gen_spatial_combination",
-            )
+            src.gen_goal_chain = raw / "libero_gen_goal_chain"
+            src.gen_spatial_combination = raw / "libero_gen_spatial_combination"
             src.drawanything = raw / "drawanything_sim"
         return src
 
     if args.pools_cmd == "build":
         out = Path(args.out)
         src = sources()
-        stages = args.stage or ["base", "object", "draw", "finalize"]
-        needed = tuple(
-            n
-            for n in LIBERO_SOURCES + DRAW_SOURCES
-            if (n in DRAW_SOURCES and "draw" in stages)
-            or (n in LIBERO_SOURCES and any(st in stages for st in ("base", "object")))
-        )
+        stages = args.stage or ["pick_and_place", "draw", "finalize"]
+        needed = tuple(dict.fromkeys(n for st in stages for n in STAGE_SOURCES.get(st, ())))
         missing = src.check(needed)
         if missing:
             print("missing sources:", *missing, sep="\n  ")
             return 1
         pool = open_pool(out, spec, args.version or str(spec.pools["version"]))
-        suites = tuple(args.suites) if args.suites else None
         kw = {"limit": args.limit, "validate": not args.no_validate}
         for stage in stages:
-            if stage == "base":
-                stage_base(
-                    pool, spec, src, **({"suites": suites} if suites else {}), limit=args.limit
-                )
-            elif stage == "object":
-                stage_object(pool, spec, src, **kw)
+            if stage == "pick_and_place":
+                stage_pick_and_place(pool, spec, src, **kw)
             elif stage == "draw":
                 stage_draw(pool, spec, src, limit=args.limit)
             elif stage == "finalize":
@@ -655,17 +633,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--stage",
         nargs="*",
         default=None,
-        help="base object draw finalize",
+        help="pick_and_place draw finalize",
     )
-    po_b.add_argument("--suites", nargs="*", default=None)
-    po_b.add_argument(
-        "--limit", type=int, default=None, help="tasks per suite/split (smoke builds)"
-    )
+    po_b.add_argument("--limit", type=int, default=None, help="tasks per view (smoke builds)")
     po_b.add_argument(
         "--no-validate", action="store_true", help="skip simulator validation (no instance lists)"
     )
     po_b.add_argument("--raw", default=None, help="raw cache dir (default ~/.cache/icilval/raw)")
-    po_b.add_argument("--libero-root", default=None)
     po_b.add_argument("--version", default=None)
     po_u = po_sub.add_parser(
         "upgrade", help="schema-2 pool (perturbation groups) -> schema-3 pool (tasks only)"

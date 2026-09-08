@@ -13,66 +13,44 @@ from ..sim.libero_env import save_init_states
 
 DEFAULT_CACHE = Path(os.environ.get("ICILVAL_CACHE", Path.home() / ".cache" / "icilval"))
 
-LIBERO_SUITES = ("libero_spatial", "libero_goal", "libero_object", "libero_10")
-SUITE_MAX_STEPS = {
-    "libero_spatial": 300,
-    "libero_goal": 400,
-    "libero_object": 300,
-    "libero_10": 550,
-}
-
-# libero_goal tasks that LIBERO-Gen's first-step view reproduces verbatim; not novel pairings.
-LIBERO_GOAL_ORIGINALS = {
-    "put_the_bowl_on_the_plate",
-    "put_the_bowl_on_the_stove",
-    "put_the_bowl_on_top_of_the_cabinet",
-    "put_the_cream_cheese_in_the_bowl",
-    "put_the_wine_bottle_on_the_rack",
-    "put_the_wine_bottle_on_top_of_the_cabinet",
-    "open_the_middle_drawer_of_the_cabinet",
-    "open_the_top_drawer_and_put_the_bowl_inside",
-    "push_the_plate_to_the_front_of_the_stove",
-    "turn_on_the_stove",
-}
-
 DRAW_HANDMADE = "eval_handmade.zarr"
 
-LIBERO_SOURCES = (
-    "libero_root",
-    "libero_datasets",
-    "gen_goal_chain",
-    "gen_spatial_combination",
-)
-DRAW_SOURCES = ("drawanything",)
+# the Hugging Face dataset each LIBERO-Gen raw directory mirrors (bddl_files/, init_files/,
+# demonstration_data/<view>/<task>_demo.hdf5)
+HUB_DATASETS = {
+    "gen_spatial_combination": "austinpatel/libero_gen_spatial_combination_hdf5",
+    "gen_goal_chain": "austinpatel/libero_gen_goal_chain_hdf5",
+}
+
+# which raw directories a build stage reads
+STAGE_SOURCES = {
+    "pick_and_place": ("gen_spatial_combination", "bpp_root"),
+    "draw": ("drawanything",),
+}
 
 
 @dataclass
 class Sources:
-    libero_root: Path  # .../deps/LIBERO/libero/libero  (bddl_files/, init_files/)
-    libero_datasets: Path  # raw/libero_datasets/<suite>/<task>_demo.hdf5
-    gen_goal_chain: Path  # raw/libero_gen_goal_chain
     gen_spatial_combination: Path  # raw/libero_gen_spatial_combination
+    gen_goal_chain: Path  # raw/libero_gen_goal_chain
     drawanything: Path  # raw/drawanything_sim (eval_handmade.zarr, unpacked)
     bpp_root: Path  # vendor/behavior_prompting
 
     @classmethod
     def default(cls, repo_root: Path, cache: Path = DEFAULT_CACHE) -> Sources:
         raw = cache / "raw"
-        bpp = repo_root / "vendor" / "behavior_prompting"
         return cls(
-            libero_root=bpp / "deps" / "LIBERO" / "libero" / "libero",
-            libero_datasets=raw / "libero_datasets",
-            gen_goal_chain=raw / "libero_gen_goal_chain",
             gen_spatial_combination=raw / "libero_gen_spatial_combination",
+            gen_goal_chain=raw / "libero_gen_goal_chain",
             drawanything=raw / "drawanything_sim",
-            bpp_root=bpp,
+            bpp_root=repo_root / "vendor" / "behavior_prompting",
         )
 
     @property
     def draw_handmade(self) -> Path:
         return self.drawanything / DRAW_HANDMADE
 
-    def check(self, names: tuple[str, ...] = LIBERO_SOURCES + DRAW_SOURCES) -> list[str]:
+    def check(self, names: tuple[str, ...]) -> list[str]:
         missing = []
         for name in names:
             p = getattr(self, name)
