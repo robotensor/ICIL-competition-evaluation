@@ -166,6 +166,8 @@ def cmd_pools(args) -> int:
         src = sources()
         stages = args.stage or ["pick_and_place", "draw", "finalize"]
         needed = tuple(dict.fromkeys(n for st in stages for n in STAGE_SOURCES.get(st, ())))
+        if args.fetch:
+            src.gen_spatial_combination.mkdir(parents=True, exist_ok=True)
         missing = src.check(needed)
         if missing:
             print("missing sources:", *missing, sep="\n  ")
@@ -174,7 +176,9 @@ def cmd_pools(args) -> int:
         kw = {"limit": args.limit, "validate": not args.no_validate}
         for stage in stages:
             if stage == "pick_and_place":
-                stage_pick_and_place(pool, spec, src, **kw)
+                stage_pick_and_place(
+                    pool, spec, src, fetch_missing=args.fetch, evict_demos=args.evict, **kw
+                )
             elif stage == "draw":
                 stage_draw(pool, spec, src, limit=args.limit)
             elif stage == "finalize":
@@ -640,6 +644,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-validate", action="store_true", help="skip simulator validation (no instance lists)"
     )
     po_b.add_argument("--raw", default=None, help="raw cache dir (default ~/.cache/icilval/raw)")
+    po_b.add_argument(
+        "--fetch", action="store_true", help="download missing LIBERO-Gen files from the hub"
+    )
+    po_b.add_argument(
+        "--evict",
+        action="store_true",
+        help="delete each demonstration hdf5 after its demos are imported (they total ~160 GB)",
+    )
     po_b.add_argument("--version", default=None)
     po_u = po_sub.add_parser(
         "upgrade", help="schema-2 pool (perturbation groups) -> schema-3 pool (tasks only)"

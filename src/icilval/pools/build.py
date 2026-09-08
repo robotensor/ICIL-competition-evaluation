@@ -20,7 +20,7 @@ from ..spec import Spec
 from . import validate as V
 from .demos import import_hdf5
 from .schema import POOL_SCHEMA, Pool, PoolTask
-from .sources import Sources, convert_init, copy_bddl
+from .sources import Sources, convert_init, copy_bddl, evict, fetch
 
 log = logging.getLogger(__name__)
 
@@ -103,10 +103,24 @@ def _gen_task(
     max_steps: int,
     meta: dict[str, Any],
     validate: bool,
+    *,
+    source_key: str | None = None,
+    evict_demos: bool = False,
 ) -> PoolTask | None:
-    bddl = split_root / "bddl_files" / split / f"{name}.bddl"
-    init = split_root / "init_files" / split / f"{name}.pruned_init"
-    h5 = split_root / "demonstration_data" / split / f"{name}_demo.hdf5"
+    """One LIBERO-Gen task from `split_root` (bddl_files/, init_files/, demonstration_data/).
+
+    With `source_key` the three files are fetched from the hub when missing; with
+    `evict_demos` the demonstration file is deleted once its demos are in the pool.
+    """
+    rels = (
+        f"bddl_files/{split}/{name}.bddl",
+        f"init_files/{split}/{name}.pruned_init",
+        f"demonstration_data/{split}/{name}_demo.hdf5",
+    )
+    if source_key is not None:
+        bddl, init, h5 = (fetch(split_root, source_key, r) for r in rels)
+    else:
+        bddl, init, h5 = (split_root / r for r in rels)
     if not (bddl.exists() and init.exists() and h5.exists()):
         log.warning("skip %s: missing bddl/init/demos", task_id)
         return None
@@ -115,6 +129,8 @@ def _gen_task(
     copy_bddl(bddl, pool.path(bddl_rel))
     n_init = convert_init(init, pool.path(init_rel))
     demos = _import_demos(h5, pool, task_id, int(spec.pools["demos_per_task"]))
+    if evict_demos:
+        evict(h5)
     task = _task_from_bddl(
         task_id,
         skill,
@@ -159,16 +175,35 @@ def stage_pick_and_place(
     skill: str = LIBERO_SKILL,
     limit: int | None = None,
     validate: bool = True,
+    fetch_missing: bool = False,
+    evict_demos: bool = False,
 ) -> None:
-    """Every LIBERO-Gen Combination task with demonstrations, from both of BPP's views."""
+    """Every LIBERO-Gen Combination task with demonstrations, from both of BPP's views.
+
+    The task list is the hub's `demonstration_data/<view>/` when fetching (only tasks that
+    have demonstrations), else the local `bddl_files/<view>/`.
+    """
     root = src.gen_spatial_combination
+    key = "gen_spatial_combination" if fetch_missing else None
     for view in COMBINATION_VIEWS:
-        names = sorted(p.stem for p in (root / "bddl_files" / view).glob("*.bddl"))[:limit]
+        if fetch_missing:
+            from .sources import hub_files
+
+            names = [
+                Path(f).name[: -len("_demo.hdf5")]
+                for f in hub_files(key or "", f"demonstration_data/{view}/")
+                if f.endswith("_demo.hdf5")
+            ][:limit]
+        else:
+            names = sorted(p.stem for p in (root / "bddl_files" / view).glob("*.bddl"))[:limit]
         for name in names:
             task_id = f"{COMBINATION_GROUP}/{name}"
             if task_id in pool.tasks:
                 continue
-            goal = V.goal_from_bddl(root / "bddl_files" / view / f"{name}.bddl")
+            bddl = root / "bddl_files" / view / f"{name}.bddl"
+            if key is not None:
+                bddl = fetch(root, key, f"bddl_files/{view}/{name}.bddl")
+            goal = V.goal_from_bddl(bddl)
             t = _gen_task(
                 pool,
                 spec,
@@ -181,6 +216,8 @@ def stage_pick_and_place(
                 spec.max_steps(skill),
                 {"swap": _swap_from_goal(goal), "source_split": view},
                 validate,
+                source_key=key,
+                evict_demos=evict_demos,
             )
             if t:
                 log.info("%s %s: %d inits, %d demos", skill, task_id, t.n_init, len(t.demos))

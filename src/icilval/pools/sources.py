@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 from dataclasses import dataclass
@@ -10,6 +11,8 @@ from pathlib import Path
 import numpy as np
 
 from ..sim.libero_env import save_init_states
+
+log = logging.getLogger(__name__)
 
 DEFAULT_CACHE = Path(os.environ.get("ICILVAL_CACHE", Path.home() / ".cache" / "icilval"))
 
@@ -57,6 +60,33 @@ class Sources:
             if not p.exists():
                 missing.append(f"{name}: {p}")
         return missing
+
+
+def hub_files(key: str, prefix: str) -> list[str]:
+    """Paths under `prefix` in the Hugging Face dataset mirrored by raw directory `key`."""
+    from huggingface_hub import HfApi
+
+    files = HfApi().list_repo_files(HUB_DATASETS[key], repo_type="dataset")
+    return sorted(f for f in files if f.startswith(prefix))
+
+
+def fetch(root: Path, key: str, rel: str) -> Path:
+    """`root/rel`, downloaded from the dataset mirrored at `root` if it is not there yet."""
+    path = root / rel
+    if path.exists():
+        return path
+    from huggingface_hub import hf_hub_download
+
+    log.info("fetch %s/%s", HUB_DATASETS[key], rel)
+    hf_hub_download(HUB_DATASETS[key], rel, repo_type="dataset", local_dir=str(root))
+    return path
+
+
+def evict(path: Path) -> None:
+    """Delete a fetched demonstration file once its demos are in the pool (they are 0.5-1.3 GB each)."""
+    if path.exists():
+        path.unlink()
+        log.info("evicted %s", path.name)
 
 
 def load_pruned_init(path: str | Path) -> np.ndarray:
