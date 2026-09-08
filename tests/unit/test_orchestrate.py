@@ -14,12 +14,12 @@ def make_rt(spec, tmp_path):
     store = Store(tmp_path / "store", spec, signer)
     store.init(signer.verify_key_hex, None)
     pool = Pool(
-        schema=3,
+        schema=4,
         pool_version="t",
-        spec_version=3,
+        spec_version=4,
         sources={},
         tasks={},
-        skills={s: {"eligible": []} for s in spec.skills},
+        skills={s: {"eligible": [], "diagnostic": []} for s in spec.skills},
         root=tmp_path,
     )
     return Runtime(

@@ -23,19 +23,28 @@ def draw_instance(task_id: str, instance: int, env: dict[str, Any]) -> dict[str,
 
 
 def draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng: HashRng):
-    """A board angle and pen start derived from the ids, and any of the task's demonstrations."""
+    """A board angle and pen start derived from the ids. A generated task's prompt is generated
+    for the unit later and carries the task's primitive family; a diagnostic task is prompted
+    with one of its stored demonstrations."""
     env = spec.env(skill)
     valid = task.valid_instances
     if not valid:
         raise ValueError(f"{task.task_id} has no instances")
-    if not task.demos:
-        raise ValueError(f"task {task.task_id} has no demonstrations")
     instance = valid[rng.below(len(valid))]
     state = draw_instance(task.task_id, instance, env)
-    demo = task.demos[rng.below(len(task.demos))]
-    demo_angle = float(task.meta.get("demo_angles", {}).get(demo, 0.0))
+    uid = unit_id(spec.skill_code(skill), index)
+    params: dict[str, Any] = {"angle_rad": state["angle_rad"], "cursor_px": state["cursor_px"]}
+    if task.diagnostic:
+        if not task.demos:
+            raise ValueError(f"task {task.task_id} has no demonstrations")
+        demo = task.demos[rng.below(len(task.demos))]
+        demo_angle = float(task.meta.get("demo_angles", {}).get(demo, 0.0))
+        params["demo_angle_rad"] = round(demo_angle, 6)
+    else:
+        demo = f"generated/{uid}"
+        params["family"] = str(task.meta.get("family", ""))
     return Unit(
-        unit_id=unit_id(spec.skill_code(skill), index),
+        unit_id=uid,
         skill=skill,
         index=index,
         task=task.task_id,
@@ -43,14 +52,11 @@ def draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng
         instance=instance,
         demo=demo,
         seed=seed,
-        instance_params={
-            "angle_rad": state["angle_rad"],
-            "cursor_px": state["cursor_px"],
-            "demo_angle_rad": round(demo_angle, 6),
-        },
+        instance_params=params,
         max_steps=max_steps_of(task, spec, skill),
         bddl=None,
         init=None,
         goal=[],
         steps=[],
+        diagnostic=task.diagnostic,
     )
