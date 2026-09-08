@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-SMOKE_POOL = Path(
+SMOKE_CATALOGUE = Path(
     os.environ.get("ICILVAL_SMOKE_POOL", Path.home() / ".cache" / "icilval" / "pools" / "smoke")
 )
 
@@ -36,8 +36,9 @@ def _sim_env():
 
 @pytest.fixture(scope="session")
 def smoke_pool():
-    if not (SMOKE_POOL / "pool.json").exists():
-        pytest.skip(f"no smoke pool at {SMOKE_POOL} (icilval pools build --limit 1 --out …)")
+    """A small catalogue: `icilval catalogue build --limit 1 --fetch --out <dir>`."""
+    if not (SMOKE_CATALOGUE / "catalogue.json").exists():
+        pytest.skip(f"no smoke catalogue at {SMOKE_CATALOGUE} (icilval catalogue build --limit 1)")
     from icilval.pools.schema import Pool
 
-    return Pool.load(SMOKE_POOL)
+    return Pool.load(SMOKE_CATALOGUE)

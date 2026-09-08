@@ -1,41 +1,47 @@
 import numpy as np
 import pytest
 
-from icilval.simulators.libero.env import LiberoEnv, load_init_states
+from icilval.simulators.libero.env import LiberoEnv
+from icilval.simulators.libero.episode import instance_seed
 from icilval.video import VideoWriter, is_faststart
 
 pytestmark = pytest.mark.sim
 
 
-def first_base_task(pool):
+def first_libero_task(pool):
     return next(t for _, t in sorted(pool.tasks.items()) if t.skill == "pick_and_place")
 
 
-def first_draw_task(pool):
-    return next(t for t in pool.tasks.values() if t.skill == "draw_anything")
+def first_diagnostic_draw_task(pool):
+    return next(
+        t
+        for _, t in sorted(pool.tasks.items())
+        if t.skill == "draw_anything" and t.diagnostic and t.demos
+    )
 
 
 def test_env_reset_observe_render_and_predicates(spec, smoke_pool):
-    task = first_base_task(smoke_pool)
+    task = first_libero_task(smoke_pool)
     env = LiberoEnv(smoke_pool.path(task.bddl), spec, skill="pick_and_place")
-    states = load_init_states(smoke_pool.path(task.init))
-    obs = env.reset(7, states[0])
+    seed = instance_seed({"task": task.task_id, "instance": 0})
+    obs = env.reset(seed, None)
     assert obs["agentview"].shape == (128, 128, 3) and obs["agentview"].dtype == np.uint8
     assert obs["ee_quat"].shape == (4,) and obs["gripper"].shape == (2,)
     assert env.success() is False and env.goal_status() == [False] * len(task.goal)
     frame = env.render()
     assert frame.shape == (spec.media["video"]["resolution"], spec.media["video"]["resolution"], 3)
-    # restoring the same state twice gives the same observation
-    again = env.reset(7, states[0])
+    # the numbered reset is the same scene every time, and another instance is another scene
+    again = env.reset(seed, None)
     assert np.array_equal(again["agentview"], obs["agentview"])
+    other = env.reset(instance_seed({"task": task.task_id, "instance": 1}), None)
+    assert not np.array_equal(other["agentview"], obs["agentview"])
     env.close()
 
 
 def test_video_writer_faststart(spec, smoke_pool, tmp_path):
-    task = first_base_task(smoke_pool)
+    task = first_libero_task(smoke_pool)
     env = LiberoEnv(smoke_pool.path(task.bddl), spec, skill="pick_and_place")
-    states = load_init_states(smoke_pool.path(task.init))
-    env.reset(7, states[0])
+    env.reset(7, None)
     out = tmp_path / "clip.mp4"
     with VideoWriter(out, int(spec.media["video"]["fps"]), spec.media["video"]) as w:
         for _ in range(10):
@@ -45,22 +51,12 @@ def test_video_writer_faststart(spec, smoke_pool, tmp_path):
     env.close()
 
 
-def test_replay_demo_actions_succeed(spec, smoke_pool):
-    """Executing a demonstration's own actions from its own initial state reproduces success."""
-    task = first_base_task(smoke_pool)
-    from icilval.pools.demos import load_demo
-
-    demo = load_demo(smoke_pool.path("demos") / f"{task.demos[0]}.npz")
-    env = LiberoEnv(smoke_pool.path(task.bddl), spec, skill="pick_and_place")
-    env.reset(7, demo["init_state"])
-    ok = False
-    for a in demo["actions"]:
-        env.step(a)
-        if env.success():
-            ok = True
-            break
-    env.close()
-    assert ok
+def test_libero_tasks_carry_definitions_not_demonstrations(smoke_pool):
+    task = first_libero_task(smoke_pool)
+    assert task.bddl and task.init is None and task.demos == []
+    assert task.steps and task.steps[0][0] in ("Grasp", "Open", "Turnon", "Push")
+    assert task.meta["base_split"] == "libero_spatial"
+    assert ("grasps_from" in task.meta) or ("actions_from" in task.meta)
 
 
 # ---------------------------------------------------------------- the drawing board
@@ -69,7 +65,7 @@ def test_draw_board_replays_demo_to_zero_chamfer(spec, smoke_pool):
     from icilval.pools.demos import load_demo
     from icilval.simulators.draw.env import DrawBoard
 
-    task = first_draw_task(smoke_pool)
+    task = first_diagnostic_draw_task(smoke_pool)
     demo = load_demo(smoke_pool.path("demos") / f"{task.demos[0]}.npz")
     board = DrawBoard(spec, "draw_anything")
     angle = float(demo["boundary_angle"])
@@ -96,7 +92,8 @@ def test_draw_board_replays_demo_to_zero_chamfer(spec, smoke_pool):
 
 
 def test_draw_episode_with_replaying_policy(spec, smoke_pool, tmp_path):
-    """The episode loop scores a policy that replays the demonstration rotated into the unit's board."""
+    """The episode loop scores a policy that replays a diagnostic unit's stored demonstration
+    rotated into the unit's board."""
     from icilval.ids import ModelRef, duel_id
     from icilval.model.prompt import PromptInfo
     from icilval.pools.demos import load_demo
@@ -106,7 +103,9 @@ def test_draw_episode_with_replaying_policy(spec, smoke_pool, tmp_path):
 
     did = duel_id(spec.version, spec.track_id, ModelRef.make("a/b", "1" * 40), None)
     unit = next(
-        u for u in derive_units(smoke_pool, spec, did, "smoke") if u.skill == "draw_anything"
+        u
+        for u in derive_units(smoke_pool, spec, did, "smoke")
+        if u.skill == "draw_anything" and u.diagnostic
     ).as_dict()
     demo = load_demo(smoke_pool.path("demos") / f"{unit['demo']}.npz")
     theta = float(unit["instance_params"]["angle_rad"]) - float(demo["boundary_angle"])

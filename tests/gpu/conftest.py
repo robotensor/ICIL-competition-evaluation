@@ -34,8 +34,8 @@ def smoke_pool_or_skip():
     root = Path(
         os.environ.get("ICILVAL_SMOKE_POOL", Path.home() / ".cache" / "icilval" / "pools" / "smoke")
     )
-    if not (root / "pool.json").exists():
-        pytest.skip(f"no pool at {root}")
+    if not (root / "catalogue.json").exists():
+        pytest.skip(f"no catalogue at {root}")
     from icilval.pools.schema import Pool
 
     return Pool.load(root)
