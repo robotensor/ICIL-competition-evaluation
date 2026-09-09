@@ -49,6 +49,24 @@ units are published and never scored.
 
 A task is eligible when a prompt can be generated for it; diagnostic tasks are listed apart.
 
+## Catalogue 2026.09-v4 (spec v4, schema 4)
+
+`pool_id` `9cad7d49496441eedbfed8baa176de889438d9f6875842dec7ba2f97969c30b4` - 227 tasks, the pinned
+catalogue, published as `pools/2026.09-v4` of `robotensor/icil-competition-pools`. Built on
+2026-09-08 with `--fetch` (about 10 minutes; nothing but the BDDL files was downloaded).
+
+| skill | tasks | source |
+|---|---|---|
+| pick_and_place | 174 | LIBERO-Gen Combination, both views (10 `selected_view` + 164 `_inverse_view`); every scene validated by reset |
+| draw_anything | 3 generated families (`bpp`, `polygon`, `glyph`) + 50 `handmade_drawings` diagnostic tasks (250 stored demonstrations) | DrawAnything-Sim |
+
+Grasp sources: the ten `libero_spatial/*_demo.hdf5` files of `yifengzhu-hf/LIBERO-datasets`,
+recorded by sha256. The catalogue is 445 MB.
+
+Genesis for this catalogue: `robotensor/bpp-genesis@e680d99fc79ac5d54d33e696a635514c4abfc8cf`,
+one converted public checkpoint per skill (`pick_and_place`: 690,455,718 parameters,
+`draw_anything`: 344,772,217).
+
 ## Earlier pools
 
 Spec v1-v3 drew units from stored demonstrations; the pools below are kept for the record.
