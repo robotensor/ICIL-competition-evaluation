@@ -91,23 +91,56 @@ spec v3 replaces.
 | pick_and_place | 27 base (libero_spatial 10, libero_object 10, libero_goal 6, libero_10 1) + 21 object-swap (LIBERO-Gen) |
 | draw_anything | 50 human drawings (eval_handmade) |
 
+## Baseline on pool 2026.09-v3
+
+`scripts/baseline.py` ran the pinned genesis over every eligible task of each skill: two initial
+states per task on the LIBERO skills, one each on 300 of the 2050 drawings (spread evenly over the
+list). Nothing was void.
+
+| skill | success rate | episodes | tasks |
+|---|---|---|---|
+| pick_and_place | 0.876 | 348 | 174 |
+| goal_chain | 0.860 | 308 | 154 |
+| draw_anything | 0.900 | 300 | 300 of 2050 |
+| **average over skills** | **0.879** | | |
+
+Per source view, which is what the pool does not distinguish and a duel therefore does not either:
+
+| skill | view BPP trained on | view BPP held out |
+|---|---|---|
+| pick_and_place | 0.875 (328 episodes) | 0.900 (20) |
+| goal_chain | 0.861 (288) | 0.850 (20) |
+| draw_anything | 0.911 procedural (292) | 0.500 handmade (8) |
+
+On both LIBERO skills the held-out view is within noise of the trained one, so importing both
+views costs nothing in difficulty and buys an order of magnitude more tasks. The drawing skill is
+the exception: the baseline is much stronger on the procedural drawings it was trained on than on
+the human-drawn ones, and since the pool is 97.6% procedural the skill's rate is essentially the
+procedural rate. The handmade figure rests on 8 episodes, so treat it as a direction, not a
+number.
+
 ## Calibrating the drawing threshold
 
-`skills.draw_anything.success.threshold` was chosen by running the converted BPP drawing
-checkpoint over 80 units derived from pool 2026.09-v2 (eight `heavy` draws' worth of drawing
-units; the per-unit best Chamfer distances are the `*_metric` values a duel publishes). The
-distribution of the best Chamfer distance, in canvas pixels on a 12 px pen:
+`skills.draw_anything.success.threshold` is 4 px - a third of the 12 px pen, so a success is a
+faithful reproduction rather than a rough one. It was chosen on pool `2026.09-v2`, whose drawing
+tasks were the 50 human-drawn ones. Re-measured on `2026.09-v3` over the 300 sweep units, the
+best Chamfer distance per unit is distributed:
 
 | percentile | 10 | 25 | 50 | 75 | 90 |
 |---|---|---|---|---|---|
-| best Chamfer (px) | 0.96 | 1.39 | 2.46 | 3.83 | 7.21 |
+| best Chamfer (px), v3 | 0.72 | 0.97 | 1.60 | 2.23 | 3.88 |
+| best Chamfer (px), v2 (handmade only) | 0.96 | 1.39 | 2.46 | 3.83 | 7.21 |
 
 | threshold (px) | 2.5 | 3 | 3.5 | 4 | 5 | 6 | 12 |
 |---|---|---|---|---|---|---|---|
-| genesis success | 0.51 | 0.61 | 0.69 | 0.79 | 0.83 | 0.86 | 0.93 |
+| genesis success, v3 | 0.777 | 0.840 | 0.883 | 0.900 | 0.930 | 0.957 | 0.973 |
+| genesis success, v2 | 0.51 | 0.61 | 0.69 | 0.79 | 0.83 | 0.86 | 0.93 |
 
-The threshold is 4 px - a third of the pen width, so a success is a faithful reproduction rather
-than a rough one - where the baseline misses the long multi-part drawings (`long5_robot`,
-`long3_horizon`, `f2`, `custom6`) and little else. Every episode finished within 400 steps; none
-was void. Those units were drawn with a 15° minimum angle delta that spec v3 no longer imposes;
-the calibration is re-checked when the v3 pool is built.
+The distribution moved left: procedural drawings are shorter and simpler than the human-drawn
+ones, so the same threshold now passes 0.900 rather than 0.79. The threshold stays at 4 px, which
+keeps the meaning of a success unchanged - what moved is the pool, not the rule. The eight units
+the baseline misses among the handmade drawings are the long multi-part ones (`custom1`,
+`custom7_birds`, `long5_robot`, `star`), the same failure mode as on v2.
+
+Worth knowing when reading a duel: the drawing skill now has less headroom above the baseline
+than the two LIBERO skills.
