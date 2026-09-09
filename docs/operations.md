@@ -47,3 +47,16 @@ the side's run directory bind-mounted. Docker cannot bind-mount from FUSE filesy
 home such as gocryptfs fails with "change mount propagation … no such file or directory"), so on such
 hosts keep `--runs`, `--pool`, `--arch` and any `--local-model` directories on a regular filesystem,
 for example under `/var/lib/icilval`. The store and queue can live anywhere.
+
+## Prompt generation
+
+A duel generates every unit's prompt before either side runs (`materializing`): worker processes
+(`--workers`, default `generation.workers`) run the simulators' generators under the validator's
+LIBERO config, reading the grasp-source files from the raw cache (`--raw`, default
+`~/.cache/icilval/raw`; `icilval catalogue build --fetch` records their hashes, the first duel
+fetches them) and the vendored BPP checkout (`--bpp-root`, default `vendor/behavior_prompting`).
+Prompts land in `<runs>/<event>/assets/<unit_id>.npz`; in-process sides read them there, container
+sides get the directory mounted read-only at `/assets` (`run-side --assets`). Every prompt is
+published by hash (`media/<sha[:2]>/<sha>.npz`) and `store verify` checks it is there. A duel
+whose materializing exceeds `budgets.materialize_wall_seconds` fails; a unit whose prompt could
+not be generated after `generation.max_attempts` and three substitutions runs void.
