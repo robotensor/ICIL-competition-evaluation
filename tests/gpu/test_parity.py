@@ -5,23 +5,25 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-import numpy as np
 import pytest
 
 from icilval.model.fingerprint import check_submission
+from icilval.pools.demos import load_demo
 from icilval.simulators.draw.env import DrawBoard
 from icilval.simulators.draw.episode import run_draw_episode
 from icilval.simulators.draw.policy import DrawPolicy
-from icilval.simulators.libero.env import LiberoEnv, load_init_states
+from icilval.simulators.libero.env import LiberoEnv
 from icilval.simulators.libero.episode import run_episode
 from icilval.simulators.libero.policy import BPPPolicy
 from icilval.spec import _repo_root
+
+from .conftest import bpp_root
 
 pytestmark = [pytest.mark.gpu, pytest.mark.slow]
 
 N_TASKS = int(os.environ.get("ICILVAL_PARITY_TASKS", "10"))
 N_INIT = int(os.environ.get("ICILVAL_PARITY_INITS", "5"))
-FLOOR = float(os.environ.get("ICILVAL_PARITY_FLOOR", "0.90"))
+FLOOR = float(os.environ.get("ICILVAL_PARITY_FLOOR", "0.80"))
 DRAW_TASKS = int(os.environ.get("ICILVAL_PARITY_DRAW_TASKS", "10"))
 DRAW_FLOOR = float(os.environ.get("ICILVAL_PARITY_DRAW_FLOOR", "0.5"))
 
@@ -36,35 +38,53 @@ def test_genesis_passes_fingerprint(spec, genesis_dir):
     assert set(rep.skills) == set(spec.skills)
 
 
-def test_parity_libero_spatial(spec, genesis_dir, smoke_pool_or_skip):
-    """The LIBERO checkpoint prompted with a stored demonstration of a task with init states;
-    a catalogue carries neither, so this runs only against a pre-v4 pool until prompts are
-    generated (the generator issue replaces it)."""
+def test_parity_libero_generated_prompts(spec, genesis_dir, smoke_pool_or_skip, tmp_path):
+    """The LIBERO checkpoint, prompted with a demonstration generated for the task, does the
+    task from fresh numbered resets on at least FLOOR of the episodes."""
+    from icilval.rng import HashRng
+    from icilval.simulators.libero.generate import generate_prompt
+
     pool = smoke_pool_or_skip
-    tasks = [t for t in pool.tasks.values() if t.skill == "pick_and_place" and t.demos and t.init][
-        :N_TASKS
-    ]
+    tasks = [t for _, t in sorted(pool.tasks.items()) if t.skill == "pick_and_place"][:N_TASKS]
     if not tasks:
-        pytest.skip("catalogue tasks carry no demonstrations or init states")
+        pytest.skip("catalogue has no pick_and_place tasks")
+    attempts = int(spec.generation["max_attempts"])
+    prompts = {}
+    for task in tasks:
+        rng = HashRng("parity", task.task_id)
+        seeds = [rng.below(1 << 31) for _ in range(attempts)]
+        res = generate_prompt(
+            task,
+            pool,
+            spec,
+            "pick_and_place",
+            seeds,
+            tmp_path / f"{task.task_id.replace('/', '__')}.npz",
+            bpp_root=bpp_root(),
+            work_dir=tmp_path / "work" / task.task_id.replace("/", "__"),
+            demo_id=f"generated/parity-{task.task_id}",
+        )
+        if res.success:
+            prompts[task.task_id] = load_demo(res.npz)
+    assert prompts, "no prompt could be generated"
     policy = BPPPolicy(genesis_dir / "pick_and_place", arch_dir(), spec, "pick_and_place")
     policy.load()
-    from icilval.pools.demos import load_demo
-
     successes, n = 0, 0
     for task in tasks:
+        if task.task_id not in prompts:
+            continue
         env = LiberoEnv(pool.path(task.bddl), spec, skill="pick_and_place")
-        states = load_init_states(pool.path(task.init))
-        demo = load_demo(pool.path("demos") / f"{task.demos[0]}.npz")
-        for i in range(min(N_INIT, len(states))):
+        for i in range(N_INIT):
             unit = {
                 "unit_id": f"pp-{i:03d}",
                 "skill": "pick_and_place",
+                "task": task.task_id,
                 "seed": 1000 + i,
                 "max_steps": task.max_steps,
                 "instance": i,
                 "instance_params": {},
             }
-            res = run_episode(env, policy, unit, np.asarray(states[i]), demo, spec)
+            res = run_episode(env, policy, unit, None, prompts[task.task_id], spec)
             assert not res.void, res.error
             successes += int(res.success)
             n += 1

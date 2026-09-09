@@ -25,11 +25,31 @@ def _has_sim() -> bool:
     return True
 
 
+def bpp_root() -> Path:
+    from icilval.spec import _repo_root
+
+    return (_repo_root() or Path.cwd()) / "vendor" / "behavior_prompting"
+
+
+def grasp_sources_root() -> Path:
+    """Where the generator reads the human teleoperation files: the raw cache's copy of the
+    grasp-source dataset (`raw/LIBERO-datasets/libero_spatial/*.hdf5`)."""
+    from icilval.pools.sources import Sources
+    from icilval.spec import _repo_root, load_spec
+
+    spec = load_spec()
+    dataset = str(spec.tasks("pick_and_place")["grasp_sources"]["dataset"])
+    return Sources.default(_repo_root() or Path.cwd()).dataset_root(dataset)
+
+
 @pytest.fixture(scope="session", autouse=True)
-def _sim_env():
+def _sim_env(tmp_path_factory):
+    # the validator's LIBERO config must be in place before libero is first imported
+    from icilval.simulators.libero.generate import libero_config
+
+    libero_config(tmp_path_factory.mktemp("libero-config"), bpp_root(), grasp_sources_root())
     if not _has_sim():
         pytest.skip("simulators not importable (run in the BPP conda env)")
-    os.environ.setdefault("MUJOCO_GL", "egl")
     os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
     os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 

@@ -49,6 +49,24 @@ units are published and never scored.
 
 A task is eligible when a prompt can be generated for it; diagnostic tasks are listed apart.
 
+## Generating a LIBERO prompt
+
+`simulators/libero/generate.py` drives BPP's own generator (`TaskDemonstrationGenerator` in the
+vendored `scripts/libero/generate_demonstrations.py`) for one prompt at a time: seeded attempts
+until one succeeds - BPP resets the scene with the seed, lifts the grasp from the human
+demonstration the task's metadata names, scripts the transport and the place with randomized
+waypoints and records the states - then BPP's `create_dataset` renders both cameras and the
+result is one npz in the demo format, with the seed, the attempt count and the BPP commit in its
+`meta`. Measured on this host: ~10 s per attempt, +7-9 s to render, ~15 s to build the scene and
+read the grasp poses, 50-100 % success per attempt depending on the task.
+
+The generator runs headless (`PYNPUT_BACKEND=dummy`) under a **validator-owned LIBERO config**
+(`libero_config`, `LIBERO_CONFIG_PATH`): `datasets` points at the raw cache's copy of the
+grasp-source files (`raw/LIBERO-datasets/libero_spatial/*.hdf5`, fetched by the catalogue's
+hashes with `ensure_grasp_sources`), every other path at the vendored checkout; `~/.libero` is
+never read. LIBERO reads the config when it is imported, so a process that generates calls
+`libero_config()` first - the simulator test sessions do. The task's vendored BDDL, next to
+which BPP reads its metadata, must equal the catalogue's byte for byte.
 ## Catalogue 2026.09-v4 (spec v4, schema 4)
 
 `pool_id` `9cad7d49496441eedbfed8baa176de889438d9f6875842dec7ba2f97969c30b4` - 227 tasks, the pinned
