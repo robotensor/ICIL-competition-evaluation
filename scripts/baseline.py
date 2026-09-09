@@ -83,7 +83,7 @@ def force_kind(units: list[dict], pool: Pool, spec, skill: str, kind: str) -> li
     out = []
     for u in units:
         u = dict(u)
-        if not u.get("diagnostic") and u.get("change", {}).get("kind") != kind:
+        if u.get("change", {}).get("kind") != kind:
             if kind == "none":
                 u["change"] = {"kind": "none"}
             elif spec.simulator(skill) == "libero":

@@ -18,7 +18,7 @@ def libero_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, r
         raise ValueError(f"{task.task_id} has no instances")
     instance = valid[rng.below(len(valid))]
     uid = unit_id(spec.skill_code(skill), index)
-    change = {"kind": "none"} if task.diagnostic else sample_change(spec, skill, task.steps, rng)
+    change = sample_change(spec, skill, task.steps, rng)
     return Unit(
         unit_id=uid,
         skill=skill,
@@ -35,5 +35,4 @@ def libero_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, r
         goal=task.goal,
         steps=task.steps,
         change=change,
-        diagnostic=task.diagnostic,
     )

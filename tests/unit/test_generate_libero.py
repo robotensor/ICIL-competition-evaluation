@@ -61,7 +61,6 @@ def make_pool(root: Path):
         bddl="bddl/g/t.bddl",
         language="l",
         n_init=5,
-        demos=[],
         max_steps=300,
         meta={"source_split": "view_a"},
     )
@@ -80,7 +79,7 @@ def make_pool(root: Path):
             }
         },
         tasks={"g/t": task},
-        skills={"pick_and_place": {"eligible": ["g/t"], "diagnostic": []}},
+        skills={"pick_and_place": {"eligible": ["g/t"]}},
         root=root,
     )
     return pool, task

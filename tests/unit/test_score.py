@@ -1,7 +1,6 @@
 from icilval.duel.score import (
     SCORE_EPSILON,
     crown_moves,
-    diagnostic_rates,
     lookup,
     paired_outcome,
     skill_scores,
@@ -104,15 +103,11 @@ def test_verdict_edge_cases():
     )
 
 
-def test_diagnostic_units_never_score_but_are_reported():
+def test_every_unit_of_a_skill_scores():
+    """Nothing is excluded any more: a skill's rate is over all of its units that ran."""
     units = [unit("draw_anything", True, False, i=0), unit("draw_anything", False, False, i=1)]
-    units[1]["diagnostic"] = True
-    units[1]["task"] = "drawanything_handmade/draw_x"
-    assert skill_scores(units, "king", SKILLS)["draw_anything"] == 1.0
+    assert skill_scores(units, "king", SKILLS)["draw_anything"] == 0.5
     assert skill_scores(units, "challenger", SKILLS)["draw_anything"] == 0.0
-    diag = {"handmade_drawings": {"skill": "draw_anything", "group": "drawanything_handmade"}}
-    assert diagnostic_rates(units, "king", diag) == {"handmade_drawings": 0.0}
-    assert diagnostic_rates(units[:1], "king", diag) == {"handmade_drawings": None}
     assert verdict(units, 3.0, SKILLS).tally.units == 2
 
 
@@ -135,6 +130,6 @@ def test_sub_scores_group_by_dotted_key():
     assert lookup(pp[0], "change.kind") == "camera" and lookup(pp[0], "change.pos.x") is None
     pp[2].pop("change")
     assert "none" in sub_scores(pp, "king", keys)["pick_and_place"]
-    pp[0]["diagnostic"] = True
-    assert "camera" in sub_scores(pp, "king", keys)["pick_and_place"]  # pp[1] still counts
-    assert sub_scores(pp[:1], "king", keys)["pick_and_place"] == {}
+    pp[1]["void"] = True
+    assert "camera" in sub_scores(pp, "king", keys)["pick_and_place"]  # pp[0] still counts
+    assert sub_scores([pp[1]], "king", keys)["pick_and_place"] == {}

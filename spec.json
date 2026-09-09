@@ -117,12 +117,8 @@
       "simulator": "draw",
       "max_steps": 400,
       "tasks": {
-        "dataset": "austinpatel/drawanything_sim",
-        "files": {
-          "drawanything_handmade": "eval_handmade.zarr"
-        },
         "kind": "drawing",
-        "_comment": "The human-drawn evaluation set (50 drawings, 5 demonstrations each) is the unscored diagnostic named in `diagnostics`; every scored drawing task is generated."
+        "_comment": "Every drawing task is generated: the catalogue holds one task per primitive family in `generation.families`, so the skill names no dataset."
       },
       "environment": {
         "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
@@ -192,15 +188,6 @@
       }
     }
   },
-  "diagnostics": {
-    "handmade_drawings": {
-      "skill": "draw_anything",
-      "group": "drawanything_handmade",
-      "units_per_duel": 6,
-      "demos_per_task": 5,
-      "_comment": "BPP's 50 human drawings, prompted with a stored human demonstration and scored with the skill's rule. Their rate is published on every record and never enters a score; the units carry diagnostic=true."
-    }
-  },
   "generation": {
     "max_attempts": 8,
     "workers": 4,
@@ -209,10 +196,10 @@
   },
   "catalogue": {
     "repo": "robotensor/icil-competition-pools",
-    "version": "2026.09-v4",
-    "pool_id": "9cad7d49496441eedbfed8baa176de889438d9f6875842dec7ba2f97969c30b4",
+    "version": "2026.09-v5",
+    "pool_id": "6f7fdf8afe09f6257463fc9a51319dba3d1e0b227b82a924364450f1a285e720",
     "init_states_per_task": 50,
-    "_comment": "The catalogue holds task definitions, not demonstrations: BDDLs, BPP's task metadata, the grasp-source hashes, the diagnostic drawings and the generator version. pool_id is filled by `icilval catalogue build` and must equal catalogue.json's id; the validator refuses a catalogue that does not match. init_states_per_task sizes the diagnostic drawing tasks' table of (board angle, cursor start) instances."
+    "_comment": "The catalogue holds task definitions and no demonstrations at all: BDDLs, BPP's task metadata, the grasp-source hashes and the generator version. pool_id is filled by `icilval catalogue build` and must equal catalogue.json's id; the validator refuses a catalogue that does not match. init_states_per_task sizes a task's table of initial states."
   },
   "duel": {
     "default_size": "heavy",

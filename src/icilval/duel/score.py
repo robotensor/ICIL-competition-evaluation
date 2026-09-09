@@ -32,7 +32,7 @@ def skill_rate(units: Iterable[dict[str, Any]], side: str, skill: str) -> float 
     scored = 0
     successes = 0
     for u in units:
-        if u.get("skill") != skill or u.get("void") or u.get("diagnostic"):
+        if u.get("skill") != skill or u.get("void"):
             continue
         s = side_success(u, side)
         if s is None:
@@ -62,7 +62,7 @@ def sub_scores(
     for skill, key in keys.items():
         groups: dict[str, list[int]] = {}
         for u in units:
-            if u.get("skill") != skill or u.get("void") or u.get("diagnostic"):
+            if u.get("skill") != skill or u.get("void"):
                 continue
             s = side_success(u, side)
             if s is None:
@@ -70,27 +70,6 @@ def sub_scores(
             value = lookup(u, key)
             groups.setdefault("none" if value is None else str(value), []).append(int(s))
         out[skill] = {g: sum(v) / len(v) for g, v in sorted(groups.items())}
-    return out
-
-
-def diagnostic_rates(
-    units: Iterable[dict[str, Any]], side: str, diagnostics: dict[str, dict[str, Any]]
-) -> dict[str, float | None]:
-    """The success rate of each unscored diagnostic's units (`Spec.diagnostics`), found by the
-    task group the diagnostic names."""
-    units = list(units)
-    out: dict[str, float | None] = {}
-    for name, diag in diagnostics.items():
-        prefix = f"{diag['group']}/"
-        scored = [
-            side_success(u, side)
-            for u in units
-            if u.get("diagnostic")
-            and str(u.get("task", "")).startswith(prefix)
-            and not u.get("void")
-            and side_success(u, side) is not None
-        ]
-        out[name] = sum(int(bool(s)) for s in scored) / len(scored) if scored else None
     return out
 
 

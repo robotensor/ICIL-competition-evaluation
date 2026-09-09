@@ -378,9 +378,6 @@ class Orchestrator:
             keys = {s: spec.sub_score_key(s) for s in spec.skills}
             ran = [s for s in score.SIDES if s in dirs]
             sub_scores = {s: score.sub_scores(state["units"], s, keys) for s in ran}
-            diagnostics = {
-                s: score.diagnostic_rates(state["units"], s, spec.diagnostics) for s in ran
-            }
             # ---- publishing
             self._post(
                 state, force=True, phase="publishing", side=None, message="publishing the record"
@@ -405,7 +402,6 @@ class Orchestrator:
                 duel_id=did,
                 pool_id=self.rt.pool.pool_id,
                 sub_scores=sub_scores,
-                diagnostics=diagnostics,
             )
             event = duel_event(
                 record,
@@ -445,8 +441,7 @@ class Orchestrator:
         self, state: dict[str, Any], did: str, assets_dir: Path, run_dir: Path
     ) -> tuple[list[dict[str, Any]], MaterializeReport]:
         spec = self.spec
-        needed = [u for u in state["unit_defs"] if not u.get("diagnostic")]
-        if not needed:
+        if not state["unit_defs"]:
             return state["unit_defs"], MaterializeReport()
         if self.rt.generation is None:
             raise DuelFailed(

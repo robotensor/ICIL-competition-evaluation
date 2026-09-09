@@ -15,7 +15,8 @@ def test_spec_loads_and_fingerprints(spec):
     assert (
         spec.simulator("pick_and_place") == "libero" and spec.simulator("draw_anything") == "draw"
     )
-    assert spec.tasks("pick_and_place")["views"] and spec.tasks("draw_anything")["files"]
+    assert spec.tasks("pick_and_place")["views"]
+    assert spec.tasks("draw_anything")["kind"] == "drawing"
     assert spec.tasks("pick_and_place")["grasp_sources"]["dataset"]
     assert "perturbations" not in spec.skill("pick_and_place")
     lo, hi = spec.env("draw_anything")["board_angle_range_rad"]
@@ -30,7 +31,7 @@ def test_spec_loads_and_fingerprints(spec):
     assert spec.env("draw_anything")["prompt_actions_per_chunk"] == 10
 
 
-def test_spec_v4_generation_changes_and_diagnostics(spec):
+def test_spec_v4_generation_and_changes(spec):
     assert set(spec.changes("pick_and_place")) == {
         "displace",
         "camera",
@@ -48,9 +49,8 @@ def test_spec_v4_generation_changes_and_diagnostics(spec):
     assert spec.generation["max_attempts"] >= 1 and spec.generation["workers"] >= 1
     assert spec.catalogue["repo"] and spec.catalogue["version"]
     assert not hasattr(spec, "pools")
-    diag = spec.diagnostics["handmade_drawings"]
-    assert diag["skill"] in spec.skills and diag["units_per_duel"] >= 0
-    assert not any(k.startswith("_") for k in spec.diagnostics)
+    assert not hasattr(spec, "diagnostics") and "diagnostics" not in spec.raw
+    assert "dataset" not in spec.tasks("draw_anything")  # every drawing task is generated
 
 
 def test_validate_rejects_bad_specs(spec, tmp_path):
@@ -91,8 +91,8 @@ def test_validate_rejects_bad_specs(spec, tmp_path):
     doc["pools"] = doc["catalogue"]
     assert any("pools renamed" in e for e in validate_spec(doc))
     doc = json.loads(json.dumps(spec.raw))
-    doc["diagnostics"]["handmade_drawings"]["skill"] = "goal_chain"
-    assert any("diagnostics.handmade_drawings.skill" in e for e in validate_spec(doc))
+    doc["diagnostics"] = {"handmade_drawings": {"skill": "draw_anything"}}
+    assert any("diagnostics removed" in e for e in validate_spec(doc))
     doc = json.loads(json.dumps(spec.raw))
     doc["duel"]["default_size"] = "gigantic"
     p = tmp_path / "spec.json"

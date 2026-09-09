@@ -71,9 +71,6 @@ def test_materialize_generates_substitutes_and_finalizes(spec, tmp_path, monkeyp
     assert len(out) == len(units) and [u["unit_id"] for u in out] == [u["unit_id"] for u in units]
     min_delta = spec.changes(DA)["board_angle"]["min_delta_rad"]
     for u in out:
-        if u.get("diagnostic"):
-            assert u["prompt_sha256"] is None and "generation" not in u
-            continue
         assert u["prompt_sha256"] and (tmp_path / "assets" / f"{u['unit_id']}.npz").exists()
         assert u["prompt_sha256"] == sha256_file(tmp_path / "assets" / f"{u['unit_id']}.npz")
         assert u["generation"]["attempts"] >= 1 and u["demo"] == f"generated/{u['unit_id']}"
@@ -94,9 +91,7 @@ def test_materialize_generates_substitutes_and_finalizes(spec, tmp_path, monkeyp
         assert first[1] in fail and second[1] == u["task"] and first[2] != second[2]
     summary = report.summary()
     assert summary[PP]["substituted"] == len(subs) and summary[PP]["failed"] == 0
-    assert summary[DA]["generated"] == len(
-        [u for u in out if u["skill"] == DA and not u.get("diagnostic")]
-    )
+    assert summary[DA]["generated"] == len([u for u in out if u["skill"] == DA])
     assert any(" -> " in n for n in report.notes()) and any(
         "materializing took" in n for n in report.notes()
     )
@@ -116,7 +111,7 @@ def test_materialize_gives_up_after_the_substitutions(spec, tmp_path, monkeypatc
     assert pp and all(u["prompt_sha256"] is None and u["generation"]["failed"] for u in pp)
     assert all(not (tmp_path / "assets" / f"{u['unit_id']}.npz").exists() for u in pp)
     assert report.summary()[PP]["failed"] == len(pp)
-    assert all(u["prompt_sha256"] for u in out if u["skill"] == DA and not u.get("diagnostic"))
+    assert all(u["prompt_sha256"] for u in out if u["skill"] == DA)
     assert any("no prompt" in n for n in report.notes())
 
 

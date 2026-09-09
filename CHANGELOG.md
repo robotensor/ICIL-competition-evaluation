@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### The handmade diagnostic is removed
+
+- (feat): the unscored `handmade_drawings` diagnostic goes, with the whole notion of a diagnostic
+  unit. It was an organizer's instrument published on the duel page and counted by nothing: it
+  cost duel time and clips, it read as part of the scoreboard, and at small duel sizes it drew a
+  single unit whose rate could only be 0 or 1. `spec.json` loses its `diagnostics` block and the
+  drawing skill's dataset pointer, a unit loses `diagnostic`, a record loses `diagnostics`, and
+  scoring drops the exclusion that went with them. A skill whose tasks are all generated names no
+  dataset, and its catalogue stage downloads nothing (#35).
+- (feat): a catalogue holds no stored demonstrations at all: BPP's 50 human drawings are no
+  longer imported, so `PoolTask.demos`, `demo_init_index` and `diagnostic` go with the per-skill
+  `diagnostic` task list, and every prompt a unit reads is the one generated for it. Catalogue
+  `2026.09-v5` is 1.2 MB against the 445 MB of `2026.09-v4`, and pinned in place of it (#35).
+- (chore): the store is rebuilt on the new catalogue and mirrored with `--prune`; the dashboard
+  drops the "Diagnostics · published, never scored" panel and the docs that described it (#35).
+
 ### Spec v4: generated prompts and one change per unit (store schema 4, live schema 4)
 
 - published: catalogue `2026.09-v4` (`9cad7d49…`, 227 tasks, 445 MB) as `pools/2026.09-v4` of

@@ -81,7 +81,7 @@ it was first derived for as `substituted_from`; the unit count per skill is alwa
 
 ## Scoring
 
-Per skill, `success rate = successes / scored units` (void and diagnostic units excluded). The
+Per skill, `success rate = successes / scored units` (void units excluded). The
 **final score** is the mean of the skill rates. Scores are stored as fractions in `[0, 1]`.
 
 Published beside the scores, never part of them:
@@ -89,10 +89,6 @@ Published beside the scores, never part of them:
 - **Sub-scores** (`sub_scores`): per side and skill, the success rate per value of
   `skills.<skill>.sub_scores.by` - the change kind on `pick_and_place`, the primitive family on
   `draw_anything`.
-- **Diagnostics** (`diagnostics`): per side, the success rate of each unscored diagnostic in
-  `spec.json` `diagnostics`. `handmade_drawings` runs `units_per_duel` units over BPP's 50
-  human-drawn targets, prompted with a stored human demonstration and scored with the skill's
-  rule; those units carry `diagnostic: true`.
 
 ## Crown rule
 
@@ -115,7 +111,7 @@ hardware.
 
 ## What is published
 
-For every duel: the signed index record (with `sub_scores` and `diagnostics`), the full event
+For every duel: the signed index record (with `sub_scores`), the full event
 (every unit with both outcomes, its change, its instance parameters, its prompt's hash and length
 and, on the drawing skill, both sides' Chamfer distances) and, per unit, the prompt npz and three
 clips: the prompt demonstration, the reigning model's rollout and the challenger's rollout.
