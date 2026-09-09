@@ -15,6 +15,7 @@ from icilval.simulators.libero.generate import (
     grasp_sources,
     libero_config,
     libero_config_doc,
+    own_grasp_sources,
     task_name,
     vendored_bddl,
 )
@@ -113,3 +114,22 @@ def test_generation_result_as_dict():
     d = r.as_dict()
     assert d["attempts"][0]["failed_stage"] == "Grasp x" and d["attempts"][1]["success"]
     assert r.n_attempts == 2 and d["sha256"] is None and d["steps"] == 0
+
+
+def test_an_existing_task_lifts_its_grasps_from_its_own_file():
+    meta = {
+        "execution_steps": ["Grasp akita_black_bowl_1", "Place akita_black_bowl_1 plate_1"],
+        "is_existing_task": True,
+    }
+    assert own_grasp_sources(meta, "pick_up_the_bowl") == {
+        "akita_black_bowl_1": {"task": "pick_up_the_bowl", "object": "akita_black_bowl_1"}
+    }
+
+
+def test_a_task_with_its_own_source_is_left_alone():
+    steps = ["Grasp akita_black_bowl_1", "Place akita_black_bowl_1 plate_1"]
+    with_grasps = {"execution_steps": steps, "grasps_from": {"akita_black_bowl_1": {}}}
+    with_actions = {"execution_steps": steps, "actions_from": "other_task"}
+    assert own_grasp_sources(with_grasps, "t") is None
+    assert own_grasp_sources(with_actions, "t") is None
+    assert own_grasp_sources({"execution_steps": ["Place a b"]}, "t") is None
