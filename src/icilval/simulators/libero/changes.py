@@ -33,6 +33,12 @@ class Infeasible(Exception):
 
 
 # ---------------------------------------------------------------- sampling (pure)
+def _draw(rng: HashRng, lo: float, hi: float) -> float:
+    """A uniform draw in [lo, hi], rounded for publication and clamped so rounding never lands
+    outside the published range."""
+    return min(max(round(rng.uniform(lo, hi), 4), lo), hi)
+
+
 def target_object(steps: list[list[str]]) -> str | None:
     """The object the task grasps: the first Grasp step's object."""
     for step in steps:
@@ -65,7 +71,7 @@ def sample_change(
                         round(dist * math.cos(angle), 4),
                         round(dist * math.sin(angle), 4),
                     ],
-                    "yaw": round(rng.uniform(-yaw_max, yaw_max), 4) if yaw_max else 0.0,
+                    "yaw": _draw(rng, -yaw_max, yaw_max) if yaw_max else 0.0,
                 }
             )
         return {
@@ -81,8 +87,8 @@ def sample_change(
         return {
             "kind": kind,
             "camera": str(spec.media["video"]["camera"]),
-            "pos_delta": [round(rng.uniform(-pos, pos), 4) for _ in range(3)],
-            "angles": [round(rng.uniform(-ang, ang), 4) for _ in range(3)],
+            "pos_delta": [_draw(rng, -pos, pos) for _ in range(3)],
+            "angles": [_draw(rng, -ang, ang) for _ in range(3)],
         }
     if kind == "lighting":
         lo_d, hi_d = (float(x) for x in cfg["diffuse_scale"])
@@ -94,14 +100,15 @@ def sample_change(
             lights.append(
                 {
                     "active": not rng.chance(float(cfg["light_drop_prob"])),
-                    "diffuse_scale": round(rng.uniform(lo_d, hi_d), 4),
-                    "ambient_add": round(rng.uniform(lo_a, hi_a), 4),
-                    "specular_scale": round(rng.uniform(lo_s, hi_s), 4),
+                    "diffuse_scale": _draw(rng, lo_d, hi_d),
+                    "ambient_add": _draw(rng, lo_a, hi_a),
+                    "specular_scale": _draw(rng, lo_s, hi_s),
                     "pos_jitter": [
-                        round(rng.uniform(-1, 1) * float(cfg["pos_jitter_m"]), 4) for _ in range(3)
+                        _draw(rng, -float(cfg["pos_jitter_m"]), float(cfg["pos_jitter_m"]))
+                        for _ in range(3)
                     ],
                     "dir_jitter": [
-                        round(rng.uniform(-1, 1) * float(cfg["dir_jitter_rad"]), 4)
+                        _draw(rng, -float(cfg["dir_jitter_rad"]), float(cfg["dir_jitter_rad"]))
                         for _ in range(3)
                     ],
                 }
@@ -111,15 +118,15 @@ def sample_change(
         return {
             "kind": kind,
             "lights": lights,
-            "headlight_scale": round(rng.uniform(lo_h, hi_h), 4),
+            "headlight_scale": _draw(rng, lo_h, hi_h),
         }
     if kind == "observation":
         lo_b, hi_b = (float(x) for x in cfg["brightness_scale"])
         lo_n, hi_n = (float(x) for x in cfg["noise_sigma"])
         return {
             "kind": kind,
-            "brightness_scale": round(rng.uniform(lo_b, hi_b), 4),
-            "noise_sigma": round(rng.uniform(lo_n, hi_n), 4),
+            "brightness_scale": _draw(rng, lo_b, hi_b),
+            "noise_sigma": _draw(rng, lo_n, hi_n),
             "noise_seed": rng.below(1 << 31),
         }
     if kind == "robot_pose":

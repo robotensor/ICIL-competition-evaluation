@@ -64,6 +64,18 @@
   prompt is published by hash and `store verify` checks it; the event notes carry the generation
   summary. The runtime gains the generation context (`--bpp-root`, `--raw`) and `--workers` (#20).
 
+- (feat): the LIBERO change ranges are calibrated on the genesis (`scripts/baseline.py --change`,
+  `--family`, `--materialize-only`; per change kind and per drawing family in the report). At
+  the provisional ranges the genesis scored 0.48-0.73 per change kind over 40 tasks; every range
+  was roughly halved and re-measured over 24 tasks: `displace`, `camera`, `lighting` and
+  `observation` 0.67, `robot_pose` 0.58 (skill mean 0.65) - the same as a reference sweep with no
+  change at all, so the distance from the v3 baseline is the generated prompt; drawing families
+  over 60 units each: `bpp` 0.73, `polygon` 0.82, `glyph` 0.25 (skill mean 0.60). A drawn
+  parameter is clamped to its range after rounding. The `displace` applier
+  refuses a candidate only when it closes in on another object within `clearance_m`, and keeps
+  the table bound only for a bowl that started on the table (13 of 40 units were void before).
+  Generating one prompt per task over the whole catalogue found the ten tasks of #31. See
+  `docs/pools.md` (#21).
 - (fix): the ten `pick_and_place` tasks LIBERO itself ships carry no grasp source in BPP's
   metadata and never generated a prompt (8 failed attempts, then a substitution, every time);
   the generator now lifts their grasps from the task's own teleoperation file, one of the

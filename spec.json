@@ -54,34 +54,34 @@
       },
       "changes": {
         "displace": {
-          "radius_m": 0.05,
-          "min_delta_m": 0.03,
-          "yaw_max_rad": 0.7853981633974483,
+          "radius_m": 0.03,
+          "min_delta_m": 0.015,
+          "yaw_max_rad": 0.39269908169872414,
           "clearance_m": 0.08,
           "_comment": "The target bowl moves by at least min_delta_m within radius_m of where it started, turned by up to yaw_max_rad, staying at least clearance_m from every other object and on the table; the goal must still be unsatisfied afterwards. A unit carries several candidate moves and applies the first the scene accepts."
         },
         "camera": {
-          "pos_jitter_m": 0.05,
-          "angle_jitter_rad": 0.08726646259971647,
+          "pos_jitter_m": 0.02,
+          "angle_jitter_rad": 0.03490658503988659,
           "_comment": "The agentview camera moves within pos_jitter_m and turns within angle_jitter_rad about each axis; the wrist camera is untouched."
         },
         "lighting": {
           "diffuse_scale": [
-            0.6,
-            1.3
+            0.8,
+            1.2
           ],
           "ambient_add": [
             0.0,
-            0.2
+            0.1
           ],
           "specular_scale": [
-            0.5,
-            1.3
+            0.8,
+            1.2
           ],
-          "pos_jitter_m": 0.5,
-          "dir_jitter_rad": 0.25,
+          "pos_jitter_m": 0.25,
+          "dir_jitter_rad": 0.1,
           "headlight_scale": [
-            0.7,
+            0.85,
             1.1
           ],
           "light_drop_prob": 0.0,
@@ -89,20 +89,20 @@
         },
         "observation": {
           "brightness_scale": [
-            0.8,
-            1.2
+            0.9,
+            1.1
           ],
           "noise_sigma": [
             0.0,
-            8.0
+            4.0
           ],
           "_comment": "Applied to the images the policy sees only, on both cameras; clips keep the rendered frame."
         },
         "robot_pose": {
-          "init_noise_magnitude": 0.05,
+          "init_noise_magnitude": 0.035,
           "_comment": "robosuite initialization_noise magnitude (rad) on the arm joints; LIBERO's default is 0.02."
         },
-        "_comment": "Exactly one entry per unit, uniform over the entries; the entry and what it applied are published as the unit's change. Ranges are public and calibrated so the genesis checkpoint scores about 0.8 on the skill (docs/pools.md)."
+        "_comment": "Exactly one entry per unit, uniform over the entries; the entry and what it applied are published as the unit's change. Ranges are public; they were set from the genesis calibration sweeps in docs/pools.md."
       },
       "sub_scores": {
         "by": "change.kind",
