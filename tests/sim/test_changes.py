@@ -47,6 +47,16 @@ def test_changes_apply_and_reset_restores(spec, smoke_pool):
     assert not np.array_equal(moved["agentview"], obs0["agentview"])
     with pytest.raises(Infeasible):
         apply_change(env, {**change, "candidates": [{"delta_xy": [0.9, 0.9], "yaw": 0.0}]})
+    # every sampled draw of the catalogue's tasks has a feasible candidate
+    for t in [x for _, x in sorted(smoke_pool.tasks.items()) if x.skill == "pick_and_place"]:
+        e = LiberoEnv(smoke_pool.path(t.bddl), spec, skill="pick_and_place")
+        for i in range(3):
+            e.reset(instance_seed({"task": t.task_id, "instance": i}), None)
+            draw = sample_change(
+                spec, "pick_and_place", t.steps, HashRng("feasible", t.task_id, i), kind="displace"
+            )
+            assert apply_change(e, draw)["kind"] == "displace"
+        e.close()
 
     # camera: the agentview camera moves; reset puts it back
     env.reset(seed, None)

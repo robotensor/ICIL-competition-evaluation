@@ -4,9 +4,9 @@ recorded exactly as applied.
 
 Sampling lives here so that unit derivation stays a pure function of the catalogue and the duel
 id; applying lives here so that every mutation of the MuJoCo model has one owner. A `displace`
-draw carries several candidate moves; the first one the scene accepts (object stays on the
-table, clear of the other objects, goal still unsatisfied) is the one applied, and its index is
-recorded. `LiberoEnv.reset` restores the model's lights and cameras before each unit, so a
+draw carries several candidate moves; the first one the scene accepts (an object that started on
+the table stays on it, the object does not close in on another one to within the clearance, the
+goal is still unsatisfied) is the one applied, and its index is recorded. `LiberoEnv.reset` restores the model's lights and cameras before each unit, so a
 change never leaks into the next one.
 """
 
@@ -22,7 +22,7 @@ from ...spec import Spec
 from .env import LiberoEnv
 from .rotations import quat_multiply_wxyz, yaw_quaternion_wxyz
 
-DISPLACE_CANDIDATES = 8
+DISPLACE_CANDIDATES = 16
 SETTLE_STEPS = 20
 MAX_DROP_M = 0.05
 N_LIGHTS = 4
@@ -170,16 +170,33 @@ def displace(env: LiberoEnv, change: dict[str, Any]) -> dict[str, Any]:
     bounds = _table_bounds(env)
     clearance = float(change.get("clearance_m", 0.0))
     min_delta = float(change.get("min_delta_m", 0.0))
+    start = env.object_position(name).copy()
+    # an object that starts on a fixture (the cabinet top, the stove) is not bound to the table
+    on_table = bounds is not None and bool(
+        np.all(start[:2] >= bounds[0]) and np.all(start[:2] <= bounds[1])
+    )
     reasons = []
     for index, cand in enumerate(change["candidates"]):
         env.set_sim_state(state)
         before = env.object_position(name).copy()
         target = before[:2] + np.asarray(cand["delta_xy"], dtype=np.float64)
-        if bounds is not None and (np.any(target < bounds[0]) or np.any(target > bounds[1])):
+        if (
+            on_table
+            and bounds is not None
+            and (np.any(target < bounds[0]) or np.any(target > bounds[1]))
+        ):
             reasons.append(f"{index}: off the table")
             continue
-        if any(np.linalg.norm(target - xy) < clearance for xy in others.values()):
-            reasons.append(f"{index}: within {clearance} m of another object")
+        # it may not close in on another object to within the clearance; an object it already
+        # sat closer to than that (a cluttered scene) is fine as long as it does not get nearer
+        crowding = [
+            o
+            for o, xy in others.items()
+            if np.linalg.norm(target - xy) < clearance
+            and np.linalg.norm(target - xy) < np.linalg.norm(before[:2] - xy)
+        ]
+        if crowding:
+            reasons.append(f"{index}: closes in on {', '.join(crowding)}")
             continue
         joint = env.object_joint(name)
         qpos = np.array(env.sim.data.get_joint_qpos(joint), dtype=np.float64).reshape(-1)
