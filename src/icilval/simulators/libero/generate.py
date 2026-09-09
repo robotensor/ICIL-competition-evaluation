@@ -144,6 +144,21 @@ def task_name(task: PoolTask) -> str:
     return task.task_id.split("/", 1)[1]
 
 
+def own_grasp_sources(meta: dict[str, Any], name: str) -> dict[str, Any] | None:
+    """BPP's metadata names no grasp source for a task LIBERO itself ships (BPP prompted those
+    with their human demonstrations), and the generator refuses every grasp step that has none.
+    Such a task lifts its grasps from its own teleoperation file, which is one of the
+    catalogue's grasp sources; a task with a source of its own is left alone."""
+    if meta.get("grasps_from") or meta.get("actions_from"):
+        return None
+    objects = [
+        s.split(" ", 1)[1] for s in meta.get("execution_steps", []) if s.startswith("Grasp ")
+    ]
+    if not objects:
+        return None
+    return {obj: {"task": name, "object": obj} for obj in objects}
+
+
 def vendored_bddl(task: PoolTask, pool: Pool, bpp_root: Path) -> Path:
     """The task's BDDL in the vendored checkout's layout, which BPP's generator reads its metadata
     next to; it must be the catalogue's file byte for byte."""
@@ -176,14 +191,30 @@ class PromptGenerator:
         self.log_path = self.work_dir / "generator.log"
         bddl = vendored_bddl(task, pool, bpp_root)
         gd = bpp_generator_module(bpp_root)
-        with self._quiet(quiet):
-            self.gen = gd.TaskDemonstrationGenerator(
-                str(bddl),
-                resolution=int(spec.env(skill)["camera_resolution"]),
-                suppress_print=quiet,
-                run_dir=str(self.work_dir),
-                bddl_path=str(bpp_root / BDDL_FILES_REL),
-            )
+        name = task_name(task)
+        load_metadata = gd.load_metadata_for_task
+        self.own_grasps = False
+
+        def load_with_own_grasps(bddl_file_path, **kwargs):
+            meta = load_metadata(bddl_file_path, **kwargs)
+            own = own_grasp_sources(meta, name)
+            if own:
+                meta["grasps_from"] = own
+                self.own_grasps = True
+            return meta
+
+        gd.load_metadata_for_task = load_with_own_grasps
+        try:
+            with self._quiet(quiet):
+                self.gen = gd.TaskDemonstrationGenerator(
+                    str(bddl),
+                    resolution=int(spec.env(skill)["camera_resolution"]),
+                    suppress_print=quiet,
+                    run_dir=str(self.work_dir),
+                    bddl_path=str(bpp_root / BDDL_FILES_REL),
+                )
+        finally:
+            gd.load_metadata_for_task = load_metadata
         self.quiet = quiet
         self._stage: str | None = None
         original = self.gen.complete_stage
@@ -225,6 +256,8 @@ class PromptGenerator:
             arrays = {k: z[k] for k in z.files if k != "meta"}
             meta = json.loads(str(z["meta"]))
         meta.update({"demo_id": demo_id, "source": "generated", **extra_meta})
+        if self.own_grasps:
+            meta["grasps_from"] = "own"
         np.savez_compressed(out_npz, meta=json.dumps(meta), **arrays)
         return out_npz, int(meta["steps"])
 

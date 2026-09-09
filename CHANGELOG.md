@@ -64,6 +64,11 @@
   prompt is published by hash and `store verify` checks it; the event notes carry the generation
   summary. The runtime gains the generation context (`--bpp-root`, `--raw`) and `--workers` (#20).
 
+- (fix): the ten `pick_and_place` tasks LIBERO itself ships carry no grasp source in BPP's
+  metadata and never generated a prompt (8 failed attempts, then a substitution, every time);
+  the generator now lifts their grasps from the task's own teleoperation file, one of the
+  catalogue's grasp sources, and the prompt's `meta` says `grasps_from: "own"` (#31).
+
 ### Pluggable simulators
 
 - (refactor): `icilval.simulators` is a registry of `Simulator` records (policy factory, unit
