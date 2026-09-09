@@ -1,6 +1,11 @@
 """A duel from queue entry to published record.
 
-fetching -> checking -> evaluating(challenger) -> evaluating(king) -> publishing -> done|failed
+fetching -> checking -> materializing -> evaluating(challenger) -> evaluating(king) -> publishing
+-> done|failed
+
+Materializing generates every unit's prompt into `<run>/assets` (see `duel.materialize`); both
+sides read their prompts from there, in-process or mounted read-only into the container, and
+every prompt is published by hash next to the clips.
 
 Each side runs either in-process (this interpreter has the simulators) or in an isolated
 container with no network. A side runs every skill's units with that skill's checkpoint from
@@ -25,14 +30,22 @@ from ..canon import Signer
 from ..ids import ModelRef, duel_id, event_id
 from ..live import LiveReporter, build_frame
 from ..model.fingerprint import check_submission
-from ..pools.demos import render_demo
+from ..pools.demos import prompt_path, render_demo
 from ..pools.schema import Pool
 from ..pools.units import derive_units
 from ..spec import Spec
-from ..store.records import duel_event, index_record, media_shas, now_iso, unit_verdict_from_unit
+from ..store.records import (
+    duel_event,
+    index_record,
+    media_shas,
+    now_iso,
+    prompt_shas,
+    unit_verdict_from_unit,
+)
 from ..store.writer import Store
 from ..submission import fetch_model
 from . import score
+from .materialize import GenerationContext, MaterializeReport, materialize
 from .side_runner import read_results, run_side
 
 log = logging.getLogger(__name__)
@@ -66,6 +79,8 @@ class Runtime:
     run_root: Path
     live: LiveReporter
     mirror: Any | None = None  # object with .push(files: list[str]) -> None
+    generation: GenerationContext | None = None  # what prompt generation needs; None: cannot
+    workers: int = 1  # generation worker processes
 
 
 class Orchestrator:
@@ -192,6 +207,7 @@ class Orchestrator:
             device=req.device,
             on_unit=on_unit,
             record_video=req.record_video,
+            assets_dir=state.get("assets_dir"),
         )
 
     def _run_side_docker(
@@ -222,6 +238,8 @@ class Orchestrator:
             f"{self.rt.arch_dir.resolve()}:/arch:ro",
             "-v",
             f"{side_dir.resolve()}:/work:rw",
+            "-v",
+            f"{Path(state['assets_dir']).resolve()}:/assets:ro",
             req.docker_image,
             "icilval",
             "run-side",
@@ -231,6 +249,8 @@ class Orchestrator:
             "/pool",
             "--arch",
             "/arch",
+            "--assets",
+            "/assets",
             "--units",
             "/work/units.json",
             "--side",
@@ -319,8 +339,17 @@ class Orchestrator:
             # ---- units
             units = derive_units(self.rt.pool, spec, did, size)
             state["unit_defs"] = [u.as_dict() for u in units]
-            state["units"] = [unit_verdict_from_unit(u.as_dict()) for u in units]
-            self._render_demos(state, run_dir)
+            state["units"] = [unit_verdict_from_unit(u) for u in state["unit_defs"]]
+            # ---- materializing: every prompt is generated before either side runs
+            assets_dir = run_dir / "assets"
+            state["assets_dir"] = assets_dir
+            self._post(
+                state, force=True, phase="materializing", side=None, message="generating prompts"
+            )
+            state["unit_defs"], report = self._materialize(state, did, assets_dir, run_dir)
+            state["units"] = [unit_verdict_from_unit(u) for u in state["unit_defs"]]
+            notes = report.notes()
+            self._render_demos(state, run_dir, assets_dir)
             # ---- evaluating
             for side in ("challenger", "king"):
                 if side not in dirs:
@@ -371,7 +400,7 @@ class Orchestrator:
                 dethroned=bool(v.dethroned),
                 new_king=req.challenger if v.dethroned else None,
                 tally=v.tally.as_dict(),
-                media_count=len(media_shas(state["units"])),
+                media_count=len(media_shas(state["units"])) + len(prompt_shas(state["units"])),
                 duel_size=size,
                 duel_id=did,
                 pool_id=self.rt.pool.pool_id,
@@ -387,7 +416,7 @@ class Orchestrator:
                 started_at=state["started_at"],
                 wall_seconds=time.monotonic() - t0,
                 sides=sides_meta,
-                notes=[],
+                notes=notes,
             )
             self.rt.store.write_event(spec.track_id, event)
             record["seq"] = self.rt.store.append(spec.track_id, record)
@@ -412,25 +441,75 @@ class Orchestrator:
             )
             raise DuelFailed(str(exc)) from exc
 
-    def _render_demos(self, state: dict[str, Any], run_dir: Path) -> None:
-        if not self.spec.media.get("demo_video", True):
-            return
+    def _materialize(
+        self, state: dict[str, Any], did: str, assets_dir: Path, run_dir: Path
+    ) -> tuple[list[dict[str, Any]], MaterializeReport]:
+        spec = self.spec
+        needed = [u for u in state["unit_defs"] if not u.get("diagnostic")]
+        if not needed:
+            return state["unit_defs"], MaterializeReport()
+        if self.rt.generation is None:
+            raise DuelFailed(
+                "prompts must be generated but the runtime has no generation context "
+                "(BPP checkout and raw cache)"
+            )
+        wall = float(spec.budgets["materialize_wall_seconds"])
+        t0 = time.monotonic()
+
+        def progress(done: int, total: int) -> None:
+            self._post(
+                state,
+                phase="materializing",
+                side=None,
+                current={"done": done, "total": total},
+                message=f"generating prompts {done}/{total}",
+            )
+
+        units, report = materialize(
+            state["unit_defs"],
+            self.rt.pool,
+            spec,
+            did,
+            assets_dir,
+            self.rt.generation,
+            workers=self.rt.workers,
+            on_progress=progress,
+        )
+        (run_dir / "materialize.json").write_text(
+            json.dumps([u.as_dict() for u in report.units], indent=1)
+        )
+        if time.monotonic() - t0 > wall:
+            raise DuelFailed(f"materializing took {time.monotonic() - t0:.0f} s, over {wall:.0f}")
+        return units, report
+
+    def _render_demos(self, state: dict[str, Any], run_dir: Path, assets_dir: Path) -> None:
+        """Publish every unit's prompt (the npz by hash) and its demonstration clip."""
         ext = str(self.spec.media["video"]["format"])
+        prompt_ext = str(self.spec.media["prompt"]["format"])
+        want_clips = bool(self.spec.media.get("demo_video", True))
         demo_dir = run_dir / "demos"
         demo_dir.mkdir(exist_ok=True)
         cache: dict[str, str] = {}
         touched: list[str] = []
         for u, d in zip(state["units"], state["unit_defs"], strict=True):
             demo = d["demo"]
+            path = prompt_path(self.rt.pool, d, assets_dir)
+            if not path.exists():
+                u["demo_video"] = None
+                continue
+            if d.get("prompt_sha256"):
+                sha = self.rt.store.put_media(path, prompt_ext)
+                if sha != d["prompt_sha256"]:
+                    raise DuelFailed(f"{d['unit_id']}: prompt hash changed after generation")
+                touched.append(
+                    str(self.rt.store.media_path(sha, prompt_ext).relative_to(self.rt.store.root))
+                )
+            if not want_clips:
+                continue
             if demo not in cache:
                 out = demo_dir / (demo.replace("/", "__") + f".{ext}")
                 try:
-                    render_demo(
-                        self.rt.pool.path("demos") / f"{demo}.npz",
-                        out,
-                        self.spec,
-                        d["skill"],
-                    )
+                    render_demo(path, out, self.spec, d["skill"])
                     sha = self.rt.store.put_media(out, ext)
                     touched.append(
                         str(self.rt.store.media_path(sha, ext).relative_to(self.rt.store.root))

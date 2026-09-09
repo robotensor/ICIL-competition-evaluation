@@ -256,6 +256,9 @@ def _runtime(args, spec, *, enforce_pool_id: bool = True):
         live_token=args.live_token,
         mirror_repo=args.mirror,
         enforce_pool_id=enforce_pool_id,
+        bpp_root=Path(args.bpp_root) if args.bpp_root else root / "vendor" / "behavior_prompting",
+        raw_root=Path(args.raw) if getattr(args, "raw", None) else None,
+        workers=args.workers,
     )
 
 
@@ -334,6 +337,7 @@ def cmd_run_side(args) -> int:
         out_dir=Path(args.out),
         device=args.device,
         record_video=not args.no_video,
+        assets_dir=Path(args.assets) if args.assets else None,
     )
     print(json.dumps(summary, indent=1))
     return 0
@@ -515,6 +519,15 @@ def _add_runtime_args(p: argparse.ArgumentParser) -> None:
         "--docker-image", default=None, help="run model sides in this image with --network none"
     )
     p.add_argument("--device", default="cuda")
+    p.add_argument(
+        "--workers", type=int, default=None, help="prompt generation processes (spec default)"
+    )
+    p.add_argument("--raw", default=None, help="raw cache with the grasp-source files")
+    p.add_argument(
+        "--bpp-root",
+        default=None,
+        help="the vendored BPP checkout (default vendor/behavior_prompting)",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -657,6 +670,7 @@ def build_parser() -> argparse.ArgumentParser:
     rs.add_argument("--pool", required=True)
     rs.add_argument("--arch", required=True)
     rs.add_argument("--units", required=True)
+    rs.add_argument("--assets", default=None, help="the duel's generated prompts (<unit_id>.npz)")
     rs.add_argument("--side", required=True, choices=["challenger", "king"])
     rs.add_argument("--out", required=True)
     rs.add_argument("--device", default="cuda")

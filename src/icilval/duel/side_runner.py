@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from ..canon import sha256_file
+from ..pools.demos import prompt_path
 from ..pools.schema import Pool
 from ..simulators import for_skill, make_policy
 from ..spec import Spec
@@ -52,6 +53,7 @@ def run_side(
     device: str = "cuda",
     on_unit: Callable[[dict[str, Any]], None] | None = None,
     record_video: bool = True,
+    assets_dir: Path | None = None,
 ) -> dict[str, Any]:
     out_dir.mkdir(parents=True, exist_ok=True)
     media_dir = out_dir / "media"
@@ -82,6 +84,15 @@ def run_side(
 
         def out_of_time(self) -> bool:
             return time.monotonic() - self.t_start > self.side_wall
+
+        @staticmethod
+        def prompt_path(unit: dict[str, Any]) -> Path:
+            """The unit's prompt: generated into the assets directory, or a stored demo."""
+            return prompt_path(pool, unit, assets_dir)
+
+        @staticmethod
+        def void(unit: dict[str, Any], error: str) -> dict[str, Any]:
+            return _void(unit, error)
 
         def record(self, unit: dict[str, Any], res: Any, clip: Path) -> dict[str, Any]:
             return _record(unit, res, clip, out_dir, record_video)
@@ -169,15 +180,19 @@ def _record(unit: dict[str, Any], res: Any, clip: Path, out_dir: Path, record_vi
     return rec
 
 
-def _timed_out(unit: dict[str, Any]) -> dict[str, Any]:
+def _void(unit: dict[str, Any], error: str) -> dict[str, Any]:
     return {
         "unit_id": unit["unit_id"],
         "skill": unit["skill"],
         "void": True,
-        "error": "side wall time exceeded",
+        "error": error,
         "success": None,
         "metric": None,
     }
+
+
+def _timed_out(unit: dict[str, Any]) -> dict[str, Any]:
+    return _void(unit, "side wall time exceeded")
 
 
 def _close_writer(writer: VideoWriter | None, unit: dict[str, Any]) -> None:

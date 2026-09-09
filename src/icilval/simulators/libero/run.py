@@ -60,7 +60,11 @@ def run_units(
                 if unit["init"] not in init_cache:
                     init_cache[unit["init"]] = load_init_states(pool.path(unit["init"]))
                 init_state = init_cache[unit["init"]][int(unit["instance"])]
-            demo = load_demo(pool.path("demos") / f"{unit['demo']}.npz")
+            prompt = ctx.prompt_path(unit)
+            if not prompt.exists():
+                ctx.finish(unit, ctx.void(unit, "no prompt was generated for this unit"), None)
+                continue
+            demo = load_demo(prompt)
             clip = media_dir / f"{unit['unit_id']}.mp4"
             writer = VideoWriter(clip, fps, video_cfg) if record_video else None
             try:
