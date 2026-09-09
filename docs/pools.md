@@ -85,6 +85,18 @@ Genesis for this catalogue: `robotensor/bpp-genesis@e680d99fc79ac5d54d33e696a635
 one converted public checkpoint per skill (`pick_and_place`: 690,455,718 parameters,
 `draw_anything`: 344,772,217).
 
+## Generating a drawing
+
+`simulators/draw/generate.py` is BPP's `procedural_generate_drawings.py` ported in process and
+driven by one seeded NumPy generator: a target is a list of parts - BPP's lines, Bezier curves,
+ovals and pen-up movements (`bpp`), the edges of a closed polygon (`polygon`), or one polyline per
+skeleton stroke of a font character rendered with Pillow and thinned with scikit-image (`glyph`,
+`DejaVuSans` through matplotlib's font files) - turned into 10 Hz pen actions at a sampled speed
+with BPP's noise, inter-part delays and final hold, rotated onto a board at a sampled angle and
+executed on `DrawEnv` (BPP's pen-up positioning first) while frames, pen state and actions are
+recorded. One npz in the demo format comes out, with the family, seed, part count and character
+in `meta`. About 1-5 s per drawing; 50-150 actions.
+
 ## Earlier pools
 
 Spec v1-v3 drew units from stored demonstrations; the pools below are kept for the record.

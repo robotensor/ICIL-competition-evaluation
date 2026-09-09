@@ -163,7 +163,10 @@ def test_units_prompts_are_generated_and_instances_in_range(spec):
             assert u.bddl and u.init is None
             assert u.instance_params == {} and u.steps == task.steps
         if u.skill == DA:
-            assert u.change == {"kind": "none"}
+            if u.diagnostic:
+                assert u.change == {"kind": "none"}
+            else:
+                assert u.change["kind"] in spec.changes(DA)
             p = u.instance_params
             lo, hi = env["board_angle_range_rad"]
             assert lo <= p["angle_rad"] <= hi
