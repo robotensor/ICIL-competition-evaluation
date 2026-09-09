@@ -32,7 +32,11 @@ def run_units(
             if ctx.out_of_time():
                 ctx.finish(unit, ctx.timed_out(unit), None)
                 continue
-            demo = load_demo(pool.path("demos") / f"{unit['demo']}.npz")
+            prompt = ctx.prompt_path(unit)
+            if not prompt.exists():
+                ctx.finish(unit, ctx.void(unit, "no prompt was generated for this unit"), None)
+                continue
+            demo = load_demo(prompt)
             clip = media_dir / f"{unit['unit_id']}.mp4"
             writer = VideoWriter(clip, fps, video_cfg) if record_video else None
             try:

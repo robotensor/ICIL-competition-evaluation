@@ -17,6 +17,7 @@ import json
 import logging
 import math
 import os
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -484,3 +485,30 @@ def generate_drawing(
     return DrawingResult(
         True, family, int(seed), out_npz, meta["steps"], sha256_file(out_npz), angle, len(parts)
     )
+
+
+def generate_drawing_prompt(
+    spec: Spec, skill: str, family: str, seeds: Sequence[int], out_npz: Path, demo_id: str
+) -> dict[str, Any]:
+    """Seeds in order until one yields a drawing (each seed is a new target and demonstration)."""
+    attempts: list[dict[str, Any]] = []
+    for seed in seeds:
+        res = generate_drawing(spec, skill, family, int(seed), out_npz, demo_id)
+        attempts.append({"seed": int(seed), "success": res.success, "error": res.error})
+        if res.success:
+            return {
+                "success": True,
+                "attempts": attempts,
+                "steps": res.steps,
+                "sha256": res.sha256,
+                "meta": {
+                    "family": family,
+                    "boundary_angle": res.boundary_angle,
+                    "parts": res.parts,
+                },
+            }
+    return {
+        "success": False,
+        "attempts": attempts,
+        "error": attempts[-1]["error"] if attempts else "no seeds",
+    }

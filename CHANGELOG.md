@@ -53,6 +53,16 @@
   on `DrawEnv`; one npz in the demo format with family, seed and character in `meta`. Drawing
   units of generated tasks draw their change kind (`board_angle` or `pen_start`) from the menu.
   The `sim` extra lists Pillow, scikit-image and matplotlib for the glyph family (#19).
+- (feat): the **materializing** phase (`duel/materialize.py`): between checking and evaluating,
+  every scored unit's prompt is generated into `<run>/assets/<unit_id>.npz` by the skill's
+  simulator in worker processes under the validator's LIBERO config, from the unit's prompt
+  seeds (`generation.prompt_seed`); when none of `max_attempts` succeeds the unit takes the next
+  task in the duel's shuffled order (up to three times) and records `substituted_from`; a
+  drawing unit is finalized against its prompt (`board_angle` turns the board at least
+  `min_delta_rad` from the demonstration's, `pen_start` keeps its angle). Both sides read prompts
+  from the assets directory (mounted read-only into the container, `run-side --assets`); every
+  prompt is published by hash and `store verify` checks it; the event notes carry the generation
+  summary. The runtime gains the generation context (`--bpp-root`, `--raw`) and `--workers` (#20).
 
 ### Pluggable simulators
 

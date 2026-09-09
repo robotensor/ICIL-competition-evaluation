@@ -160,11 +160,18 @@ def make_runtime(
     mirror_repo: str | None,
     hf_token: str | None = None,
     enforce_pool_id: bool = True,
+    bpp_root: Path | None = None,
+    raw_root: Path | None = None,
+    workers: int | None = None,
 ) -> Runtime:
     """`enforce_pool_id`: the daemon and the publishing commands refuse a catalogue other than the
-    one pinned in spec.json; the smoke test runs a small local catalogue and turns the check off."""
+    one pinned in spec.json; the smoke test runs a small local catalogue and turns the check off.
+    `bpp_root` (the vendored BPP checkout) and `raw_root` (the raw cache with the grasp-source
+    files) are what prompt generation needs; without `bpp_root` a duel cannot materialize."""
+    from .duel.materialize import GenerationContext
     from .live import LiveReporter
     from .pools.schema import Pool
+    from .pools.sources import DEFAULT_CACHE, Sources
 
     signer = Signer.from_file(key_file)
     pool = Pool.load(pool_dir)
@@ -181,6 +188,16 @@ def make_runtime(
         from .store.mirror import Mirror
 
         mirror = Mirror(store_root, mirror_repo, token=hf_token)
+    generation: GenerationContext | None = None
+    if bpp_root is not None:
+        raw = raw_root or DEFAULT_CACHE / "raw"
+        datasets = raw
+        for skill in spec.skills:
+            grasp = spec.tasks(skill).get("grasp_sources")
+            if grasp:
+                datasets = Sources(raw=raw, bpp_root=bpp_root).dataset_root(str(grasp["dataset"]))
+                break
+        generation = GenerationContext(bpp_root=bpp_root, raw_root=raw, libero_datasets=datasets)
     return Runtime(
         spec=spec,
         pool=pool,
@@ -190,4 +207,6 @@ def make_runtime(
         run_root=run_root,
         live=LiveReporter(spec, live_url, live_token),
         mirror=mirror,
+        generation=generation,
+        workers=int(workers or spec.generation["workers"]),
     )

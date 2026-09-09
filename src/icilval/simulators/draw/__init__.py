@@ -56,6 +56,19 @@ def _validate_skill(skill: str, doc: dict[str, Any]) -> list[str]:
     return errors
 
 
+def _generate_prompt(unit, task, pool, spec, seeds, out_npz, ctx) -> dict[str, Any]:
+    from .generate import generate_drawing_prompt
+
+    family = str(unit["instance_params"].get("family") or task.meta.get("family", ""))
+    return generate_drawing_prompt(spec, unit["skill"], family, seeds, out_npz, unit["demo"])
+
+
+def _finalize_unit(unit: dict[str, Any], demo: dict[str, Any], spec: Any) -> dict[str, Any]:
+    from .units import finalize_draw_unit
+
+    return finalize_draw_unit(unit, demo, spec)
+
+
 SIMULATOR = register(
     Simulator(
         name="draw",
@@ -65,5 +78,7 @@ SIMULATOR = register(
         make_unit=_make_unit,
         demo_frames=_demo_frames,
         validate_skill=_validate_skill,
+        generate_prompt=_generate_prompt,
+        finalize_unit=_finalize_unit,
     )
 )

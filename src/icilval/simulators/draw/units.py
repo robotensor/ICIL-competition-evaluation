@@ -69,3 +69,34 @@ def draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng
         change=change,
         diagnostic=task.diagnostic,
     )
+
+
+def finalize_draw_unit(unit: dict[str, Any], demo: dict[str, Any], spec: Spec) -> dict[str, Any]:
+    """Once the prompt exists, the scored board keeps one of the demonstration's two quantities
+    by the unit's change kind: `board_angle` turns the board to an angle at least `min_delta_rad`
+    from the demonstration's (redrawn from the unit id until it is) and starts the pen where the
+    demonstration's did; `pen_start` keeps the demonstration's angle and the sampled pen start."""
+    skill = unit["skill"]
+    env = spec.env(skill)
+    params = dict(unit.get("instance_params") or {})
+    kind = str((unit.get("change") or {}).get("kind", "none"))
+    demo_angle = round(float(demo["boundary_angle"]), 6)
+    start = [int(round(float(demo["agent_pos"][0][0]))), int(round(float(demo["agent_pos"][0][1])))]
+    params["demo_angle_rad"] = demo_angle
+    change = dict(unit.get("change") or {"kind": "none"})
+    if kind == "board_angle":
+        min_delta = float(spec.changes(skill)["board_angle"]["min_delta_rad"])
+        lo, hi = (float(x) for x in env["board_angle_range_rad"])
+        angle = float(params["angle_rad"])
+        rng = HashRng("draw-angle", unit["unit_id"])
+        for _ in range(1000):
+            if abs(angle - demo_angle) >= min_delta:
+                break
+            angle = round(rng.uniform(lo, hi), 6)
+        params["angle_rad"] = angle
+        params["cursor_px"] = start
+        change.update({"angle_rad": angle, "delta_rad": round(abs(angle - demo_angle), 6)})
+    elif kind == "pen_start":
+        params["angle_rad"] = demo_angle
+        change.update({"cursor_px": list(params["cursor_px"])})
+    return {**unit, "instance_params": params, "change": change}

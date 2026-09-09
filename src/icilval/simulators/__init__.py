@@ -31,6 +31,11 @@ class Simulator:
     demo_frames: Callable[[dict[str, Any]], list[Any]]
     #: (skill id, its spec.json entry) -> validation errors for what this simulator needs there
     validate_skill: Callable[[str, dict[str, Any]], list[str]]
+    #: (unit, task, pool, spec, seeds, out_npz, ctx) -> {"success", "attempts", "steps", "sha256"}:
+    #: generates the unit's prompt demonstration into `out_npz` (see `duel.materialize`)
+    generate_prompt: Callable[..., dict[str, Any]] | None = None
+    #: (unit, demo, spec) -> unit: the unit adjusted to its generated prompt
+    finalize_unit: Callable[..., dict[str, Any]] | None = None
 
 
 REGISTRY: dict[str, Simulator] = {}

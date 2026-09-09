@@ -34,3 +34,17 @@ def test_hash_rng_determinism_and_range():
     assert all(0.0 <= r.uniform() < 1.0 for _ in range(500))
     perm = HashRng("p").shuffled(list(range(50)))
     assert sorted(perm) == list(range(50)) and perm != list(range(50))
+
+
+def test_prompt_seed_varies_with_every_part():
+    from icilval.ids import prompt_seed
+
+    a = prompt_seed("d" * 64, "pick_and_place", 3, 0)
+    assert a == prompt_seed("d" * 64, "pick_and_place", 3, 0) and 0 <= a < (1 << 32)
+    others = {
+        prompt_seed("d" * 64, "pick_and_place", 3, 1),
+        prompt_seed("d" * 64, "pick_and_place", 4, 0),
+        prompt_seed("e" * 64, "pick_and_place", 3, 0),
+        prompt_seed("d" * 64, "draw_anything", 3, 0),
+    }
+    assert len(others | {a}) == 5
