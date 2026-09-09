@@ -97,6 +97,98 @@ executed on `DrawEnv` (BPP's pen-up positioning first) while frames, pen state a
 recorded. One npz in the demo format comes out, with the family, seed, part count and character
 in `meta`. About 1-5 s per drawing; 50-150 actions.
 
+## Calibrating catalogue 2026.09-v4
+
+`pool_id` `9cad7d49496441eedbfed8baa176de889438d9f6875842dec7ba2f97969c30b4` - 174 `pick_and_place`
+tasks, 3 `draw_anything` tasks (one per family) and the 50 handmade drawings as the
+`handmade_drawings` diagnostic; the pinned catalogue. The genesis is `robotensor/bpp-genesis` at
+`e680d99f`, BPP's public checkpoints converted for the two skills.
+
+A v4 unit is harder than a v3 unit in two ways: its prompt is a generated demonstration of a
+fresh reset rather than a stored human or scripted one, and the scored scene carries one change
+from the skill's menu. `scripts/baseline.py` runs the genesis over units built exactly as a duel
+builds them (`--change <kind>` forces one entry of the menu on every unit, `--family` picks one
+drawing family) and reports the rate per change and per family. The ranges in `spec.json` were
+set from two passes of that sweep; the first published difficulty is deliberately mild.
+
+### LIBERO change ranges
+
+Pass 1, provisional ranges, 40 tasks spread over the 174 (one unit each):
+
+| change | provisional range | genesis |
+|---|---|---|
+| `displace` | radius 0.05 m, min delta 0.03 m, yaw ±45°, clearance 0.08 m | 0.475 |
+| `camera` | position ±0.05 m, angle ±5° | 0.641 |
+| `lighting` | diffuse ×[0.6, 1.3], ambient +[0, 0.2], specular ×[0.5, 1.3], position ±0.5 m, direction ±0.25 rad, headlight ×[0.7, 1.2] | 0.658 |
+| `observation` | brightness ×[0.8, 1.2], noise σ [0, 8] | 0.730 |
+| `robot_pose` | joint noise 0.05 rad (LIBERO default 0.02) | 0.703 |
+
+Two things the first pass taught. The `displace` applier initially voided 13 of 40 units: it
+required the moved bowl to keep `clearance_m` from every object and to stay on the table even
+when it had started on a fixture, so on the crowded scenes no candidate was acceptable. The
+rule became: a candidate is refused only when it *closes in* on another object within the
+clearance, and the table bound applies only to a bowl that started on the table; 16 candidates
+are drawn per unit and the first acceptable one applied. Nothing is void at that rule (the
+0.475 above is measured with it). And three of the sampled tasks never generated a
+demonstration in any of the 8 seeded attempts, so every pass-1 sweep substituted three units
+(`substituted_from` on the unit). Generating one prompt for every task of the catalogue found
+ten such tasks: the ten LIBERO-Spatial itself ships, each placing the bowl on the plate, for
+which BPP's metadata names no grasp source. Since #31 they lift their grasps from their own
+teleoperation file and generate in one to five attempts; the other 164 generate in 1.7 attempts
+on average (105 at the first seed, 2 at the eighth) at about 48 s per attempt.
+
+Pass 2, every range roughly halved, 24 tasks spread over the 174. These are the published
+ranges:
+
+| change | published range | genesis |
+|---|---|---|
+| `displace` | radius 0.03 m, min delta 0.015 m, yaw ±22.5°, clearance 0.08 m | 0.667 |
+| `camera` | position ±0.02 m, angle ±2° | 0.667 |
+| `lighting` | diffuse ×[0.8, 1.2], ambient +[0, 0.1], specular ×[0.8, 1.2], position ±0.25 m, direction ±0.1 rad, headlight ×[0.85, 1.1] | 0.667 |
+| `observation` | brightness ×[0.9, 1.1], noise σ [0, 4] | 0.667 |
+| `robot_pose` | joint noise 0.035 rad | 0.583 |
+| **skill (mean over the menu)** | | **0.650** |
+
+A reference sweep of the same 24 tasks with a generated prompt and **no change at all** scores
+0.667 as well, and misses the same eight units; four of the five kinds miss exactly those eight,
+`robot_pose` two more. So at the published ranges a change costs the genesis nothing measurable
+on this sample, and the whole distance from the v3 baseline (0.876 with stored prompts) is the
+prompt: a demonstration generated for a fresh reset, rather than a human or scripted one
+recorded on the scored scene's own initial state. The seven units missed under every kind all
+pick the bowl off a fixture (the stove, the cookie box, the wooden cabinet). Sampling noise on
+24 units is about ±0.1.
+
+### Drawing families
+
+Generated drawings, 60 units per family, the change drawn from the menu as in a duel
+(`board_angle` or `pen_start`):
+
+| family | genesis | best Chamfer p25 / p50 / p75 (px) |
+|---|---|---|
+| `bpp` (BPP's procedural parts) | 0.733 | 1.2 / 1.7 / 2.6 |
+| `polygon` (one closed polygon, 3-6 vertices) | 0.817 | 0.8 / 1.2 / 2.0 |
+| `glyph` (one character's skeleton, DejaVuSans) | 0.250 | 2.5 / 4.8 / 9.8 |
+| **skill (mean over the families)** | **0.600** | |
+
+Two readings. Per change, a turned board is the harder case on the two families the genesis
+handles (`bpp` 0.54 against 0.91 for a moved pen start, `polygon` 0.79 against
+0.86); for glyphs both are low (0.32 and 0.17). And the glyph family is hard for
+the genesis at any character: over the 60 units only `Y`, `J`, `N` and `V` pass every time, and
+the misses spread over most of the alphabet, with the multi-stroke letters (`A`, `H`, `K`, `Q`,
+`R`, `Z`) missing by 8-30 px. The genesis was trained on BPP's procedural parts, and a glyph's
+skeleton - several short strokes with pen lifts and sharp corners - is far from them. The family
+stays in the menu at its published parameters; its rate is the third of the skill's mean that a
+challenger can most improve on.
+
+### The drawing threshold at 2.5 px
+
+`skills.draw_anything.success.threshold` moved from 4 px to 2.5 px with v4 - a fifth of the
+12 px pen. The v3 re-measurement below already showed that 4 px passed 0.90 of procedural
+drawings and left the skill little headroom; on the generated families the genesis passes
+0.600 at 2.5 px against 0.789 at 4 px. The handmade drawings, prompted with a stored human
+demonstration, are no longer scored; their rate at the same rule is published on every record
+as the `handmade_drawings` diagnostic.
+
 ## Earlier pools
 
 Spec v1-v3 drew units from stored demonstrations; the pools below are kept for the record.

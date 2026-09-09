@@ -61,7 +61,9 @@ def sweep_units(
             unit = sim.make_unit(spec, skill, index, task, rng.below(2**31), rng).as_dict()
             unit["unit_id"] = f"{spec.skill_code(skill)}-{index:04d}"
             unit["demo"] = f"generated/{unit['unit_id']}"
-            if change and spec.simulator(skill) == "libero":
+            if change == "none":
+                unit["change"] = {"kind": "none"}  # the reference: a generated prompt, no change
+            elif change and spec.simulator(skill) == "libero":
                 unit["change"] = sample_change(
                     spec, skill, task.steps, HashRng("baseline-change", tid, k), kind=change
                 )
@@ -82,7 +84,9 @@ def force_kind(units: list[dict], pool: Pool, spec, skill: str, kind: str) -> li
     for u in units:
         u = dict(u)
         if not u.get("diagnostic") and u.get("change", {}).get("kind") != kind:
-            if spec.simulator(skill) == "libero":
+            if kind == "none":
+                u["change"] = {"kind": "none"}
+            elif spec.simulator(skill) == "libero":
                 task = pool.tasks[u["task"]]
                 rng = HashRng("baseline-change", u["task"], u["index"])
                 u["change"] = sample_change(spec, skill, task.steps, rng, kind=kind)
@@ -170,7 +174,9 @@ def main() -> int:
     ap.add_argument("--arch", default=None)
     ap.add_argument("--task-filter", default=None, help="only tasks whose id contains this")
     ap.add_argument("--max-tasks", type=int, default=None, help="tasks spread evenly over the list")
-    ap.add_argument("--change", default=None, help="force this change kind on every unit")
+    ap.add_argument(
+        "--change", default=None, help="force this change kind on every unit ('none': no change)"
+    )
     ap.add_argument("--family", default=None, help="only drawing tasks of this family")
     ap.add_argument("--workers", type=int, default=None, help="generation processes (spec default)")
     ap.add_argument("--raw", default=None, help="raw cache with the grasp-source files")
