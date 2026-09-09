@@ -147,5 +147,15 @@ def media_shas(units: list[dict[str, Any]]) -> list[str]:
     return sorted(set(out))
 
 
+def prompt_shas(units: list[dict[str, Any]]) -> list[str]:
+    """The published prompt npz files (`prompt.sha256`) of a duel's units."""
+    out = set()
+    for u in units:
+        sha = (u.get("prompt") or {}).get("sha256")
+        if isinstance(sha, str) and sha:
+            out.add(sha)
+    return sorted(out)
+
+
 def empty_skill_scores(skills: Sequence[str]) -> dict[str, float | None]:
     return {**{s: None for s in skills}, "average": None}

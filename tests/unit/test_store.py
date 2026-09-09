@@ -200,8 +200,18 @@ def test_schema_4_unit_fields(spec, tmp_path):
     assert bare["prompt"]["sha256"] is None and bare["diagnostic"] is False
     rec = make_record(sp, "duel", 1, king, ch)
     rec["sub_scores"] = {"king": {"pick_and_place": {"camera": 1.0}}}
+    # the prompt is published by hash next to the clips, and verify wants it there
+    import numpy as np
+
+    npz = tmp_path / "prompt.npz"
+    np.savez(npz, actions=np.zeros((3, 7), np.float32))
+    sha = store.put_media(npz, sp.media["prompt"]["format"])
+    unit["prompt"]["sha256"] = sha
     publish(store, sp, rec, units=[unit, bare])
-    assert verify_store(tmp_path / "store", sp).ok
+    report = verify_store(tmp_path / "store", sp)
+    assert report.ok, report.errors
+    store.media_path(sha, sp.media["prompt"]["format"]).unlink()
+    assert any("prompt" in e for e in verify_store(tmp_path / "store", sp).errors)
     del unit["change"]
     publish(store, sp, make_record(sp, "duel", 2, king, ch), units=[unit])
     assert any("change" in e for e in verify_store(tmp_path / "store", sp).errors)

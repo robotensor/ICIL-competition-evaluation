@@ -9,7 +9,7 @@ from typing import Any
 
 from ..canon import canonical_json, verify_signature
 from ..spec import Spec, load_schema
-from .records import media_shas
+from .records import media_shas, prompt_shas
 from .writer import Store
 
 
@@ -67,6 +67,7 @@ def verify_store(
         report.warnings.append("manifest spec_fingerprint differs from the loaded spec.json")
 
     video_ext = str(spec.media["video"]["format"])
+    prompt_ext = str(spec.media["prompt"]["format"])
     for track in manifest.get("tracks", []):
         expected_seq = 1
         last: dict[str, Any] | None = None
@@ -124,6 +125,11 @@ def verify_store(
                         report.media += 1
                     else:
                         report.errors.append(f"{where}: media {sha[:12]} missing")
+                for sha in prompt_shas(event.get("units", [])):
+                    if store.has_media(sha, prompt_ext):
+                        report.media += 1
+                    else:
+                        report.errors.append(f"{where}: prompt {sha[:12]} missing")
             part += 1
 
         head = store.head(track)
