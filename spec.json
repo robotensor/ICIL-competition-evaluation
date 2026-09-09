@@ -57,7 +57,8 @@
           "radius_m": 0.05,
           "min_delta_m": 0.03,
           "yaw_max_rad": 0.7853981633974483,
-          "_comment": "The target bowl moves by at least min_delta_m within radius_m of where it started, turned by up to yaw_max_rad, and never onto another object's named location; the goal must still be unsatisfied afterwards."
+          "clearance_m": 0.08,
+          "_comment": "The target bowl moves by at least min_delta_m within radius_m of where it started, turned by up to yaw_max_rad, staying at least clearance_m from every other object and on the table; the goal must still be unsatisfied afterwards. A unit carries several candidate moves and applies the first the scene accepts."
         },
         "camera": {
           "pos_jitter_m": 0.05,

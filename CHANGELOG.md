@@ -39,6 +39,14 @@
   validator-owned LIBERO config pointing `datasets` at the grasp-source files fetched by the
   catalogue's hashes; the simulator and GPU test sessions install that config. The GPU parity
   test prompts the genesis with generated demonstrations from fresh resets (#17).
+- (feat): `simulators/libero/changes.py`: the one change a scored LIBERO scene carries. Sampled
+  from the skill's menu when the unit is derived (pure, from the unit's RNG; a `displace` draw
+  carries candidate moves and the first the scene accepts - on the table, `clearance_m` from
+  every other object, goal still unsatisfied - is applied); applied after the scored reset
+  (`displace`, `camera`, `lighting` mutate the model, `observation` scales and noises the
+  policy's images with a seeded generator, `robot_pose` builds the scene with larger joint
+  noise). `LiberoEnv` snapshots its lights and cameras and restores them on every reset; the
+  side record carries `change_applied` (#18).
 
 ### Pluggable simulators
 

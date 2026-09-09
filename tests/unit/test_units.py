@@ -155,14 +155,15 @@ def test_units_prompts_are_generated_and_instances_in_range(spec):
     for u in derive_units(pool, spec, did, "heavy"):
         task = pool.tasks[u.task]
         assert u.max_steps <= spec.max_steps(u.skill)
-        assert u.change == {"kind": "none"} and u.substituted_from is None
-        assert u.prompt_sha256 is None
+        assert u.substituted_from is None and u.prompt_sha256 is None
         if u.skill == PP:
+            assert u.change["kind"] in spec.changes(PP)
             assert u.demo == f"generated/{u.unit_id}"
             assert 0 <= u.instance < 5
             assert u.bddl and u.init is None
             assert u.instance_params == {} and u.steps == task.steps
         if u.skill == DA:
+            assert u.change == {"kind": "none"}
             p = u.instance_params
             lo, hi = env["board_angle_range_rad"]
             assert lo <= p["angle_rad"] <= hi

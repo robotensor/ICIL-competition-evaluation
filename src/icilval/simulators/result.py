@@ -20,4 +20,5 @@ class EpisodeResult:
     prompt_steps: int = 0
     prompt_chunks: int = 0
     instance_applied: dict[str, Any] = field(default_factory=dict)
+    change_applied: dict[str, Any] = field(default_factory=dict)
     video_frames: int = 0
