@@ -46,6 +46,27 @@ def _validate_skill(skill: str, doc: dict[str, Any]) -> list[str]:
     return errors
 
 
+def _generate_prompt(unit, task, pool, spec, seeds, out_npz, ctx) -> dict[str, Any]:
+    from .generate import generate_prompt
+
+    res = generate_prompt(
+        task,
+        pool,
+        spec,
+        unit["skill"],
+        seeds,
+        out_npz,
+        bpp_root=ctx.bpp_root,
+        work_dir=out_npz.parent / "work" / unit["unit_id"],
+        demo_id=unit["demo"],
+    )
+    return res.as_dict()
+
+
+def _finalize_unit(unit: dict[str, Any], demo: dict[str, Any], spec: Any) -> dict[str, Any]:
+    return dict(unit)  # the scored reset is the unit's instance whatever the prompt shows
+
+
 SIMULATOR = register(
     Simulator(
         name="libero",
@@ -55,5 +76,7 @@ SIMULATOR = register(
         make_unit=_make_unit,
         demo_frames=_demo_frames,
         validate_skill=_validate_skill,
+        generate_prompt=_generate_prompt,
+        finalize_unit=_finalize_unit,
     )
 )

@@ -38,6 +38,20 @@ def sorted_demo_keys(keys: list[str]) -> list[str]:
     return sorted(keys, key=lambda k: int(k.split("_")[-1]) if k.split("_")[-1].isdigit() else k)
 
 
+GENERATED_PREFIX = "generated/"
+
+
+def prompt_path(pool: Any, unit: dict[str, Any], assets_dir: str | Path | None) -> Path:
+    """The npz a unit is prompted with: a generated prompt in the duel's assets directory
+    (`<assets>/<unit_id>.npz`), else one of the catalogue's stored demonstrations."""
+    demo = str(unit["demo"])
+    if demo.startswith(GENERATED_PREFIX):
+        if assets_dir is None:
+            raise ValueError(f"{unit['unit_id']}: generated prompt but no assets directory")
+        return Path(assets_dir) / f"{unit['unit_id']}.npz"
+    return pool.path("demos") / f"{demo}.npz"
+
+
 # ---------------------------------------------------------------- reading back
 def load_demo(path: str | Path) -> dict[str, Any]:
     with np.load(path, allow_pickle=False) as z:

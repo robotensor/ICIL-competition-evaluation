@@ -58,6 +58,11 @@ def unit_seed(duel: str, skill: str, index: int) -> int:
     return int(sha256_hex(f"{duel}|{skill}|{index}")[:8], 16)
 
 
+def prompt_seed(duel: str, skill: str, index: int, attempt: int) -> int:
+    """The seed of a unit's `attempt`-th prompt generation (`generation.prompt_seed`)."""
+    return int(sha256_hex(f"{duel}|{skill}|{index}|{attempt}")[:8], 16)
+
+
 def unit_id(code: str, index: int) -> str:
     """`<skill code>-<index>`: the code is the two-letter `skills.<skill>.code`."""
     return f"{code}-{index:03d}"
