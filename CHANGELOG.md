@@ -4,6 +4,10 @@
 
 ### Spec v4: generated prompts and one change per unit (store schema 4, live schema 4)
 
+- published: catalogue `2026.09-v4` (`9cad7d49…`, 227 tasks, 445 MB) as `pools/2026.09-v4` of
+  `robotensor/icil-competition-pools`, and the two-skill genesis as
+  `robotensor/bpp-genesis@e680d99fc79ac5d54d33e696a635514c4abfc8cf`; both pinned in `spec.json`
+  (#22).
 - (feat): `spec.json` version 4. Every unit's prompt demonstration is generated at duel time with
   BPP's own generators and the scored scene differs from it by exactly one change drawn from the
   skill's menu, so a skill carries `changes` (public ranges) and `sub_scores`; the spec gains a
