@@ -37,10 +37,15 @@ def test_genesis_passes_fingerprint(spec, genesis_dir):
 
 
 def test_parity_libero_spatial(spec, genesis_dir, smoke_pool_or_skip):
+    """The LIBERO checkpoint prompted with a stored demonstration of a task with init states;
+    a catalogue carries neither, so this runs only against a pre-v4 pool until prompts are
+    generated (the generator issue replaces it)."""
     pool = smoke_pool_or_skip
-    tasks = [t for t in pool.tasks.values() if t.suite == "libero_spatial"][:N_TASKS]
+    tasks = [t for t in pool.tasks.values() if t.skill == "pick_and_place" and t.demos and t.init][
+        :N_TASKS
+    ]
     if not tasks:
-        pytest.skip("pool has no libero_spatial tasks")
+        pytest.skip("catalogue tasks carry no demonstrations or init states")
     policy = BPPPolicy(genesis_dir / "pick_and_place", arch_dir(), spec, "pick_and_place")
     policy.load()
     from icilval.pools.demos import load_demo
@@ -69,8 +74,9 @@ def test_parity_libero_spatial(spec, genesis_dir, smoke_pool_or_skip):
 
 
 def test_parity_draw_anything(spec, genesis_dir, smoke_pool_or_skip):
-    """The BPP drawing checkpoint, prompted with one human demonstration, redraws it on a
-    turned board within the success threshold on at least DRAW_FLOOR of the units."""
+    """The BPP drawing checkpoint, prompted with one stored human demonstration (the handmade
+    diagnostic's units), redraws it on a turned board within the success threshold on at least
+    DRAW_FLOOR of the units."""
     from icilval.ids import ModelRef, duel_id
     from icilval.pools.demos import load_demo
     from icilval.pools.units import derive_units
@@ -82,8 +88,12 @@ def test_parity_draw_anything(spec, genesis_dir, smoke_pool_or_skip):
     policy.load()
     did = duel_id(spec.version, spec.track_id, ModelRef.make("parity/draw", "1" * 40), None)
     units = [
-        u.as_dict() for u in derive_units(pool, spec, did, "heavy") if u.skill == "draw_anything"
+        u.as_dict()
+        for u in derive_units(pool, spec, did, "heavy")
+        if u.skill == "draw_anything" and u.diagnostic
     ][:DRAW_TASKS]
+    if not units:
+        pytest.skip("catalogue has no diagnostic drawing tasks")
     board = DrawBoard(spec, "draw_anything")
     successes, metrics = 0, []
     for unit in units:

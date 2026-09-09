@@ -23,7 +23,7 @@ class Simulator:
     #: (ctx, skill, policy, pool, units, spec, media_dir, record_video) -> None; runs each unit
     #: and hands `ctx.finish` a record (see `duel.side_runner.SideContext`)
     run_units: Callable[..., None]
-    #: (pool, spec, src, skill, *, limit, validate, fetch_missing, evict_demos) -> None
+    #: (pool, spec, src, skill, *, limit, validate, fetch_missing) -> None
     build_stage: Callable[..., None]
     #: (spec, skill, index, task, seed, rng) -> `pools.units.Unit`
     make_unit: Callable[..., Any]

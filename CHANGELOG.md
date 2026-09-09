@@ -19,6 +19,16 @@
   command (#15).
 - (docs): `docs/protocol.md` describes the v4 protocol; `docs/plan-spec-v4.md` holds the plan and
   work breakdown for the milestone (#14, #15).
+- (feat): the pool becomes a **catalogue** (schema 4, `catalogue.json`): task definitions, not
+  demonstrations. A LIBERO task is its BDDL as the release ships it plus BPP's task metadata for
+  the view (execution steps, which human demonstration each grasp is lifted from) from the
+  vendored checkout; the sha256 of the ten grasp-source teleoperation files is recorded from the
+  hub's tree listing. Drawing tasks are one per primitive family; BPP's handmade set is imported
+  only as the `handmade_drawings` diagnostic, flagged and listed apart. Unit derivation numbers
+  the scored reset (`instance_seed`), names the prompt it will generate and appends each
+  diagnostic's units, scaled with the duel size, after the scored ones (#16).
+- (feat): `icilval catalogue build / verify / push / pull` replace `icilval pools`; `--evict`
+  and `generate-draw` go; `Spec.catalogue` replaces `Spec.pools` (#16).
 
 ### Pluggable simulators
 

@@ -1,15 +1,17 @@
 """Deterministic unit lists.
 
-A unit is one paired episode: skill, task, initial-state index, prompt
-demonstration and seed. Both sides of a duel run the same list. The list is a
-pure function of the pool and the duel id, so a third party holding the pool
-can regenerate it from the published record.
+A unit is one paired episode: skill, task, a numbered reset of the task's
+scene, a prompt generated for the unit and a seed. Both sides of a duel run the
+same list. The list is a pure function of the catalogue and the duel id, so a
+third party holding the catalogue can regenerate it from the published record.
 
-A skill's units are spread evenly over its eligible tasks, in the pool's order,
-shuffled by the duel id. A LIBERO task's initial state is one of its benchmark
-init states; a drawing task's is a board angle and a pen start derived from
-the task id and instance index, in the ranges BPP's `DrawEnv` samples from.
-The prompt demonstration never starts from the scored initial state.
+A skill's scored units are spread evenly over its eligible tasks, in the
+catalogue's order, shuffled by the duel id; after them come the units of the
+skill's unscored diagnostics, spread over the diagnostic tasks of each. A
+LIBERO unit's instance numbers the reset its scored scene starts from; a
+drawing unit's is a board angle and a pen start derived from the task id and
+instance index, in the ranges BPP's `DrawEnv` samples from. The prompt never
+starts from the scored state.
 """
 
 from __future__ import annotations
@@ -77,6 +79,14 @@ def _spread(n: int, entries: list[str], rng: HashRng) -> list[str]:
 
 
 # ---------------------------------------------------------------- derivation
+def diagnostic_units(spec: Spec, size: str | None, diag: dict[str, Any]) -> int:
+    """`units_per_duel` at the default duel size, scaled with the size; at least one when any."""
+    n = int(diag["units_per_duel"])
+    if n == 0:
+        return 0
+    return max(1, round(n * spec.units_per_skill(size) / spec.units_per_skill(None)))
+
+
 def derive_units(pool: Pool, spec: Spec, duel: str, size: str | None = None) -> list[Unit]:
     per_skill = spec.units_per_skill(size)
     out: list[Unit] = []
@@ -84,9 +94,21 @@ def derive_units(pool: Pool, spec: Spec, duel: str, size: str | None = None) -> 
         rng = HashRng(duel, skill)
         entries = pool.eligible(skill)
         if per_skill and not entries:
-            raise ValueError(f"pool has no eligible tasks for {skill}")
-        for index, entry in enumerate(_spread(per_skill, entries, rng)):
+            raise ValueError(f"catalogue has no eligible tasks for {skill}")
+        index = 0
+        for entry in _spread(per_skill, entries, rng):
             out.append(_unit(pool, spec, duel, skill, index, entry, rng))
+            index += 1
+        for name, diag in spec.diagnostics.items():
+            if diag["skill"] != skill:
+                continue
+            n = diagnostic_units(spec, size, diag)
+            tasks = [t for t in pool.diagnostic(skill) if t.startswith(f"{diag['group']}/")]
+            if n and not tasks:
+                raise ValueError(f"catalogue has no tasks for diagnostic {name}")
+            for entry in _spread(n, tasks, rng):
+                out.append(_unit(pool, spec, duel, skill, index, entry, rng))
+                index += 1
     return out
 
 

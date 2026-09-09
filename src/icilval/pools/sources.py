@@ -1,9 +1,12 @@
-"""Where raw inputs live and how they become pool files. Pickles are read only here, at build time.
+"""Where raw inputs live and how they become catalogue files.
 
-A skill's tasks come from one Hugging Face dataset (`spec.json` `skills.<skill>.tasks.dataset`),
-mirrored under `raw/<name>` where `<name>` is the repo name without an `_hdf5` suffix:
-`austinpatel/libero_gen_goal_chain_hdf5` -> `raw/libero_gen_goal_chain`. Files are fetched on
-demand when a build asks for it, and the demonstration files can be evicted once imported.
+A skill's task definitions come from one Hugging Face dataset (`spec.json`
+`skills.<skill>.tasks.dataset`), mirrored under `raw/<name>` where `<name>` is the repo name
+without an `_hdf5` suffix: `austinpatel/libero_gen_spatial_combination_hdf5` ->
+`raw/libero_gen_spatial_combination`. Files are fetched on demand when a build asks for it. The
+human teleoperation files a skill's generated demonstrations lift their grasps from
+(`tasks.grasp_sources`) are recorded by sha256 from the hub's tree listing and fetched by hash
+only where a prompt is generated.
 """
 
 from __future__ import annotations
@@ -12,6 +15,8 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
+
+from ..canon import sha256_file
 
 log = logging.getLogger(__name__)
 
@@ -66,3 +71,41 @@ def evict(path: Path) -> None:
     if path.exists():
         path.unlink()
         log.info("evicted %s", path.name)
+
+
+def hub_file_hashes(dataset: str, prefix: str) -> dict[str, str]:
+    """File name -> sha256 of every LFS file under `prefix` in a dataset, from the hub's tree
+    listing; nothing is downloaded."""
+    from huggingface_hub import HfApi
+
+    out: dict[str, str] = {}
+    entries = HfApi().list_repo_tree(
+        dataset, path_in_repo=prefix.rstrip("/"), repo_type="dataset", expand=True
+    )
+    for entry in entries:
+        lfs = getattr(entry, "lfs", None)
+        sha = getattr(lfs, "sha256", None) if lfs is not None else None
+        if sha:
+            out[Path(str(entry.path)).name] = str(sha)
+    return dict(sorted(out.items()))
+
+
+def grasp_source_hashes(src: Sources, dataset: str, prefix: str, online: bool) -> dict[str, str]:
+    """The grasp-source hashes: from the hub when online, else from the files already in the
+    raw cache under `raw/<dataset name>/<prefix>`."""
+    if online:
+        return hub_file_hashes(dataset, prefix)
+    local = src.dataset_root(dataset) / prefix.rstrip("/")
+    files = sorted(local.glob("*.hdf5")) if local.exists() else []
+    if not files:
+        raise FileNotFoundError(f"no grasp-source files under {local}; build with --fetch")
+    return {f.name: sha256_file(f) for f in files}
+
+
+def fetch_by_hash(root: Path, dataset: str, rel: str, sha256: str) -> Path:
+    """`root/rel`, downloaded if missing, and refused unless its sha256 is the recorded one."""
+    path = fetch(root, dataset, rel)
+    got = sha256_file(path)
+    if got != sha256:
+        raise ValueError(f"{path}: sha256 {got[:12]} is not the catalogue's {sha256[:12]}")
+    return path

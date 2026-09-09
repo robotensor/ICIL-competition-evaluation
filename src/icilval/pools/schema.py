@@ -1,10 +1,12 @@
-"""The pool manifest: everything a duel draws from, content-addressed.
+"""The catalogue manifest: everything a duel draws from, content-addressed.
 
-A pool is a directory holding `pool.json` plus, per skill, the files its
-simulator needs: `bddl/`, `init/` and `demos/` for LIBERO, `demos/` for the
-drawing board. Tasks are the things a prompt demonstration exists for; a unit
-is one task, one of its initial states, one of its demonstrations and a seed.
-Eligibility is one list of task ids per skill, sealed into the pool id.
+A catalogue is a directory holding `catalogue.json` plus, per skill, the files its simulator
+needs to *generate* a unit: `bddl/` for LIBERO task definitions, and `demos/` only for the
+diagnostic tasks that are prompted with a stored demonstration. Tasks are the things a prompt
+can be generated for; a unit is one task, one numbered reset of its scene, a prompt generated
+for the unit and a seed. Eligibility is one list of task ids per skill, sealed into the id
+(`pool_id`, the name the records and the spec keep); diagnostic tasks are listed apart and never
+enter a score.
 """
 
 from __future__ import annotations
@@ -16,7 +18,8 @@ from typing import Any
 
 from ..canon import canonical_sha256
 
-POOL_SCHEMA = 3
+POOL_SCHEMA = 4
+CATALOGUE_FILE = "catalogue.json"
 
 
 @dataclass
@@ -37,6 +40,8 @@ class PoolTask:
     provenance: dict[str, Any] = field(default_factory=dict)
     instances: list[int] | None = None
     meta: dict[str, Any] = field(default_factory=dict)
+    #: an unscored diagnostic's task (`spec.json` diagnostics): prompted with a stored demonstration
+    diagnostic: bool = False
 
     @property
     def valid_instances(self) -> list[int]:
@@ -54,7 +59,7 @@ class Pool:
     spec_version: int
     sources: dict[str, Any]
     tasks: dict[str, PoolTask]
-    skills: dict[str, dict[str, list[str]]]  # skill -> {"eligible": [task_id, ...]}
+    skills: dict[str, dict[str, list[str]]]  # skill -> {"eligible": [...], "diagnostic": [...]}
     pool_id: str | None = None
     root: Path | None = None
 
@@ -64,7 +69,8 @@ class Pool:
         schema = int(d.get("schema", POOL_SCHEMA))
         if schema != POOL_SCHEMA:
             raise ValueError(
-                f"pool schema {schema} is not {POOL_SCHEMA}; rebuild it with `icilval pools build`"
+                f"catalogue schema {schema} is not {POOL_SCHEMA}; "
+                "rebuild it with `icilval catalogue build`"
             )
         tasks = {
             k: PoolTask(task_id=k, **{kk: vv for kk, vv in v.items() if kk != "task_id"})
@@ -77,7 +83,11 @@ class Pool:
             sources=dict(d.get("sources", {})),
             tasks=tasks,
             skills={
-                s: {"eligible": list(e.get("eligible", []))} for s, e in d.get("skills", {}).items()
+                s: {
+                    "eligible": list(e.get("eligible", [])),
+                    "diagnostic": list(e.get("diagnostic", [])),
+                }
+                for s, e in d.get("skills", {}).items()
             },
             pool_id=d.get("pool_id"),
             root=root,
@@ -101,6 +111,7 @@ class Pool:
                 "provenance": t.provenance,
                 "instances": t.instances,
                 "meta": t.meta,
+                "diagnostic": t.diagnostic,
             }
 
         d: dict[str, Any] = {
@@ -110,7 +121,11 @@ class Pool:
             "sources": self.sources,
             "tasks": {k: task_dict(t) for k, t in sorted(self.tasks.items())},
             "skills": {
-                s: {"eligible": sorted(e["eligible"])} for s, e in sorted(self.skills.items())
+                s: {
+                    "eligible": sorted(e.get("eligible", [])),
+                    "diagnostic": sorted(e.get("diagnostic", [])),
+                }
+                for s, e in sorted(self.skills.items())
             },
         }
         if with_id:
@@ -127,10 +142,14 @@ class Pool:
     @classmethod
     def load(cls, root: str | Path) -> Pool:
         root = Path(root)
-        doc = json.loads((root / "pool.json").read_text())
+        path = root / CATALOGUE_FILE
+        if not path.exists():
+            hint = " (a pool.json is a pre-v4 pool)" if (root / "pool.json").exists() else ""
+            raise ValueError(f"{path} missing{hint}; rebuild it with `icilval catalogue build`")
+        doc = json.loads(path.read_text())
         pool = cls.from_dict(doc, root=root)
         if pool.pool_id and pool.pool_id != pool.compute_id():
-            raise ValueError(f"{root}/pool.json: pool_id does not match its content")
+            raise ValueError(f"{path}: pool_id does not match its content")
         return pool
 
     def save(self, root: str | Path | None = None) -> Path:
@@ -138,7 +157,7 @@ class Pool:
         root.mkdir(parents=True, exist_ok=True)
         if not self.pool_id:
             self.seal()
-        path = root / "pool.json"
+        path = root / CATALOGUE_FILE
         path.write_text(json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n")
         self.root = root
         return path
@@ -146,6 +165,9 @@ class Pool:
     # -- lookups
     def eligible(self, skill: str) -> list[str]:
         return sorted(self.skills.get(skill, {}).get("eligible", []))
+
+    def diagnostic(self, skill: str) -> list[str]:
+        return sorted(self.skills.get(skill, {}).get("diagnostic", []))
 
     def tasks_of(self, skill: str) -> list[PoolTask]:
         return [t for _, t in sorted(self.tasks.items()) if t.skill == skill]
