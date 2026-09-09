@@ -4,12 +4,12 @@ A catalogue is a content-addressed directory the validator generates units from.
 *definitions*, not demonstrations: every prompt is generated when a duel runs.
 
 ```
-catalogue.json     manifest (tasks, the eligible and diagnostic tasks per skill, the grasp-source
-                   hashes, pool_id = sha256 of the rest)
+catalogue.json     manifest (tasks, the eligible tasks per skill, the grasp-source hashes,
+                   pool_id = sha256 of the rest)
 bddl/<group>/…     LIBERO BDDL files, as BPP's LIBERO-Gen release ships them
-demos/<task>/…     stored demonstrations of the diagnostic tasks only (the handmade drawings):
-                   the board's frames + pen state + actions + the strokes drawn
 ```
+
+Nothing else: a catalogue holds no demonstrations at all.
 
 Build (needs the BPP conda environment; raw inputs live under `~/.cache/icilval/raw`):
 
@@ -42,12 +42,9 @@ from the hub's tree listing), so a generator host can fetch them by hash.
 
 **`draw_anything`** - one task per primitive family in `skills.draw_anything.generation.families`
 (`drawanything_generated/<family>`); a unit of such a task gets its target and demonstration
-generated. Beside them, the skill's diagnostic (`spec.json` `diagnostics.handmade_drawings`):
-BPP's human-drawn evaluation set (`eval_handmade.zarr`, 50 drawings, `demos_per_task` stored
-demonstrations each) imported under `drawanything_handmade/` and flagged `diagnostic`, so its
-units are published and never scored.
+generated. The skill imports nothing and names no dataset, so its stage downloads nothing.
 
-A task is eligible when a prompt can be generated for it; diagnostic tasks are listed apart.
+A task is eligible when a prompt can be generated for it.
 
 ## Generating a LIBERO prompt
 
@@ -67,19 +64,22 @@ hashes with `ensure_grasp_sources`), every other path at the vendored checkout; 
 never read. LIBERO reads the config when it is imported, so a process that generates calls
 `libero_config()` first - the simulator test sessions do. The task's vendored BDDL, next to
 which BPP reads its metadata, must equal the catalogue's byte for byte.
-## Catalogue 2026.09-v4 (spec v4, schema 4)
+## Catalogue 2026.09-v5 (spec v4, schema 4)
 
-`pool_id` `9cad7d49496441eedbfed8baa176de889438d9f6875842dec7ba2f97969c30b4` - 227 tasks, the pinned
-catalogue, published as `pools/2026.09-v4` of `robotensor/icil-competition-pools`. Built on
-2026-09-08 with `--fetch` (about 10 minutes; nothing but the BDDL files was downloaded).
+`pool_id` `6f7fdf8afe09f6257463fc9a51319dba3d1e0b227b82a924364450f1a285e720` - 177 tasks, the pinned
+catalogue, published as `pools/2026.09-v5` of `robotensor/icil-competition-pools`. Built on
+2026-09-09 with `--fetch` (about 8 minutes; nothing but the BDDL files was downloaded).
 
 | skill | tasks | source |
 |---|---|---|
 | pick_and_place | 174 | LIBERO-Gen Combination, both views (10 `selected_view` + 164 `_inverse_view`); every scene validated by reset |
-| draw_anything | 3 generated families (`bpp`, `polygon`, `glyph`) + 50 `handmade_drawings` diagnostic tasks (250 stored demonstrations) | DrawAnything-Sim |
+| draw_anything | 3 generated families (`bpp`, `polygon`, `glyph`) | generated at duel time |
 
 Grasp sources: the ten `libero_spatial/*_demo.hdf5` files of `yifengzhu-hf/LIBERO-datasets`,
-recorded by sha256. The catalogue is 445 MB.
+recorded by sha256. The catalogue is 1.1 MB: it holds BDDL files and a manifest, and no
+demonstrations at all. It replaces `2026.09-v4` (`9cad7d49…`, 227 tasks, 445 MB), which also
+carried BPP's 50 human drawings with five stored demonstrations each, for the unscored diagnostic
+the protocol no longer has.
 
 Genesis for this catalogue: `robotensor/bpp-genesis@e680d99fc79ac5d54d33e696a635514c4abfc8cf`,
 one converted public checkpoint per skill (`pick_and_place`: 690,455,718 parameters,
@@ -97,11 +97,11 @@ executed on `DrawEnv` (BPP's pen-up positioning first) while frames, pen state a
 recorded. One npz in the demo format comes out, with the family, seed, part count and character
 in `meta`. About 1-5 s per drawing; 50-150 actions.
 
-## Calibrating catalogue 2026.09-v4
+## Calibrating the change ranges
 
-`pool_id` `9cad7d49496441eedbfed8baa176de889438d9f6875842dec7ba2f97969c30b4` - 174 `pick_and_place`
-tasks, 3 `draw_anything` tasks (one per family) and the 50 handmade drawings as the
-`handmade_drawings` diagnostic; the pinned catalogue. The genesis is `robotensor/bpp-genesis` at
+The ranges below were calibrated on catalogue `2026.09-v4`, whose 174 `pick_and_place` tasks and
+3 `draw_anything` family tasks are exactly those of the pinned `2026.09-v5` (v4 also carried the
+handmade drawings, which were never scored). The genesis is `robotensor/bpp-genesis` at
 `e680d99f`, BPP's public checkpoints converted for the two skills.
 
 A v4 unit is harder than a v3 unit in two ways: its prompt is a generated demonstration of a
@@ -185,9 +185,8 @@ challenger can most improve on.
 `skills.draw_anything.success.threshold` moved from 4 px to 2.5 px with v4 - a fifth of the
 12 px pen. The v3 re-measurement below already showed that 4 px passed 0.90 of procedural
 drawings and left the skill little headroom; on the generated families the genesis passes
-0.600 at 2.5 px against 0.789 at 4 px. The handmade drawings, prompted with a stored human
-demonstration, are no longer scored; their rate at the same rule is published on every record
-as the `handmade_drawings` diagnostic.
+0.600 at 2.5 px against 0.789 at 4 px. The 50 human-drawn targets of the v2 and v3 pools are not
+in the catalogue at all any more: every drawing a duel scores is generated.
 
 ## Earlier pools
 

@@ -21,9 +21,8 @@ def test_materialize_smoke_duel(spec, smoke_pool, tmp_path):
     ctx = GenerationContext(bpp_root=bpp_root(), raw_root=root.parent, libero_datasets=root)
     out, report = materialize(units, smoke_pool, spec, did, tmp_path / "assets", ctx, workers=2)
     assert [u["unit_id"] for u in out] == [u["unit_id"] for u in units]
-    scored = [u for u in out if not u.get("diagnostic")]
-    assert scored and all(u["prompt_sha256"] for u in scored), report.notes()
-    for u in scored:
+    assert out and all(u["prompt_sha256"] for u in out), report.notes()
+    for u in out:
         demo = load_demo(tmp_path / "assets" / f"{u['unit_id']}.npz")
         assert (
             demo["meta"]["demo_id"] == u["demo"]
@@ -43,7 +42,5 @@ def test_materialize_smoke_duel(spec, smoke_pool, tmp_path):
             assert (
                 demo["agentview"].shape[1:] == (128, 128, 3) and demo["meta"]["task"] == u["task"]
             )
-    diag = [u for u in out if u.get("diagnostic")]
-    assert diag and all(u["prompt_sha256"] is None for u in diag)
     summary = report.summary()
     assert summary["pick_and_place"]["failed"] == 0 and summary["draw_anything"]["failed"] == 0

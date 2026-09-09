@@ -30,9 +30,8 @@ def sample_draw_change(spec: Spec, skill: str, rng: HashRng) -> dict[str, Any]:
 
 
 def draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng: HashRng):
-    """A board angle and pen start derived from the ids, and one change from the menu. A
-    generated task's prompt is generated for the unit later and carries the task's primitive
-    family; a diagnostic task is prompted with one of its stored demonstrations."""
+    """A board angle and pen start derived from the ids, and one change from the menu. The
+    prompt is generated for the unit later and carries the task's primitive family."""
     env = spec.env(skill)
     valid = task.valid_instances
     if not valid:
@@ -41,16 +40,9 @@ def draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng
     state = draw_instance(task.task_id, instance, env)
     uid = unit_id(spec.skill_code(skill), index)
     params: dict[str, Any] = {"angle_rad": state["angle_rad"], "cursor_px": state["cursor_px"]}
-    if task.diagnostic:
-        if not task.demos:
-            raise ValueError(f"task {task.task_id} has no demonstrations")
-        demo = task.demos[rng.below(len(task.demos))]
-        demo_angle = float(task.meta.get("demo_angles", {}).get(demo, 0.0))
-        params["demo_angle_rad"] = round(demo_angle, 6)
-    else:
-        demo = f"generated/{uid}"
-        params["family"] = str(task.meta.get("family", ""))
-    change = {"kind": "none"} if task.diagnostic else sample_draw_change(spec, skill, rng)
+    demo = f"generated/{uid}"
+    params["family"] = str(task.meta.get("family", ""))
+    change = sample_draw_change(spec, skill, rng)
     return Unit(
         unit_id=uid,
         skill=skill,
@@ -67,7 +59,6 @@ def draw_unit(spec: Spec, skill: str, index: int, task: PoolTask, seed: int, rng
         goal=[],
         steps=[],
         change=change,
-        diagnostic=task.diagnostic,
     )
 
 

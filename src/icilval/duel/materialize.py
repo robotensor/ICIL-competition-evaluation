@@ -241,7 +241,7 @@ def materialize(
     assets_dir.mkdir(parents=True, exist_ok=True)
     config_dir = assets_dir.parent / "libero-config"
     out_units = [dict(u) for u in units]
-    todo = [i for i, u in enumerate(out_units) if not u.get("diagnostic")]
+    todo = list(range(len(out_units)))
     tried: dict[int, set[str]] = {i: {out_units[i]["task"]} for i in todo}
     subs: dict[int, int] = dict.fromkeys(todo, 0)
     attempts: dict[int, int] = dict.fromkeys(todo, 0)

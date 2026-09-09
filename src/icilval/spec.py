@@ -87,18 +87,21 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
             errors.extend(simulator(str(s["simulator"])).validate_skill(sid, s))
         tasks = s.get("tasks") or {}
         need(
-            f"skills.{sid}.tasks.dataset",
-            isinstance(tasks.get("dataset"), str) and "/" in tasks["dataset"],
-        )
-        need(
             f"skills.{sid}.tasks.kind",
             isinstance(tasks.get("kind"), str) and bool(tasks.get("kind")),
         )
-        need(
-            f"skills.{sid}.tasks views|files",
-            (isinstance(tasks.get("views"), list) and bool(tasks["views"]))
-            or (isinstance(tasks.get("files"), dict) and bool(tasks["files"])),
-        )
+        # A skill whose tasks are all generated names no dataset; one that imports them names
+        # the dataset and which of its views or files to take.
+        if "dataset" in tasks:
+            need(
+                f"skills.{sid}.tasks.dataset",
+                isinstance(tasks.get("dataset"), str) and "/" in tasks["dataset"],
+            )
+            need(
+                f"skills.{sid}.tasks views|files",
+                (isinstance(tasks.get("views"), list) and bool(tasks["views"]))
+                or (isinstance(tasks.get("files"), dict) and bool(tasks["files"])),
+            )
         changes = s.get("changes")
         kinds = [k for k in changes if not k.startswith("_")] if isinstance(changes, dict) else []
         need(f"skills.{sid}.changes non-empty", bool(kinds))
@@ -113,12 +116,7 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
     need("catalogue.repo", isinstance(cat.get("repo"), str) and "/" in cat.get("repo", ""))
     need("catalogue.version", isinstance(cat.get("version"), str) and bool(cat.get("version")))
     need("pools renamed catalogue", "pools" not in doc)
-    for name, diag in (doc.get("diagnostics") or {}).items():
-        if name.startswith("_"):
-            continue
-        need(f"diagnostics.{name}.skill", isinstance(diag, dict) and diag.get("skill") in skills)
-        n = diag.get("units_per_duel") if isinstance(diag, dict) else None
-        need(f"diagnostics.{name}.units_per_duel>=0", isinstance(n, int) and n >= 0)
+    need("diagnostics removed", "diagnostics" not in doc)
     duel = doc.get("duel") or {}
     sizes = duel.get("sizes") or {}
     need("duel.default_size in sizes", duel.get("default_size") in sizes)
@@ -272,11 +270,6 @@ class Spec:
     @property
     def generation(self) -> dict[str, Any]:
         return self.raw["generation"]
-
-    @property
-    def diagnostics(self) -> dict[str, dict[str, Any]]:
-        """Unscored diagnostics published on every record: name -> its definition."""
-        return {k: v for k, v in self.raw.get("diagnostics", {}).items() if not k.startswith("_")}
 
     @property
     def catalogue(self) -> dict[str, Any]:

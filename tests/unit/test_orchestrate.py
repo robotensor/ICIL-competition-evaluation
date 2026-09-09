@@ -19,7 +19,7 @@ def make_rt(spec, tmp_path):
         spec_version=4,
         sources={},
         tasks={},
-        skills={s: {"eligible": [], "diagnostic": []} for s in spec.skills},
+        skills={s: {"eligible": []} for s in spec.skills},
         root=tmp_path,
     )
     return Runtime(

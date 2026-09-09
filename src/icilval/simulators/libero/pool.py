@@ -120,7 +120,6 @@ def stage_libero_gen(
                 language=B.language(tree),
                 n_init=n_init,
                 goal=B.goal_predicates(tree),
-                demos=[],
                 max_steps=spec.max_steps(skill),
                 steps=execution_steps(meta),
                 provenance={

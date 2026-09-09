@@ -12,12 +12,14 @@ def first_libero_task(pool):
     return next(t for _, t in sorted(pool.tasks.items()) if t.skill == "pick_and_place")
 
 
-def first_diagnostic_draw_task(pool):
-    return next(
-        t
-        for _, t in sorted(pool.tasks.items())
-        if t.skill == "draw_anything" and t.diagnostic and t.demos
-    )
+def a_generated_drawing(spec, tmp_path, seed=11, family="polygon"):
+    """A generated drawing and its demonstration: a catalogue holds none to load."""
+    from icilval.pools.demos import load_demo
+    from icilval.simulators.draw.generate import generate_drawing
+
+    out = tmp_path / "prompt.npz"
+    generate_drawing(spec, "draw_anything", family, seed, out, "generated/da-000")
+    return load_demo(out)
 
 
 def test_env_reset_observe_render_and_predicates(spec, smoke_pool):
@@ -53,20 +55,18 @@ def test_video_writer_faststart(spec, smoke_pool, tmp_path):
 
 def test_libero_tasks_carry_definitions_not_demonstrations(smoke_pool):
     task = first_libero_task(smoke_pool)
-    assert task.bddl and task.init is None and task.demos == []
+    assert task.bddl and task.init is None and not hasattr(task, "demos")
     assert task.steps and task.steps[0][0] in ("Grasp", "Open", "Turnon", "Push")
     assert task.meta["base_split"] == "libero_spatial"
     assert ("grasps_from" in task.meta) or ("actions_from" in task.meta)
 
 
 # ---------------------------------------------------------------- the drawing board
-def test_draw_board_replays_demo_to_zero_chamfer(spec, smoke_pool):
+def test_draw_board_replays_demo_to_zero_chamfer(spec, tmp_path):
     """A demonstration's own actions on its own board redraw its strokes exactly."""
-    from icilval.pools.demos import load_demo
     from icilval.simulators.draw.env import DrawBoard
 
-    task = first_diagnostic_draw_task(smoke_pool)
-    demo = load_demo(smoke_pool.path("demos") / f"{task.demos[0]}.npz")
+    demo = a_generated_drawing(spec, tmp_path)
     board = DrawBoard(spec, "draw_anything")
     angle = float(demo["boundary_angle"])
     cursor = (int(demo["agent_pos"][0][0]), int(demo["agent_pos"][0][1]))
@@ -92,22 +92,19 @@ def test_draw_board_replays_demo_to_zero_chamfer(spec, smoke_pool):
 
 
 def test_draw_episode_with_replaying_policy(spec, smoke_pool, tmp_path):
-    """The episode loop scores a policy that replays a diagnostic unit's stored demonstration
-    rotated into the unit's board."""
+    """The episode loop scores a policy that replays the unit's generated demonstration rotated
+    into the unit's own board."""
     from icilval.ids import ModelRef, duel_id
     from icilval.model.prompt import PromptInfo
-    from icilval.pools.demos import load_demo
     from icilval.pools.units import derive_units
     from icilval.simulators.draw.env import DrawBoard
     from icilval.simulators.draw.episode import run_draw_episode
 
     did = duel_id(spec.version, spec.track_id, ModelRef.make("a/b", "1" * 40), None)
     unit = next(
-        u
-        for u in derive_units(smoke_pool, spec, did, "smoke")
-        if u.skill == "draw_anything" and u.diagnostic
+        u for u in derive_units(smoke_pool, spec, did, "smoke") if u.skill == "draw_anything"
     ).as_dict()
-    demo = load_demo(smoke_pool.path("demos") / f"{unit['demo']}.npz")
+    demo = a_generated_drawing(spec, tmp_path)
     theta = float(unit["instance_params"]["angle_rad"]) - float(demo["boundary_angle"])
     c, s = np.cos(theta), np.sin(theta)
     rotated = demo["actions"].copy()

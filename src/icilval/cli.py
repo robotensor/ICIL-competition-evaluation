@@ -165,8 +165,13 @@ def cmd_catalogue(args) -> int:
         if unknown:
             print("unknown stage(s):", *unknown, "- stages are the skill ids and finalize")
             return 2
+        # a skill whose tasks are all generated names no dataset, so there is nothing to fetch
         datasets = tuple(
-            dict.fromkeys(str(spec.tasks(st)["dataset"]) for st in stages if st != "finalize")
+            dict.fromkeys(
+                str(spec.tasks(st)["dataset"])
+                for st in stages
+                if st != "finalize" and spec.tasks(st).get("dataset")
+            )
         )
         if args.fetch:
             for d in datasets:
@@ -304,14 +309,10 @@ def cmd_check(args) -> int:
 
 def cmd_render_demo(args) -> int:
     from .pools.demos import render_demo
-    from .pools.schema import Pool
 
     spec = _spec(args)
-    pool = Pool.load(args.pool)
-    task_id = args.demo.rsplit("/", 1)[0]
-    skill = pool.tasks[task_id].skill
-    sha = render_demo(pool.path("demos") / f"{args.demo}.npz", args.out, spec, skill)
-    print(f"{args.out} ({skill}) sha256={sha}")
+    sha = render_demo(args.prompt, args.out, spec, args.skill)
+    print(f"{args.out} ({args.skill}) sha256={sha}")
     return 0
 
 
@@ -653,13 +654,9 @@ def build_parser() -> argparse.ArgumentParser:
     ck.add_argument("--skill", action="append", default=None, help="check only these skills")
     ck.set_defaults(func=cmd_check)
 
-    rd = sub.add_parser("render-demo", help="render a pool demonstration to mp4")
-    rd.add_argument("--pool", required=True)
-    rd.add_argument(
-        "--demo",
-        required=True,
-        help="demo id, e.g. libero_spatial/<task>/demo_00 or drawanything_handmade/<task>/demo_00",
-    )
+    rd = sub.add_parser("render-demo", help="render a generated prompt to mp4")
+    rd.add_argument("--prompt", required=True, help="a prompt npz, e.g. <run>/assets/pp-000.npz")
+    rd.add_argument("--skill", required=True)
     rd.add_argument("--out", required=True)
     rd.set_defaults(func=cmd_render_demo)
 

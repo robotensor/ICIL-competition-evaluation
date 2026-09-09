@@ -1,5 +1,4 @@
-"""Demonstrations: one npz per demo under `demos/<task_id>/<demo>.npz`, read back for prompts and
-clips. Each simulator's `demos.py` writes its own arrays (see `simulators/<sim>/demos.py`);
+"""Demonstrations: one npz per prompt, read back for prompts and clips. Each simulator's `demos.py` writes its own arrays (see `simulators/<sim>/demos.py`);
 every file carries a `meta` JSON string: source file, demo key, index in file, steps.
 """
 
@@ -42,14 +41,14 @@ GENERATED_PREFIX = "generated/"
 
 
 def prompt_path(pool: Any, unit: dict[str, Any], assets_dir: str | Path | None) -> Path:
-    """The npz a unit is prompted with: a generated prompt in the duel's assets directory
-    (`<assets>/<unit_id>.npz`), else one of the catalogue's stored demonstrations."""
+    """The npz a unit is prompted with: its generated prompt in the duel's assets directory
+    (`<assets>/<unit_id>.npz`). A catalogue holds no demonstrations, so there is nowhere else."""
     demo = str(unit["demo"])
-    if demo.startswith(GENERATED_PREFIX):
-        if assets_dir is None:
-            raise ValueError(f"{unit['unit_id']}: generated prompt but no assets directory")
-        return Path(assets_dir) / f"{unit['unit_id']}.npz"
-    return pool.path("demos") / f"{demo}.npz"
+    if not demo.startswith(GENERATED_PREFIX):
+        raise ValueError(f"{unit['unit_id']}: prompt {demo} is not a generated one")
+    if assets_dir is None:
+        raise ValueError(f"{unit['unit_id']}: generated prompt but no assets directory")
+    return Path(assets_dir) / f"{unit['unit_id']}.npz"
 
 
 # ---------------------------------------------------------------- reading back

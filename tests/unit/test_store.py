@@ -159,7 +159,7 @@ def test_schema_rejects_axis_scores(spec, tmp_path):
 
 
 def test_schema_4_unit_fields(spec, tmp_path):
-    """A unit publishes its change, substitution and diagnostic flag, and the prompt's hash."""
+    """A unit publishes its change, whether it was substituted, and the prompt's hash."""
     sp = small_spec(spec, tmp_path, lines_per_part=1000)
     signer = Signer.generate()
     store = Store(tmp_path / "store", sp, signer)
@@ -178,12 +178,11 @@ def test_schema_4_unit_fields(spec, tmp_path):
             "demo": "t/demo_00",
             "change": {"kind": "camera", "pos": [0.01, 0.0, 0.02]},
             "substituted_from": "u",
-            "diagnostic": False,
             "prompt_sha256": "c" * 64,
         }
     )
     assert unit["change"]["kind"] == "camera" and unit["substituted_from"] == "u"
-    assert unit["prompt"]["sha256"] == "c" * 64 and unit["diagnostic"] is False
+    assert unit["prompt"]["sha256"] == "c" * 64 and "diagnostic" not in unit
     bare = unit_verdict_from_unit(
         {
             "unit_id": "da-000",
@@ -197,7 +196,7 @@ def test_schema_4_unit_fields(spec, tmp_path):
         }
     )
     assert bare["change"] == {"kind": "none"} and bare["substituted_from"] is None
-    assert bare["prompt"]["sha256"] is None and bare["diagnostic"] is False
+    assert bare["prompt"]["sha256"] is None and "diagnostic" not in bare
     rec = make_record(sp, "duel", 1, king, ch)
     rec["sub_scores"] = {"king": {"pick_and_place": {"camera": 1.0}}}
     # the prompt is published by hash next to the clips, and verify wants it there

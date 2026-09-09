@@ -1,12 +1,10 @@
 """The catalogue manifest: everything a duel draws from, content-addressed.
 
 A catalogue is a directory holding `catalogue.json` plus, per skill, the files its simulator
-needs to *generate* a unit: `bddl/` for LIBERO task definitions, and `demos/` only for the
-diagnostic tasks that are prompted with a stored demonstration. Tasks are the things a prompt
-can be generated for; a unit is one task, one numbered reset of its scene, a prompt generated
-for the unit and a seed. Eligibility is one list of task ids per skill, sealed into the id
-(`pool_id`, the name the records and the spec keep); diagnostic tasks are listed apart and never
-enter a score.
+needs to *generate* a unit: `bddl/` for LIBERO task definitions. It holds no demonstrations at
+all. Tasks are the things a prompt can be generated for; a unit is one task, one numbered reset
+of its scene, a prompt generated for the unit and a seed. Eligibility is one list of task ids
+per skill, sealed into the id (`pool_id`, the name the records and the spec keep).
 """
 
 from __future__ import annotations
@@ -30,18 +28,14 @@ class PoolTask:
     suite: str
     language: str
     n_init: int
-    demos: list[str]
     max_steps: int
     bddl: str | None = None
     init: str | None = None
     goal: list[list[str]] = field(default_factory=list)
     steps: list[list[str]] = field(default_factory=list)
-    demo_init_index: dict[str, int | None] = field(default_factory=dict)
     provenance: dict[str, Any] = field(default_factory=dict)
     instances: list[int] | None = None
     meta: dict[str, Any] = field(default_factory=dict)
-    #: an unscored diagnostic's task (`spec.json` diagnostics): prompted with a stored demonstration
-    diagnostic: bool = False
 
     @property
     def valid_instances(self) -> list[int]:
@@ -59,7 +53,7 @@ class Pool:
     spec_version: int
     sources: dict[str, Any]
     tasks: dict[str, PoolTask]
-    skills: dict[str, dict[str, list[str]]]  # skill -> {"eligible": [...], "diagnostic": [...]}
+    skills: dict[str, dict[str, list[str]]]  # skill -> {"eligible": [...]}
     pool_id: str | None = None
     root: Path | None = None
 
@@ -83,11 +77,7 @@ class Pool:
             sources=dict(d.get("sources", {})),
             tasks=tasks,
             skills={
-                s: {
-                    "eligible": list(e.get("eligible", [])),
-                    "diagnostic": list(e.get("diagnostic", [])),
-                }
-                for s, e in d.get("skills", {}).items()
+                s: {"eligible": list(e.get("eligible", []))} for s, e in d.get("skills", {}).items()
             },
             pool_id=d.get("pool_id"),
             root=root,
@@ -105,13 +95,10 @@ class Pool:
                 "n_init": t.n_init,
                 "goal": t.goal,
                 "steps": t.steps,
-                "demos": t.demos,
-                "demo_init_index": t.demo_init_index,
                 "max_steps": t.max_steps,
                 "provenance": t.provenance,
                 "instances": t.instances,
                 "meta": t.meta,
-                "diagnostic": t.diagnostic,
             }
 
         d: dict[str, Any] = {
@@ -121,10 +108,7 @@ class Pool:
             "sources": self.sources,
             "tasks": {k: task_dict(t) for k, t in sorted(self.tasks.items())},
             "skills": {
-                s: {
-                    "eligible": sorted(e.get("eligible", [])),
-                    "diagnostic": sorted(e.get("diagnostic", [])),
-                }
+                s: {"eligible": sorted(e.get("eligible", []))}
                 for s, e in sorted(self.skills.items())
             },
         }
@@ -165,9 +149,6 @@ class Pool:
     # -- lookups
     def eligible(self, skill: str) -> list[str]:
         return sorted(self.skills.get(skill, {}).get("eligible", []))
-
-    def diagnostic(self, skill: str) -> list[str]:
-        return sorted(self.skills.get(skill, {}).get("diagnostic", []))
 
     def tasks_of(self, skill: str) -> list[PoolTask]:
         return [t for _, t in sorted(self.tasks.items()) if t.skill == skill]

@@ -93,13 +93,15 @@ def test_parity_libero_generated_prompts(spec, genesis_dir, smoke_pool_or_skip, 
     assert successes / n >= FLOOR, f"success {successes}/{n}"
 
 
-def test_parity_draw_anything(spec, genesis_dir, smoke_pool_or_skip):
-    """The BPP drawing checkpoint, prompted with one stored human demonstration (the handmade
-    diagnostic's units), redraws it on a turned board within the success threshold on at least
-    DRAW_FLOOR of the units."""
-    from icilval.ids import ModelRef, duel_id
+def test_parity_draw_anything(spec, genesis_dir, smoke_pool_or_skip, tmp_path):
+    """The BPP drawing checkpoint, prompted with a demonstration generated for the unit, redraws
+    it on a board the unit's change moved within the success threshold on at least DRAW_FLOOR of
+    the units."""
+    from icilval.ids import ModelRef, duel_id, prompt_seed
     from icilval.pools.demos import load_demo
     from icilval.pools.units import derive_units
+    from icilval.simulators.draw.generate import generate_drawing
+    from icilval.simulators.draw.units import finalize_draw_unit
 
     pool = smoke_pool_or_skip
     if not pool.tasks_of("draw_anything"):
@@ -108,16 +110,24 @@ def test_parity_draw_anything(spec, genesis_dir, smoke_pool_or_skip):
     policy.load()
     did = duel_id(spec.version, spec.track_id, ModelRef.make("parity/draw", "1" * 40), None)
     units = [
-        u.as_dict()
-        for u in derive_units(pool, spec, did, "heavy")
-        if u.skill == "draw_anything" and u.diagnostic
+        u.as_dict() for u in derive_units(pool, spec, did, "heavy") if u.skill == "draw_anything"
     ][:DRAW_TASKS]
     if not units:
-        pytest.skip("catalogue has no diagnostic drawing tasks")
+        pytest.skip("catalogue has no drawing tasks")
     board = DrawBoard(spec, "draw_anything")
     successes, metrics = 0, []
     for unit in units:
-        demo = load_demo(pool.path("demos") / f"{unit['demo']}.npz")
+        out = tmp_path / f"{unit['unit_id']}.npz"
+        generate_drawing(
+            spec,
+            "draw_anything",
+            str(pool.tasks[unit["task"]].meta["family"]),
+            prompt_seed(did, "draw_anything", unit["index"], 0),
+            out,
+            unit["demo"],
+        )
+        demo = load_demo(out)
+        unit = finalize_draw_unit(unit, demo, spec)
         res = run_draw_episode(board, policy, unit, demo, spec)
         assert not res.void, res.error
         successes += int(res.success)
