@@ -41,6 +41,14 @@ class Unit:
     init: str | None
     goal: list[list[str]] = field(default_factory=list)
     steps: list[list[str]] = field(default_factory=list)
+    #: the one change applied to the scored scene: {"kind": <skills.<skill>.changes entry>, ...}
+    change: dict[str, Any] = field(default_factory=lambda: {"kind": "none"})
+    #: the task the unit was first derived for, when its prompt could not be generated
+    substituted_from: str | None = None
+    #: units of an unscored diagnostic never enter a score
+    diagnostic: bool = False
+    #: sha256 of the generated prompt once it exists
+    prompt_sha256: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)

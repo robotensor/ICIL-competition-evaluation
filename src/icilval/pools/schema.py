@@ -64,7 +64,7 @@ class Pool:
         schema = int(d.get("schema", POOL_SCHEMA))
         if schema != POOL_SCHEMA:
             raise ValueError(
-                f"pool schema {schema} is not {POOL_SCHEMA}; run `icilval pools upgrade`"
+                f"pool schema {schema} is not {POOL_SCHEMA}; rebuild it with `icilval pools build`"
             )
         tasks = {
             k: PoolTask(task_id=k, **{kk: vv for kk, vv in v.items() if kk != "task_id"})

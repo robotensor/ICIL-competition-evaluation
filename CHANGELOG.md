@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### Spec v4: generated prompts and one change per unit (store schema 4, live schema 4)
+
+- (feat): `spec.json` version 4. Every unit's prompt demonstration is generated at duel time with
+  BPP's own generators and the scored scene differs from it by exactly one change drawn from the
+  skill's menu, so a skill carries `changes` (public ranges) and `sub_scores`; the spec gains a
+  `generation` block, drawing `generation.families` (BPP primitives, polygons, glyphs), an
+  unscored `diagnostics` block (BPP's 50 handmade drawings) and `catalogue` in place of `pools`.
+  `goal_chain` leaves the skill list; the drawing threshold is 2.5 px (#15).
+- (feat): store and live schema 4: a unit publishes its `change`, `substituted_from`,
+  `diagnostic` flag and `prompt.sha256`; records carry `sub_scores` and `diagnostics`; live frames
+  have a `materializing` phase (#15).
+- (feat): scoring excludes diagnostic units, reports sub-scores per `sub_scores.by` group and
+  the rate of each diagnostic; the crown still rests on the mean over skills (#15).
+- (chore): `icilval pools upgrade` is retired; an old pool is refused with a pointer to the build
+  command (#15).
+- (docs): `docs/protocol.md` describes the v4 protocol; `docs/plan-spec-v4.md` holds the plan and
+  work breakdown for the milestone (#14, #15).
+
 ### Pluggable simulators
 
 - (refactor): `icilval.simulators` is a registry of `Simulator` records (policy factory, unit

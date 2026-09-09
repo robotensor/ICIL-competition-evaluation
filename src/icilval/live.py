@@ -14,7 +14,7 @@ from .store.records import now_iso
 
 log = logging.getLogger(__name__)
 
-PHASES = ("fetching", "checking", "evaluating", "publishing", "done", "failed")
+PHASES = ("fetching", "checking", "materializing", "evaluating", "publishing", "done", "failed")
 
 
 def build_frame(

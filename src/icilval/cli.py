@@ -193,13 +193,6 @@ def cmd_pools(args) -> int:
         pool.save()
         print(json.dumps(summary(pool), indent=1))
         return 0
-    if args.pools_cmd == "upgrade":
-        from .pools.upgrade import upgrade_pool
-
-        pool = upgrade_pool(Path(args.old), Path(args.out), spec)
-        print("eligible:", json.dumps(finalize(pool, spec)))
-        print(json.dumps(summary(pool), indent=1))
-        return 0
     if args.pools_cmd == "verify":
         errors = verify_pool(Path(args.pool), spec)
         for e in errors:
@@ -629,11 +622,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="delete each demonstration hdf5 after its demos are imported (they total ~160 GB)",
     )
     po_b.add_argument("--version", default=None)
-    po_u = po_sub.add_parser(
-        "upgrade", help="schema-2 pool (perturbation groups) -> schema-3 pool (tasks only)"
-    )
-    po_u.add_argument("--old", required=True, help="the schema-2 pool directory")
-    po_u.add_argument("--out", required=True)
     po_v = po_sub.add_parser("verify")
     po_v.add_argument("pool")
     po_p = po_sub.add_parser("push")

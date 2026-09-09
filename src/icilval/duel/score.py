@@ -32,7 +32,7 @@ def skill_rate(units: Iterable[dict[str, Any]], side: str, skill: str) -> float 
     scored = 0
     successes = 0
     for u in units:
-        if u.get("skill") != skill or u.get("void"):
+        if u.get("skill") != skill or u.get("void") or u.get("diagnostic"):
             continue
         s = side_success(u, side)
         if s is None:
@@ -40,6 +40,58 @@ def skill_rate(units: Iterable[dict[str, Any]], side: str, skill: str) -> float 
         scored += 1
         successes += int(s)
     return successes / scored if scored else None
+
+
+def lookup(unit: dict[str, Any], path: str) -> Any:
+    """A dotted path into a unit verdict (`change.kind`, `instance_params.family`)."""
+    cur: Any = unit
+    for part in path.split("."):
+        if not isinstance(cur, dict):
+            return None
+        cur = cur.get(part)
+    return cur
+
+
+def sub_scores(
+    units: Iterable[dict[str, Any]], side: str, keys: dict[str, str]
+) -> dict[str, dict[str, float]]:
+    """Per skill, the success rate per value of the skill's sub-score key (`Spec.sub_score_key`):
+    a change kind, a drawing family. Published on the record, never part of a score."""
+    units = list(units)
+    out: dict[str, dict[str, float]] = {}
+    for skill, key in keys.items():
+        groups: dict[str, list[int]] = {}
+        for u in units:
+            if u.get("skill") != skill or u.get("void") or u.get("diagnostic"):
+                continue
+            s = side_success(u, side)
+            if s is None:
+                continue
+            value = lookup(u, key)
+            groups.setdefault("none" if value is None else str(value), []).append(int(s))
+        out[skill] = {g: sum(v) / len(v) for g, v in sorted(groups.items())}
+    return out
+
+
+def diagnostic_rates(
+    units: Iterable[dict[str, Any]], side: str, diagnostics: dict[str, dict[str, Any]]
+) -> dict[str, float | None]:
+    """The success rate of each unscored diagnostic's units (`Spec.diagnostics`), found by the
+    task group the diagnostic names."""
+    units = list(units)
+    out: dict[str, float | None] = {}
+    for name, diag in diagnostics.items():
+        prefix = f"{diag['group']}/"
+        scored = [
+            side_success(u, side)
+            for u in units
+            if u.get("diagnostic")
+            and str(u.get("task", "")).startswith(prefix)
+            and not u.get("void")
+            and side_success(u, side) is not None
+        ]
+        out[name] = sum(int(bool(s)) for s in scored) / len(scored) if scored else None
+    return out
 
 
 def average(per_skill: dict[str, float | None], skills: Sequence[str]) -> float | None:
