@@ -45,6 +45,7 @@ def unit(skill, i):
             "seed": i,
             "instance_params": {},
             "demo": "t/demo_00",
+            "prompt_sha256": "c" * 64,
         }
     )
 
@@ -85,6 +86,7 @@ def test_merge_and_media_flush(spec, tmp_path):
         and u["challenger_success"] is False
         and u["outcome"] == "king"
         and u["prompt"]["chunks"] == 5
+        and u["prompt"]["sha256"] == "c" * 64  # a side's report never drops the prompt hash
     )
     orch._merge(state, "king", {"unit_id": "da-000", "success": True, "metric": 6.5, "steps": 120})
     assert state["units"][1]["king_metric"] == 6.5

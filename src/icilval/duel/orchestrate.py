@@ -175,7 +175,7 @@ class Orchestrator:
                 u[f"{side}_error"] = rec.get("error")
                 if rec.get("prompt_chunks"):
                     u["prompt"] = {
-                        "demo_id": u["prompt"]["demo_id"],
+                        **u["prompt"],  # keeps demo_id and the prompt's sha256
                         "steps": rec.get("prompt_steps", 0),
                         "chunks": rec.get("prompt_chunks", 0),
                     }
