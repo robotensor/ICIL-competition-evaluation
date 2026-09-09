@@ -81,6 +81,12 @@
   the generator now lifts their grasps from the task's own teleoperation file, one of the
   catalogue's grasp sources, and the prompt's `meta` says `grasps_from: "own"` (#31).
 
+- (chore): the result store `robotensor/icil-competition-results` is rebuilt on schema 4 and
+  mirrored with `--prune`: the genesis `robotensor/bpp-genesis@e680d99f` and a light self-duel on
+  catalogue `2026.09-v4` (19 ties, 56 media files, every prompt published by hash, `store verify`
+  OK; genesis scores on that duel 0.44 `pick_and_place` over 9 units and 0.78 `draw_anything`,
+  average 0.61, handmade diagnostic 0 of 1). Same signing key as the v2 and v3 stores (#22).
+
 ### Pluggable simulators
 
 - (refactor): `icilval.simulators` is a registry of `Simulator` records (policy factory, unit
