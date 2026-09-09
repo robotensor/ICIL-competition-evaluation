@@ -79,3 +79,12 @@ def test_observation_change_is_seeded_clipped_and_leaves_the_rest_alone():
         {"kind": "observation", "brightness_scale": 0.5, "noise_sigma": 0.0, "noise_seed": 1}
     )(obs)
     assert dim["agentview"].max() == 100
+
+
+def test_sample_change_can_be_forced_to_a_kind(spec):
+    import pytest
+
+    for kind in spec.changes(PP):
+        assert sample_change(spec, PP, STEPS, HashRng("f", 1), kind=kind)["kind"] == kind
+    with pytest.raises(ValueError, match="not in"):
+        sample_change(spec, PP, STEPS, HashRng("f", 1), kind="teleport")

@@ -41,11 +41,16 @@ def target_object(steps: list[list[str]]) -> str | None:
     return None
 
 
-def sample_change(spec: Spec, skill: str, steps: list[list[str]], rng: HashRng) -> dict[str, Any]:
-    """One entry of the skill's menu, uniform over the entries, with its parameters drawn
-    uniformly in the published ranges."""
+def sample_change(
+    spec: Spec, skill: str, steps: list[list[str]], rng: HashRng, kind: str | None = None
+) -> dict[str, Any]:
+    """One entry of the skill's menu, uniform over the entries (or `kind`, for a calibration
+    sweep), with its parameters drawn uniformly in the published ranges."""
     menu = spec.changes(skill)
-    kind = sorted(menu)[rng.below(len(menu))]
+    if kind is None:
+        kind = sorted(menu)[rng.below(len(menu))]
+    elif kind not in menu:
+        raise ValueError(f"{kind!r} is not in skills.{skill}.changes")
     cfg = menu[kind]
     if kind == "displace":
         radius, lo = float(cfg["radius_m"]), float(cfg["min_delta_m"])
