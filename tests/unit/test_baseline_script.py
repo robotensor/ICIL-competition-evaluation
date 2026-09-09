@@ -33,3 +33,19 @@ def test_sweep_units_forces_a_change_kind_and_spreads_over_tasks(spec):
     assert len(glyph) == 1 and glyph[0]["instance_params"]["family"] == "glyph"
     assert glyph[0]["change"] == {"kind": "pen_start"}
     assert baseline.sweep_units(pool, spec, PP, 1, None, 2)  # max_tasks spreads over the list
+
+
+def test_force_kind_puts_the_swept_kind_back_on_substituted_units(spec):
+    baseline = _baseline()
+    pool = make_pool()
+    units = baseline.sweep_units(pool, spec, PP, 1, None, None, change="lighting")
+    units[0]["change"] = {"kind": "camera", "pos_delta": [0, 0, 0], "angles": [0, 0, 0]}
+    units[0]["substituted_from"] = "elsewhere"
+    forced = baseline.force_kind(units, pool, spec, PP, "lighting")
+    assert (
+        all(u["change"]["kind"] == "lighting" for u in forced) and "lights" in forced[0]["change"]
+    )
+    assert forced[1] == units[1]  # untouched when already the swept kind
+    da = baseline.sweep_units(pool, spec, DA, 1, None, None, family="glyph", change="pen_start")
+    da[0]["change"] = {"kind": "board_angle"}
+    assert baseline.force_kind(da, pool, spec, DA, "pen_start")[0]["change"]["kind"] == "pen_start"

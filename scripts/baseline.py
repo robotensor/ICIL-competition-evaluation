@@ -72,6 +72,26 @@ def sweep_units(
     return units
 
 
+def force_kind(units: list[dict], pool: Pool, spec, skill: str, kind: str) -> list[dict]:
+    """After materializing, a substituted unit was re-derived with a fresh change draw; a sweep
+    that forces one kind puts that kind back (a LIBERO change is applied at scoring time, so the
+    prompt is unaffected)."""
+    from icilval.simulators.libero.changes import sample_change
+
+    out = []
+    for u in units:
+        u = dict(u)
+        if not u.get("diagnostic") and u.get("change", {}).get("kind") != kind:
+            if spec.simulator(skill) == "libero":
+                task = pool.tasks[u["task"]]
+                rng = HashRng("baseline-change", u["task"], u["index"])
+                u["change"] = sample_change(spec, skill, task.steps, rng, kind=kind)
+            else:
+                u["change"] = {**u["change"], "kind": kind}
+        out.append(u)
+    return out
+
+
 def summarize(pool: Pool, units: list[dict], out: Path, skill: str, spec) -> dict:
     from icilval.duel.side_runner import read_results
 
@@ -200,6 +220,8 @@ def main() -> int:
         (out / "materialize.json").write_text(
             json.dumps([g.as_dict() for g in report.units], indent=1)
         )
+        if args.change:
+            units = force_kind(units, pool, spec, args.skill, args.change)
         units_path.write_text(json.dumps(units, indent=1))
         for note in report.notes():
             print(note)
