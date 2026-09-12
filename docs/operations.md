@@ -4,14 +4,33 @@
 icilval keys generate --out keys                      # validator signing key (keep keys/ private)
 icilval store init store --key keys/validator.ed25519 --pool-id <pool_id>
 icilval daemon --store store --pool pools/2026.09-v3 --key keys/validator.ed25519 \
-  --queue queue/queue.json --runs runs --admin-token "$ICIL_ADMIN_TOKEN" \
+  --queue queue --runs runs --admin-token "$ICIL_ADMIN_TOKEN" \
   --live https://<dashboard> --live-token "$ICIL_LIVE_TOKEN" \
   --mirror <owner>/icil-competition-results --docker-image icilval/model:dev
 ```
 
-The daemon pops the queue, runs the duel (each side in the model container with `--network none`),
-publishes the signed record, mirrors the store and posts live frames. `--once` runs a single entry.
-Without `--docker-image` the sides run in-process (the BPP conda environment).
+The daemon takes one entry from **each field's** queue in turn, runs the duel (each side in the
+model container with `--network none`), publishes the signed record, mirrors the store and posts
+live frames. `--once` runs a single pass. Without `--docker-image` the sides run in-process (the
+BPP conda environment).
+
+Round-robin rather than a worker per field: the store has one writer, and a lock fine enough to
+let two fields publish at once would risk a torn index. The cost is that a long duel in one field
+delays the other's queue. A field whose benchmark is not installed is logged and skipped, so an
+absent plugin never stops another field and is never scored as empty.
+
+### The queue is a directory
+
+`--queue` names a **directory** holding one file per field (`queue/<track>.json`), because a
+field's block counter advances with its own lineage. Upgrading from the single-file layout is one
+move, which the validator refuses to guess:
+
+```bash
+mkdir -p queue && git mv queue.json queue/sensorimotor.json   # or plain mv
+```
+
+Pointing `--queue` at the old file raises and says exactly this, rather than starting from an
+empty queue and silently losing the entries in it.
 
 Smoke test end to end (in the BPP environment; `--model-dir` holds one directory per skill):
 
@@ -21,9 +40,10 @@ icilval store verify /tmp/store
 ```
 
 Genesis: convert one public checkpoint per skill (`convert-ckpt --arch-name <skills.<skill>.architecture>`)
-into `<dir>/<skill>`, publish the directory as `spec.baseline.repo`, pin the revision, then
-`icilval genesis --king <repo>@<revision> …`
-(or simply queue it on an empty throne).
+into `<dir>/<skill>`, publish the directory as that field's `baselines.<track>.repo`, pin the
+revision, then `icilval genesis --king <repo>@<revision> …` (or simply queue it on an empty
+throne). A field whose `baselines` entry is `null` opens with no king and crowns its first
+entrant by genesis.
 
 The drawing board runs pygame headless: `SDL_VIDEODRIVER=dummy` (the container sets it).
 

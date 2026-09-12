@@ -69,10 +69,14 @@ def _spread(n: int, entries: list[str], rng: HashRng) -> list[str]:
 
 
 # ---------------------------------------------------------------- derivation
-def derive_units(pool: Pool, spec: Spec, duel: str, size: str | None = None) -> list[Unit]:
-    per_skill = spec.units_per_skill(spec.sole_track, size)
+def derive_units(
+    pool: Pool, spec: Spec, duel: str, size: str | None = None, track: str | None = None
+) -> list[Unit]:
+    """The unit list of one duel, in one field. A field scores its own skills and no others."""
+    track = track or spec.sole_track
+    per_skill = spec.units_per_skill(track, size)
     out: list[Unit] = []
-    for skill in spec.all_skills:
+    for skill in spec.skills(track):
         rng = HashRng(duel, skill)
         entries = pool.eligible(skill)
         if per_skill and not entries:

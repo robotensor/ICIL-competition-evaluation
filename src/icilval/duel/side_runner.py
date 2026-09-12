@@ -48,6 +48,7 @@ def run_side(
     pool: Pool,
     units: list[dict[str, Any]],
     spec: Spec,
+    track: str,
     out_dir: Path,
     device: str = "cuda",
     on_unit: Callable[[dict[str, Any]], None] | None = None,
@@ -123,7 +124,7 @@ def run_side(
 
     ctx = SideContext()
     try:
-        for skill in spec.all_skills:
+        for skill in spec.skills(track):
             todo = [u for u in units if u["skill"] == skill and u["unit_id"] not in done]
             if not todo:
                 continue
