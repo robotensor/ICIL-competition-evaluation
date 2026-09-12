@@ -115,7 +115,7 @@ class _Spec:
         self.raw = {"benchmarks": benchmarks} if benchmarks is not None else {}
 
     @property
-    def skills(self):
+    def all_skills(self):
         return tuple(self._mapping)
 
     def simulator(self, skill: str) -> str:

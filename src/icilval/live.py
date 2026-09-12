@@ -38,7 +38,7 @@ def build_frame(
         raise ValueError(f"phase must be one of {PHASES}")
     per_skill: dict[str, dict[str, dict[str, int]]] = {s: {} for s in ("challenger", "king")}
     for s in per_skill:
-        for skill in spec.skills:
+        for skill in spec.all_skills:
             skill_units = [u for u in units if u.get("skill") == skill]
             done = sum(
                 1 for u in skill_units if isinstance(u.get(f"{s}_success"), bool) or u.get("void")

@@ -213,7 +213,7 @@ def check_submission(
         report.errors.append(
             f"repository is {report.repo_bytes} bytes; limit {model_spec['max_repo_bytes']}"
         )
-    for skill in skills or spec.skills:
+    for skill in skills or spec.all_skills:
         sub = model_dir / skill
         if not sub.is_dir():
             report.skills[skill] = SkillReport(

@@ -32,7 +32,7 @@ def open_pool(out: Path, spec: Spec, version: str) -> Pool:
         spec_version=spec.version,
         sources={},
         tasks={},
-        skills={s: {"eligible": []} for s in spec.skills},
+        skills={s: {"eligible": []} for s in spec.all_skills},
         root=out,
     )
 
@@ -72,7 +72,7 @@ def eligible_tasks(pool: Pool, skill: str) -> list[str]:
 
 
 def finalize(pool: Pool, spec: Spec) -> dict[str, int]:
-    pool.skills = {skill: {"eligible": eligible_tasks(pool, skill)} for skill in spec.skills}
+    pool.skills = {skill: {"eligible": eligible_tasks(pool, skill)} for skill in spec.all_skills}
     pool.spec_version = spec.version
     pool.seal()
     pool.save()
@@ -89,7 +89,7 @@ def verify_pool(root: Path, spec: Spec | None = None) -> list[str]:
         for d in t.demos:
             if not (pool.path("demos") / f"{d}.npz").exists():
                 errors.append(f"{tid}: missing demo {d}")
-        if spec is not None and t.skill not in spec.skills:
+        if spec is not None and t.skill not in spec.all_skills:
             errors.append(f"{tid}: unknown skill {t.skill}")
         elif spec is not None:
             # Whatever this task's simulator can check about its own files, which the generic
@@ -97,7 +97,7 @@ def verify_pool(root: Path, spec: Spec | None = None) -> list[str]:
             errors.extend(
                 f"{tid}: {e}" for e in simulators.for_skill(spec, t.skill).verify_pool_task(pool, t)
             )
-    skills = list(spec.skills) if spec is not None else list(pool.skills)
+    skills = list(spec.all_skills) if spec is not None else list(pool.skills)
     for skill in skills:
         if not pool.eligible(skill):
             errors.append(f"{skill}: nothing eligible")

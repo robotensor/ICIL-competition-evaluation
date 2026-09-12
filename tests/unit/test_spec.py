@@ -8,7 +8,7 @@ from icilval.spec import load_spec_file, validate_spec
 def test_spec_loads_and_fingerprints(spec):
     assert spec.version == 3
     assert spec.track_id == "icil_1demo"
-    assert spec.skills == ("pick_and_place", "goal_chain", "draw_anything")
+    assert spec.all_skills == ("pick_and_place", "goal_chain", "draw_anything")
     assert (
         spec.skill_code("pick_and_place") == "pp" and spec.skill_for_code("da") == "draw_anything"
     )
@@ -20,7 +20,7 @@ def test_spec_loads_and_fingerprints(spec):
     assert "perturbations" not in spec.skill("pick_and_place")
     lo, hi = spec.env("draw_anything")["board_angle_range_rad"]
     assert lo < 0 < hi
-    assert spec.units_per_duel("smoke") == len(spec.skills) * spec.units_per_skill("smoke")
+    assert spec.units_per_duel("smoke") == len(spec.all_skills) * spec.units_per_skill("smoke")
     assert spec.size_of("bogus") == spec.default_size
     assert len(spec.fingerprint) == 64
     assert 0 <= spec.score_margin <= 100

@@ -41,12 +41,12 @@ def upgrade_pool(old_root: Path, out: Path, spec: Spec) -> Pool:
             },
         },
         tasks={},
-        skills={s: {"eligible": []} for s in spec.skills},
+        skills={s: {"eligible": []} for s in spec.all_skills},
         root=out,
     )
     out.mkdir(parents=True, exist_ok=True)
     for tid, t in sorted(doc["tasks"].items()):
-        if t["skill"] not in spec.skills:
+        if t["skill"] not in spec.all_skills:
             log.info("drop %s: skill %s is not in the spec", tid, t["skill"])
             continue
         meta = dict(t.get("meta", {}))

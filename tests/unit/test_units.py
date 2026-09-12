@@ -110,8 +110,8 @@ def test_units_deterministic_and_spread_over_tasks(spec):
     again = derive_units(pool, spec, did, "heavy")
     assert [u.as_dict() for u in units] == [u.as_dict() for u in again]
     per = spec.units_per_skill("heavy")
-    assert len(units) == len(spec.skills) * per
-    for skill in spec.skills:
+    assert len(units) == len(spec.all_skills) * per
+    for skill in spec.all_skills:
         skill_units = [u for u in units if u.skill == skill]
         assert len(skill_units) == per
         assert [u.index for u in skill_units] == list(range(per))

@@ -33,7 +33,7 @@ def arch_dir() -> Path:
 def test_genesis_passes_fingerprint(spec, genesis_dir):
     rep = check_submission(genesis_dir, spec, arch_dir())
     assert rep.ok, rep.errors
-    assert set(rep.skills) == set(spec.skills)
+    assert set(rep.skills) == set(spec.all_skills)
 
 
 def test_parity_libero_spatial(spec, genesis_dir, smoke_pool_or_skip):
