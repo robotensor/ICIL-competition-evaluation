@@ -30,6 +30,51 @@
       ],
       "default_size": "heavy",
       "_comment": "Renamed from the v3 track id 'icil_1demo'; the id is inside every signed record, so the store is rebuilt at v5. The replay shortcut is closed here by scoring from a different initial state than the demonstration started from (prompt_instance_disjoint)."
+    },
+    "video_only": {
+      "id": "video_only",
+      "code": "vo",
+      "slug": "video-only",
+      "short": "Video-only",
+      "title": "Video-only demonstration",
+      "blurb": "The model is shown one demonstration as frames only - no action trajectory, no proprioception - and must do the task from the identical initial scene.",
+      "k_demos": 1,
+      "language": "none",
+      "demonstration": {
+        "view": "video_only",
+        "modalities": [
+          "video"
+        ],
+        "withheld": [
+          "actions",
+          "proprio"
+        ]
+      },
+      "protocol": "same_initial_state",
+      "prompt_instance_disjoint": false,
+      "prompts": "materialized",
+      "skills": [
+        "rt_pick_and_place",
+        "rt_stacking",
+        "rt_press_push"
+      ],
+      "default_size": "smoke",
+      "sizes": {
+        "smoke": {
+          "units_per_skill": 1
+        },
+        "light": {
+          "units_per_skill": 3
+        },
+        "medium": {
+          "units_per_skill": 6
+        },
+        "heavy": {
+          "units_per_skill": 12
+        }
+      },
+      "max_void_fraction": 0.2,
+      "_comment": "Same Scene: the demonstration starts in the very scene the rollout is scored in, so replaying its actions would be perfect - which is exactly why they are withheld, and why this field and the sensorimotor one close the same shortcut in opposite ways. Its prompts are materialized per duel and published with the event rather than up front, because a demonstration of the scored scene is the answer for it. Sizes are small and the void tolerance higher: a unit is a scene rebuild plus a rollout, and a rebuild that drifts is the benchmark's fault rather than the model's."
     }
   },
   "benchmarks": {
@@ -40,6 +85,14 @@
     "draw": {
       "distribution": "icilval",
       "in_repo": true
+    },
+    "robotwin": {
+      "distribution": "robotwin-icil-competition",
+      "in_repo": false,
+      "repo": "robotensor/robotwin-icil-benchmark",
+      "version": null,
+      "wheel_sha256": null,
+      "_comment": "Pinned by distribution, version and wheel sha256 once published: entry-point discovery imports code into the validator, so what it may import is part of the contract."
     }
   },
   "_benchmarks_comment": "Which distribution provides each simulator a skill names. An in-repo one needs no pin; one from another repository is found through the 'icilval.benchmarks' entry point group and is pinned by distribution, version and wheel sha256, because entry-point discovery imports code into the validator.",
@@ -168,6 +221,144 @@
         "threshold": 4.0,
         "_comment": "A unit succeeds iff the lowest symmetric Chamfer distance, in canvas pixels, between the demonstrated strokes and the drawn strokes at any step of the episode is at most threshold (the pen is 12 px wide). Calibrated on 80 units drawn from pool 2026.09-v2 with the genesis checkpoint: best-Chamfer percentiles 10/25/50/75/90 = 0.96/1.39/2.46/3.83/7.21 px; the baseline succeeds on 0.79 of the units at 4 px, its misses being the long multi-part drawings. See docs/pools.md."
       }
+    },
+    "rt_pick_and_place": {
+      "code": "rp",
+      "title": "Pick and place (RoboTwin)",
+      "blurb": "Watch one demonstration of a bimanual pick and place, as frames only, then do it from the identical initial scene. RoboTwin 2.0's own expert produced the demonstration and its own check decides the outcome.",
+      "architecture": "uniskill_v1",
+      "simulator": "robotwin",
+      "max_steps": 500,
+      "tasks": {
+        "dataset": "robotensor/robotwin-icil-catalogue",
+        "kind": "same_scene",
+        "files": {
+          "v1": "catalogue.json"
+        },
+        "suite": "v1",
+        "category": "pick_and_place"
+      },
+      "environment": {
+        "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
+        "embodiment": "aloha-agilex",
+        "camera_profile": "stock",
+        "cameras": [
+          "head_camera",
+          "front_camera",
+          "left_camera",
+          "right_camera"
+        ],
+        "camera_resolution": 320,
+        "control_freq": 20,
+        "action_dim": 14,
+        "action_type": "qpos",
+        "obs_history": 2,
+        "action_horizon": 16,
+        "exec_horizon": 8,
+        "policy_image_resolution": 128,
+        "skill_encoder": {
+          "repo": "HanjungKim/UniSkill",
+          "revision": "b8d6cba",
+          "file": "UniSkill_final_weight/idm.pth",
+          "sha256": null,
+          "skill_dim": 64,
+          "k": 20,
+          "rate_hz": 20,
+          "_comment": "Organizer-owned and frozen: the skill encoder is a preprocessor in the validator's image, not part of a submission, so two entrants are comparable and nobody can smuggle capability into it. sha256 is pinned when the architecture template is emitted."
+        }
+      }
+    },
+    "rt_stacking": {
+      "code": "rs",
+      "title": "Stacking (RoboTwin)",
+      "blurb": "Watch one demonstration of stacking two objects, as frames only, then do it from the identical initial scene. The longest-horizon of the three, so its step cap is the highest.",
+      "architecture": "uniskill_v1",
+      "simulator": "robotwin",
+      "max_steps": 900,
+      "tasks": {
+        "dataset": "robotensor/robotwin-icil-catalogue",
+        "kind": "same_scene",
+        "files": {
+          "v1": "catalogue.json"
+        },
+        "suite": "v1",
+        "category": "stacking"
+      },
+      "environment": {
+        "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
+        "embodiment": "aloha-agilex",
+        "camera_profile": "stock",
+        "cameras": [
+          "head_camera",
+          "front_camera",
+          "left_camera",
+          "right_camera"
+        ],
+        "camera_resolution": 320,
+        "control_freq": 20,
+        "action_dim": 14,
+        "action_type": "qpos",
+        "obs_history": 2,
+        "action_horizon": 16,
+        "exec_horizon": 8,
+        "policy_image_resolution": 128,
+        "skill_encoder": {
+          "repo": "HanjungKim/UniSkill",
+          "revision": "b8d6cba",
+          "file": "UniSkill_final_weight/idm.pth",
+          "sha256": null,
+          "skill_dim": 64,
+          "k": 20,
+          "rate_hz": 20,
+          "_comment": "Organizer-owned and frozen: the skill encoder is a preprocessor in the validator's image, not part of a submission, so two entrants are comparable and nobody can smuggle capability into it. sha256 is pinned when the architecture template is emitted."
+        }
+      }
+    },
+    "rt_press_push": {
+      "code": "ru",
+      "title": "Press and push (RoboTwin)",
+      "blurb": "Watch one demonstration of pressing or pushing something, as frames only, then do it from the identical initial scene. The shortest-horizon of the three.",
+      "architecture": "uniskill_v1",
+      "simulator": "robotwin",
+      "max_steps": 400,
+      "tasks": {
+        "dataset": "robotensor/robotwin-icil-catalogue",
+        "kind": "same_scene",
+        "files": {
+          "v1": "catalogue.json"
+        },
+        "suite": "v1",
+        "category": "press_push"
+      },
+      "environment": {
+        "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
+        "embodiment": "aloha-agilex",
+        "camera_profile": "stock",
+        "cameras": [
+          "head_camera",
+          "front_camera",
+          "left_camera",
+          "right_camera"
+        ],
+        "camera_resolution": 320,
+        "control_freq": 20,
+        "action_dim": 14,
+        "action_type": "qpos",
+        "obs_history": 2,
+        "action_horizon": 16,
+        "exec_horizon": 8,
+        "policy_image_resolution": 128,
+        "skill_encoder": {
+          "repo": "HanjungKim/UniSkill",
+          "revision": "b8d6cba",
+          "file": "UniSkill_final_weight/idm.pth",
+          "sha256": null,
+          "skill_dim": 64,
+          "k": 20,
+          "rate_hz": 20,
+          "_comment": "Organizer-owned and frozen: the skill encoder is a preprocessor in the validator's image, not part of a submission, so two entrants are comparable and nobody can smuggle capability into it. sha256 is pinned when the architecture template is emitted."
+        }
+      }
     }
   },
   "pools": {
@@ -179,6 +370,11 @@
       "sensorimotor": {
         "version": "2026.09-v3",
         "pool_id": "73a98b0821be1fdbb5fb7b08219be6041c644ba35d634a7068688aaf501db843"
+      },
+      "video_only": {
+        "version": null,
+        "pool_id": null,
+        "_comment": "No pool: this field materializes its prompts per duel and publishes them with the event."
       }
     }
   },
@@ -284,6 +480,7 @@
       "revision": "aa24179bcc6d18185b4b07c995bbd0d15ac10b8a",
       "label": "BPP public checkpoints, converted (austinpatel/liberogen_spatial_combination, austinpatel/liberogen_goal_chain, austinpatel/drawanything_sim)",
       "_comment": "The genesis king: one repo holding one converted public checkpoint per skill, one directory per skill."
-    }
+    },
+    "video_only": null
   }
 }
