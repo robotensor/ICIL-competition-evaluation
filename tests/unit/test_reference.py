@@ -97,6 +97,9 @@ def test_the_listing_is_rebuilt_from_disk_and_repeats_only_what_is_signed(tmp_pa
         "bpp-robotwin-same-scene",
     ], "newest first"
     assert doc["references"][0]["benchmark"]["simulator"] == "robotwin"
+    assert doc["references"][0]["demonstration_shown"]["view"] == "sensorimotor", (
+        "the view is what decides where an exhibit is worth offering"
+    )
     assert all("track" not in item for item in doc["references"]), "an exhibit is under no field"
 
     # It is rebuilt, not appended: an exhibit removed from disk leaves the listing.

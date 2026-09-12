@@ -136,8 +136,14 @@ def listing(store_root: str | Path) -> dict[str, Any]:
                 "headline": doc["headline"],
                 "not_a_competition_score": doc["not_a_competition_score"],
                 "published_at": doc.get("published_at", ""),
-                # Which benchmark it ran on, so a page can work out where the exhibit is worth
-                # offering without the exhibit naming a field - which it must not do.
+                # What the policy was shown, and which benchmark it ran on - so a page can work
+                # out where an exhibit is worth offering without the exhibit naming a field,
+                # which it must not do. The view is the one that matters: an exhibit belongs
+                # beside the field whose demonstration it was actually given, not beside
+                # whichever field happens to score on the same simulator.
+                "demonstration_shown": {
+                    "view": doc.get("demonstration_shown", {}).get("view", ""),
+                },
                 "benchmark": {
                     "name": doc.get("benchmark", {}).get("name", ""),
                     "simulator": doc.get("benchmark", {}).get("simulator", ""),
