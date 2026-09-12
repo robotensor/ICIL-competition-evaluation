@@ -20,7 +20,7 @@ class FakeOrchestrator:
             schema=1,
             event_id=f"{block:064x}",
             kind="duel",
-            track=self.rt.spec.track_id,
+            track=self.rt.spec.sole_track,
             block=block,
             finished_at=now_iso(),
             king=req.king,
@@ -32,7 +32,7 @@ class FakeOrchestrator:
             new_king=req.challenger if self.outcome == "win" else None,
         )
         self.rt.store.write_event(
-            self.rt.spec.track_id,
+            self.rt.spec.sole_track,
             duel_event(
                 rec,
                 spec_version=1,
@@ -43,7 +43,7 @@ class FakeOrchestrator:
                 wall_seconds=1,
             ),
         )
-        self.rt.store.append(self.rt.spec.track_id, rec)
+        self.rt.store.append(self.rt.spec.sole_track, rec)
         return rec
 
 
@@ -87,7 +87,7 @@ def test_daemon_genesis_then_duels(spec, tmp_path, monkeypatch):
     assert (
         d.step() is True and d.current_king().repo == "org/second" and q.state.in_progress is None
     )
-    snap = rt.store.queue_path(spec.track_id)
+    snap = rt.store.queue_path(spec.sole_track)
     assert snap.exists()
 
 
@@ -98,7 +98,7 @@ def _genesis(rt, ref, block):
         schema=1,
         event_id=f"{1000 + block:064x}",
         kind="genesis",
-        track=rt.spec.track_id,
+        track=rt.spec.sole_track,
         block=block,
         finished_at=now_iso(),
         king=ref,
@@ -110,7 +110,7 @@ def _genesis(rt, ref, block):
         new_king=None,
     )
     rt.store.write_event(
-        rt.spec.track_id,
+        rt.spec.sole_track,
         duel_event(
             rec,
             spec_version=1,
@@ -121,5 +121,5 @@ def _genesis(rt, ref, block):
             wall_seconds=0,
         ),
     )
-    rt.store.append(rt.spec.track_id, rec)
+    rt.store.append(rt.spec.sole_track, rec)
     return rec

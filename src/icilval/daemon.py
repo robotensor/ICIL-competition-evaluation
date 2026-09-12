@@ -51,14 +51,14 @@ class Daemon:
             ) from exc
 
     def current_king(self) -> ModelRef | None:
-        head = self.rt.store.head(self.rt.spec.track_id)
+        head = self.rt.store.head(self.rt.spec.sole_track)
         return ModelRef.from_dict(head.get("king")) if head else None
 
     def publish_queue(self) -> None:
         snap = self.queue.snapshot(
-            self.rt.spec.track_id, self.current_king(), int(self.rt.spec.store["schema"])
+            self.rt.spec.sole_track, self.current_king(), int(self.rt.spec.store["schema"])
         )
-        self.rt.store.write_queue(self.rt.spec.track_id, snap)
+        self.rt.store.write_queue(self.rt.spec.sole_track, snap)
         self._mirror(self.rt.store.drain_touched())
 
     def _mirror(self, files: list[str]) -> None:
@@ -112,9 +112,9 @@ class Daemon:
 
         eid = event_id(
             "duel",
-            self.rt.spec.track_id,
+            self.rt.spec.sole_track,
             block,
-            duel_id(self.rt.spec.version, self.rt.spec.track_id, entry.ref, king),
+            duel_id(self.rt.spec.version, self.rt.spec.sole_track, entry.ref, king),
         )
         self.queue.pop()
         self.queue.start(eid, entry.ref)

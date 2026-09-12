@@ -1,13 +1,48 @@
 {
-  "spec_version": 3,
-  "_comment": "Normative constants for the RoboTensor one-demonstration in-context imitation learning competition. The validator and the dashboard both read this file; nothing in it may be duplicated as a literal in code. spec_fingerprint = sha256 of the canonical JSON of this file. Changing spec_version changes every derived duel_id and therefore every draw; bump it only deliberately. Version 2 replaced the four perturbation axes with skills: every skill is scored as one success rate and the final score is the mean over skills. Version 3 removed the organizer perturbation groups: a unit is one task, one of its initial states, one prompt demonstration and a seed, exactly as BPP's own runner evaluates.",
-  "track": {
-    "id": "icil_1demo",
-    "title": "One-demo in-context imitation",
-    "k_demos": 1,
-    "language": "none",
-    "_comment": "The model is shown exactly one demonstration of the task and no language. The demonstration is the whole prompt."
+  "spec_version": 5,
+  "_comment": "Normative constants for the RoboTensor one-demonstration in-context imitation learning competition. Version 4 was published and then rolled back; that number is retired and never reused. Version 5 splits the competition into fields: each has its own demonstration modality, skills, pool, baseline, king, queue and lineage. Bumping spec_version changes every derived duel id.",
+  "tracks": {
+    "sensorimotor": {
+      "id": "sensorimotor",
+      "code": "sm",
+      "slug": "sensorimotor",
+      "short": "Sensorimotor",
+      "title": "Sensorimotor demonstration",
+      "blurb": "The model is shown one demonstration - the frames, the action trajectory and the proprioception - and must do the task from a different initial state.",
+      "k_demos": 1,
+      "language": "none",
+      "demonstration": {
+        "view": "sensorimotor",
+        "modalities": [
+          "video",
+          "actions",
+          "proprio"
+        ],
+        "withheld": []
+      },
+      "protocol": "different_initial_state",
+      "prompt_instance_disjoint": true,
+      "prompts": "pool",
+      "skills": [
+        "pick_and_place",
+        "goal_chain",
+        "draw_anything"
+      ],
+      "default_size": "heavy",
+      "_comment": "Renamed from the v3 track id 'icil_1demo'; the id is inside every signed record, so the store is rebuilt at v5. The replay shortcut is closed here by scoring from a different initial state than the demonstration started from (prompt_instance_disjoint)."
+    }
   },
+  "benchmarks": {
+    "libero": {
+      "distribution": "icilval",
+      "in_repo": true
+    },
+    "draw": {
+      "distribution": "icilval",
+      "in_repo": true
+    }
+  },
+  "_benchmarks_comment": "Which distribution provides each simulator a skill names. An in-repo one needs no pin; one from another repository is found through the 'icilval.benchmarks' entry point group and is pinned by distribution, version and wheel sha256, because entry-point discovery imports code into the validator.",
   "skills": {
     "pick_and_place": {
       "code": "pp",
@@ -137,11 +172,15 @@
   },
   "pools": {
     "repo": "robotensor/icil-competition-pools",
-    "version": "2026.09-v3",
-    "pool_id": "73a98b0821be1fdbb5fb7b08219be6041c644ba35d634a7068688aaf501db843",
     "demos_per_task": 10,
     "init_states_per_task": 50,
-    "_comment": "pool_id is filled by `icilval pools build` and must equal pool.json's id; the validator refuses to run on a mismatch. demos_per_task is how many of a task's demonstrations the pool keeps; init_states_per_task also sizes the drawing skill's table of (board angle, cursor start) instances."
+    "_comment": "pool_id is filled by `icilval pools build` and must equal pool.json's id; the validator refuses to run on a mismatch. demos_per_task is how many of a task's demonstrations the pool keeps; init_states_per_task also sizes the drawing skill's table of (board angle, cursor start) instances.",
+    "tracks": {
+      "sensorimotor": {
+        "version": "2026.09-v3",
+        "pool_id": "73a98b0821be1fdbb5fb7b08219be6041c644ba35d634a7068688aaf501db843"
+      }
+    }
   },
   "duel": {
     "default_size": "heavy",
@@ -164,10 +203,10 @@
     "_crown_comment": "Both sides run the identical unit list (same tasks, initial states, prompt demonstrations and seeds). Per-skill success rate is stored as a fraction in [0, 1]; the final score is the mean over skills. A skill's units are spread evenly over its eligible tasks. The challenger takes the crown iff challenger.average >= king.average + score_margin / 100. Paired per-unit outcomes are published as a diagnostic and never decide the crown.",
     "derivation": {
       "duel_id": "sha256(spec_version|track|challenger.key|challenger.revision|king.key|king.revision)",
-      "unit_seed": "int(sha256(duel_id|skill|index)[:8], 16)",
-      "prompt_instance_disjoint": true
+      "unit_seed": "int(sha256(duel_id|skill|index)[:8], 16)"
     },
-    "_max_steps_comment": "skills.<skill>.max_steps are per-skill caps; each task carries its own (smaller) limit from its source benchmark."
+    "_max_steps_comment": "skills.<skill>.max_steps are per-skill caps; each task carries its own (smaller) limit from its source benchmark.",
+    "_default_comment": "Defaults. A track may override sizes, score_margin or max_void_fraction; an override must declare the same size names, so a submitter sees one vocabulary."
   },
   "budgets": {
     "act_soft_timeout_s": 1.0,
@@ -205,12 +244,6 @@
     "_comment": "A submission is a Hugging Face model repo holding one directory per skill, each with model.safetensors and config.yaml. For every skill the validator instantiates the architecture from its own allow-listed template (arch/<architecture>.cfg.json), diffs the submitted config against it, checks the safetensors header against arch/<architecture>.tensors.json, and loads weights strictly. No pickle is ever read and no entrant code runs. max_params applies per skill; max_repo_bytes to the whole repo.",
     "_mutable_comment": "Dotted paths under `model` that may differ from the template without affecting inference. Training-only keys are overwritten by the converter, so they never differ."
   },
-  "baseline": {
-    "repo": "robotensor/bpp-genesis",
-    "revision": "aa24179bcc6d18185b4b07c995bbd0d15ac10b8a",
-    "label": "BPP public checkpoints, converted (austinpatel/liberogen_spatial_combination, austinpatel/liberogen_goal_chain, austinpatel/drawanything_sim)",
-    "_comment": "The genesis king: one repo holding one converted public checkpoint per skill, one directory per skill."
-  },
   "media": {
     "video": {
       "format": "mp4",
@@ -228,13 +261,13 @@
     "_comment": "resolution and camera describe LIBERO clips; draw clips are the board render at skills.draw_anything.environment.render_resolution and draw demonstration clips are the 224 px observation frames."
   },
   "store": {
-    "schema": 3,
+    "schema": 4,
     "index_lines_per_part": 1000,
     "media_bucket_hex": 2,
     "_layout_comment": "manifest.json; tracks/{track}/{head.json,queue.json,index-NNNN.jsonl}; events/{track}/{event_id}.json; media/{sha[:2]}/{sha}.mp4. Index lines are '<canonical_json>\\t<ed25519_signature_hex>', append-only."
   },
   "live": {
-    "schema": 3,
+    "schema": 4,
     "path": "/api/live",
     "media_flush_units": 4,
     "max_frame_bytes": 524288,
@@ -244,5 +277,13 @@
     "bind": "127.0.0.1",
     "port": 8799,
     "max_body_bytes": 8192
+  },
+  "baselines": {
+    "sensorimotor": {
+      "repo": "robotensor/bpp-genesis",
+      "revision": "aa24179bcc6d18185b4b07c995bbd0d15ac10b8a",
+      "label": "BPP public checkpoints, converted (austinpatel/liberogen_spatial_combination, austinpatel/liberogen_goal_chain, austinpatel/drawanything_sim)",
+      "_comment": "The genesis king: one repo holding one converted public checkpoint per skill, one directory per skill."
+    }
   }
 }

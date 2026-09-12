@@ -159,9 +159,15 @@ def cmd_units(args) -> int:
     if args.king:
         k_repo, k_rev = args.king.split("@", 1)
         king = ModelRef.make(k_repo, k_rev)
-    did = duel_id(spec.version, spec.track_id, challenger, king)
+    track = spec.sole_track
+    did = duel_id(spec.version, track, challenger, king)
     units = [u.as_dict() for u in derive_units(pool, spec, did, args.size)]
-    doc = {"duel_id": did, "pool_id": pool.pool_id, "size": spec.size_of(args.size), "units": units}
+    doc = {
+        "duel_id": did,
+        "pool_id": pool.pool_id,
+        "size": spec.size_of(track, args.size),
+        "units": units,
+    }
     if args.out:
         Path(args.out).write_text(json.dumps(doc, indent=2) + "\n")
         print(f"{len(units)} units -> {args.out}")
@@ -523,7 +529,7 @@ def cmd_smoke(args) -> int:
     challenger = ModelRef.make(args.repo, args.revision[::-1] if args.same_model else args.revision)
     local = {args.repo: args.model_dir}
     block = 1
-    if rt.store.head(spec.track_id) is None or not rt.store.head(spec.track_id).get("king"):
+    if rt.store.head(spec.sole_track) is None or not rt.store.head(spec.sole_track).get("king"):
         publish_genesis(rt, king, block, local_models=local, check=True)
         block += 1
     req = DuelRequest(

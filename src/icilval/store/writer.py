@@ -105,11 +105,11 @@ class Store:
             "spec_version": self.spec.version,
             "spec_fingerprint": self.spec.fingerprint,
             "pool_id": pool_id,
-            "tracks": [self.spec.track_id],
+            "tracks": [self.spec.sole_track],
         }
         atomic_write_json(self.root / "manifest.json", manifest)
         self._touch(self.root / "manifest.json")
-        track = self.spec.track_id
+        track = self.spec.sole_track
         if not self.head_path(track).exists():
             self.write_head(track, seq=0, event_id="", block=0, finished_at="", king=None)
         return manifest
