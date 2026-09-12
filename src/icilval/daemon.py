@@ -10,10 +10,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from . import simulators
 from .canon import Signer
 from .duel.orchestrate import DuelFailed, DuelRequest, Orchestrator, Runtime
 from .ids import ModelRef
-from .queue import Queue
+from .queue import Queues
 from .spec import Spec
 from .store.writer import Store
 
@@ -32,9 +33,9 @@ class DaemonConfig:
 
 
 class Daemon:
-    def __init__(self, rt: Runtime, queue: Queue, cfg: DaemonConfig):
+    def __init__(self, rt: Runtime, queues: Queues, cfg: DaemonConfig):
         self.rt = rt
-        self.queue = queue
+        self.queues = queues
         self.cfg = cfg
         self.orchestrator = Orchestrator(rt)
         self._lock_fd: int | None = None
@@ -50,15 +51,15 @@ class Daemon:
                 f"another validator is publishing to {self.cfg.store_root} (holds {path})"
             ) from exc
 
-    def current_king(self) -> ModelRef | None:
-        head = self.rt.store.head(self.rt.spec.sole_track)
+    def current_king(self, track: str) -> ModelRef | None:
+        head = self.rt.store.head(track)
         return ModelRef.from_dict(head.get("king")) if head else None
 
-    def publish_queue(self) -> None:
-        snap = self.queue.snapshot(
-            self.rt.spec.sole_track, self.current_king(), int(self.rt.spec.store["schema"])
+    def publish_queue(self, track: str) -> None:
+        snap = self.queues[track].snapshot(
+            track, self.current_king(track), int(self.rt.spec.store["schema"])
         )
-        self.rt.store.write_queue(self.rt.spec.sole_track, snap)
+        self.rt.store.write_queue(track, snap)
         self._mirror(self.rt.store.drain_touched())
 
     def _mirror(self, files: list[str]) -> None:
@@ -69,21 +70,23 @@ class Daemon:
         except Exception as exc:  # noqa: BLE001
             log.warning("mirror failed (will retry next publish): %s", exc)
 
-    def step(self) -> bool:
-        """Run one queue entry. Returns False when the queue is empty."""
-        entry = self.queue.peek()
+    def step(self, track: str) -> bool:
+        """Run one entry of one field's queue. Returns False when that queue is empty."""
+        queue = self.queues[track]
+        entry = queue.peek()
         if entry is None:
             return False
-        king = self.current_king()
+        king = self.current_king(track)
         if king is None:
             log.info("empty throne: genesis for %s", entry.ref.entry)
             from .duel.orchestrate import publish_genesis
 
-            block = self.queue.advance_block()
-            self.queue.pop()
+            block = queue.advance_block()
+            queue.pop()
             try:
                 publish_genesis(
                     self.rt,
+                    track,
                     entry.ref,
                     block,
                     local_models=self.cfg.local_models,
@@ -91,16 +94,17 @@ class Daemon:
                 )
             except DuelFailed as exc:
                 log.error("genesis refused: %s", exc)
-            self.publish_queue()
+            self.publish_queue(track)
             self._mirror(self.rt.store.drain_touched())
             return True
         if king.key == entry.key:
             log.info("%s already holds the crown; dropping the entry", entry.ref.entry)
-            self.queue.pop()
-            self.publish_queue()
+            queue.pop()
+            self.publish_queue(track)
             return True
-        block = self.queue.advance_block()
+        block = queue.advance_block()
         req = DuelRequest(
+            track=track,
             challenger=entry.ref,
             king=king,
             size=entry.duel_size,
@@ -112,32 +116,50 @@ class Daemon:
 
         eid = event_id(
             "duel",
-            self.rt.spec.sole_track,
+            track,
             block,
-            duel_id(self.rt.spec.version, self.rt.spec.sole_track, entry.ref, king),
+            duel_id(self.rt.spec.version, track, entry.ref, king),
         )
-        self.queue.pop()
-        self.queue.start(eid, entry.ref)
-        self.publish_queue()
+        queue.pop()
+        queue.start(eid, entry.ref)
+        self.publish_queue(track)
         try:
             self.orchestrator.run(req, block)
         except DuelFailed:
             pass
         finally:
-            self.queue.finish()
-            self.publish_queue()
+            queue.finish()
+            self.publish_queue(track)
             self._mirror(self.rt.store.drain_touched())
         return True
+
+    def step_all(self) -> bool:
+        """One entry from each field, in turn. Returns False when every queue is empty.
+
+        Round-robin rather than a worker per field: the store has one writer, and a lock fine
+        enough to let two fields publish at once would risk a torn index. A field whose benchmark
+        is not installed is logged and skipped, so an absent plugin never stops another's queue.
+        """
+        ran = False
+        for track in self.queues.tracks:
+            try:
+                simulators.require(self.rt.spec, self.rt.spec.skills(track))
+            except simulators.MissingBenchmark as exc:
+                log.warning("%s: skipped, %s", track, exc)
+                continue
+            ran |= self.step(track)
+        return ran
 
     def run(self) -> None:
         self.lock()
         log.info(
             "validator %s watching %s", self.rt.signer.verify_key_hex[:12], self.cfg.queue_path
         )
-        self.publish_queue()
+        for track in self.queues.tracks:
+            self.publish_queue(track)
         while True:
             try:
-                ran = self.step()
+                ran = self.step_all()
             except Exception:  # noqa: BLE001
                 log.exception("daemon step crashed; continuing")
                 ran = True
