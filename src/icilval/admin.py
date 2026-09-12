@@ -1,9 +1,12 @@
 """Submission intake: a loopback HTTP server the organizer's dashboard form talks to.
 
 POST /admin/submissions {repo, revision|null, track?, duel_size?, skip_model_config_check?, source?}
-  -> 200 {ok, key, repo, revision, entry, position, accepted_at, message}
+  -> 200 {ok, track, key, repo, revision, entry, position, accepted_at, message}
   -> 4xx {ok: false, error, detail?}
-GET  /admin/health -> 200 {ok, validator_key, queue_len, in_progress, block}
+GET  /admin/health -> 200 {ok, validator_key, tracks: {<track>: {queue_len, in_progress, block}}}
+
+`track` is optional while the competition has one field and required once it has more: queueing
+against the wrong ladder is not something the organizer can see from the reply.
 """
 
 from __future__ import annotations
@@ -16,7 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 from .ids import is_repo, is_sha_revision
-from .queue import Queue
+from .queue import Queues
 from .spec import Spec
 
 RevisionResolver = Callable[[str, str | None], str]
@@ -36,7 +39,7 @@ class AdminServer:
     def __init__(
         self,
         spec: Spec,
-        queue: Queue,
+        queues: Queues,
         token: str,
         validator_key: str,
         *,
@@ -48,7 +51,7 @@ class AdminServer:
         if not token:
             raise ValueError("admin token must be set")
         self.spec = spec
-        self.queue = queue
+        self.queues = queues
         self.token = token
         self.validator_key = validator_key
         self.resolver = resolver
@@ -88,16 +91,20 @@ class AdminServer:
                 if self.path != "/admin/health":
                     return self._reply(404, {"ok": False, "error": "Not found."})
                 with server.lock:
-                    st = server.queue.state
+                    tracks = {}
+                    for track, queue in server.queues.items():
+                        st = queue.state
+                        tracks[track] = {
+                            "queue_len": len(st.entries),
+                            "in_progress": st.in_progress.event_id if st.in_progress else None,
+                            "block": st.block,
+                        }
                     self._reply(
                         200,
                         {
                             "ok": True,
                             "validator_key": server.validator_key,
-                            "track": server.spec.sole_track,
-                            "queue_len": len(st.entries),
-                            "in_progress": st.in_progress.event_id if st.in_progress else None,
-                            "block": st.block,
+                            "tracks": tracks,
                         },
                     )
 
@@ -134,13 +141,23 @@ class AdminServer:
         if revision is not None and (not isinstance(revision, str) or not revision.strip()):
             return 422, {"ok": False, "error": "revision must be a string or null."}
         track = body.get("track")
-        if track is not None and track != self.spec.sole_track:
-            return 422, {"ok": False, "error": f"track must be {self.spec.sole_track}."}
+        fields = self.spec.tracks
+        if track is None:
+            # One field needs no saying; more than one must be said, because queueing against
+            # the wrong ladder is not something the organizer can see from the reply.
+            if len(fields) != 1:
+                return 422, {
+                    "ok": False,
+                    "error": f"track is required; the fields are: {', '.join(fields)}.",
+                }
+            track = fields[0]
+        if track not in fields:
+            return 422, {"ok": False, "error": f"track must be one of: {', '.join(fields)}."}
         duel_size = body.get("duel_size")
-        if duel_size is not None and duel_size not in self.spec.sizes(self.spec.sole_track):
+        if duel_size is not None and duel_size not in self.spec.sizes(track):
             return 422, {
                 "ok": False,
-                "error": f"duel_size must be one of: {', '.join(self.spec.sizes(self.spec.sole_track))}.",
+                "error": f"duel_size must be one of: {', '.join(self.spec.sizes(track))}.",
             }
         skip = bool(body.get("skip_model_config_check", False))
         source = str(body.get("source") or "")[:64]
@@ -159,11 +176,12 @@ class AdminServer:
                 "detail": pinned[:80],
             }
         with self.lock:
-            entry, position = self.queue.add(
+            entry, position = self.queues[track].add(
                 repo, pinned, duel_size=duel_size, skip_model_config_check=skip, source=source
             )
         return 200, {
             "ok": True,
+            "track": track,
             "key": entry.key,
             "repo": entry.repo,
             "revision": entry.revision,
