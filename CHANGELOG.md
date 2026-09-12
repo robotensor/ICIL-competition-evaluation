@@ -4,6 +4,32 @@
 
 ### Two fields on pluggable benchmarks
 
+- (feat): the `bpp_robotwin_v1` conversion and its policy. The network takes `agentview_rgb`,
+  `eye_in_hand_rgb`, `ee_pos`, `ee_ori` and `gripper_states` and emits a 10-dim delta; the
+  benchmark produces `frames_<camera>`, `qpos`, `endpose`, `gripper_joints` and `times`. The
+  conversion between them lives here, because this repository holds the weights and the
+  architecture template, and it stands alone on numpy - nothing under
+  `model/bpp_robotwin/` imports `robotwin_icil`, `icil_policies` or torch at module scope, so the
+  whole of it is checkable in the pure venv. The array-name contract is written down at the top of
+  `conversion.py`: observations carry the same names as the demonstration arrays, so one mapping
+  serves both, and it is the contract the benchmark's `prompt.py` has to keep matching. Two inputs
+  are refused rather than guessed, because both would be wrong silently - a demonstration with no
+  measured `gripper_joints` (the gripper inside `qpos` and `endpose` is a command, and reads
+  closed while the fingers rest on an object) and one with no `times` (the expert's frames are not
+  evenly spaced, so resampling on the frame index distorts a 20 Hz prompt by up to a fifth of a
+  second per motion primitive). Verified against the benchmark's own adapter on synthetic arrays:
+  every array - the resampling, the prompt actions, both views, all three proprioception keys, the
+  action decode and the executed row - agrees to 0.0 in float64 (#69).
+
+- (refactor): a policy comes from its **architecture**, not its simulator.
+  `simulators.make_policy` asked the skill's simulator, and `adapt()` answered "out of process"
+  for every benchmark in another repository - which is every benchmark this layer exists to run,
+  since the orchestrator holds the weights and serves the policy over a socket rather than handing
+  it over. `model/architectures.py` keys it by `spec.architecture(skill)`, which is what a policy
+  is built from anyway: the template instantiates it, the tensor manifest checks its weights, and
+  the observation names it consumes are the ones that template declares. `Simulator` no longer
+  carries a `make_policy` field (#69).
+
 - (feat): a field whose skills are on a plugged benchmark derives its units from the plugin.
   `pools/units.py` knows what a LIBERO initial state and a drawing board's angle ranges are,
   because those benchmarks ship here; only a benchmark knows what one of *its* units is. What the

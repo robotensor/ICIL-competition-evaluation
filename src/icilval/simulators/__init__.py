@@ -30,9 +30,11 @@ ENTRY_POINT_GROUP = "icilval.benchmarks"
 
 @dataclass(frozen=True)
 class Simulator:
+    """What a simulator supplies. Not the policy: that is the architecture's, and
+    `model.architectures` keys it by `skills.<skill>.architecture` - see its docstring for why a
+    plugged benchmark could never have supplied one."""
+
     name: str
-    #: (model_dir, arch_dir, spec, skill, device) -> a loaded-on-demand policy (`PolicyBase`)
-    make_policy: Callable[..., Any]
     #: (ctx, skill, policy, pool, units, spec, media_dir, record_video) -> None; runs each unit
     #: and hands `ctx.finish` a record (see `duel.side_runner.SideContext`)
     run_units: Callable[..., None]
@@ -154,9 +156,6 @@ def adapt(name: str, benchmark: Any, *, distribution: str) -> Simulator:
     channels = {k: tuple(v) for k, v in (info.get("demo_channels") or {}).items()}
     return Simulator(
         name=name,
-        # A plugged benchmark's policy is *served*, not loaded here: the orchestrator owns the
-        # weights and the architecture template, the benchmark's subprocess connects to it.
-        make_policy=out_of_process("loading a policy"),
         # This one is no longer a refusal. `run_command` plus `read_result` is a complete
         # execution path, and leaving it refused was what kept this repository from being an
         # orchestration layer at all.
@@ -275,11 +274,6 @@ def audit(spec: Any) -> list[dict[str, Any]]:
         row["skills"] = [s for s in spec.all_skills if spec.simulator(s) == name]
         rows.append(row)
     return rows
-
-
-def make_policy(model_dir: Any, arch_dir: Any, spec: Any, skill: str, device: str = "cuda") -> Any:
-    """The policy for a skill, from its simulator."""
-    return for_skill(spec, skill).make_policy(model_dir, arch_dir, spec, skill, device=device)
 
 
 # The simulators this validator ships. Each import registers one.
