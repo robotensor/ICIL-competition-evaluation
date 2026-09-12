@@ -11,3 +11,24 @@ record which conversion it ran.
 
 Nothing here imports the benchmark, and nothing outside `policy.py` imports torch.
 """
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from ..architectures import register
+
+#: The architecture in `arch/` this package implements.
+ARCHITECTURE = "bpp_robotwin_v1"
+
+
+def make_policy(
+    model_dir: str | Path, arch_dir: str | Path, spec: Any, skill: str, device: str = "cuda"
+) -> Any:
+    from .policy import BPPRoboTwinPolicy
+
+    return BPPRoboTwinPolicy(model_dir, arch_dir, spec, skill, device=device)
+
+
+register(ARCHITECTURE, make_policy)

@@ -510,3 +510,139 @@ def test_the_conversion_imports_with_numpy_alone():
 
     for name in ("conversion", "images", "rotations", "settings"):
         importlib.import_module(f"icilval.model.bpp_robotwin.{name}")
+
+
+# ------------------------------------------------------------------- the policy shell
+
+
+class _Tensor:
+    """Just enough of a torch tensor for `_plan` to unwrap one, so the plumbing is testable
+    without torch. The numbers it carries are numpy's."""
+
+    def __init__(self, array):
+        self.array = np.asarray(array)
+
+    def __getitem__(self, index):
+        return _Tensor(self.array[index])
+
+    def detach(self):
+        return self
+
+    def float(self):
+        return self
+
+    def cpu(self):
+        return self
+
+    def numpy(self):
+        return self.array
+
+
+class _Network:
+    """A stand-in for the BPP network: records what it was prompted with, returns a fixed chunk."""
+
+    def __init__(self, chunk):
+        self.chunk = np.asarray(chunk)
+        self.prompts: list[dict] = []
+        self.calls = 0
+        self.exec_horizon = None
+
+    def reset(self, action_exec_horizon=None):
+        self.exec_horizon = action_exec_horizon
+
+    def prompt(self, prompt_dict):
+        self.prompts.append(prompt_dict)
+
+    def predict_action(self, obs_dict):
+        self.calls += 1
+        self.last_obs = obs_dict
+        return {"action": _Tensor(self.chunk[None])}
+
+
+def _policy(spec, tmp_path, monkeypatch, chunk):
+    """A `BPPRoboTwinPolicy` wired to a fake network, with torch stubbed out of the two places
+    that reach for it.
+
+    Built on `pick_and_place` because what `PolicyBase` reads from a skill is the BPP cadence -
+    the chunk size, the padding, the two horizons - and that is the skill in the contract today
+    that declares all of it. Nothing here touches its simulator.
+    """
+    import sys
+    import types
+    from contextlib import nullcontext
+
+    from icilval.model.bpp_robotwin.policy import BPPRoboTwinPolicy
+
+    stub = types.ModuleType("torch")
+    stub.inference_mode = nullcontext
+    monkeypatch.setitem(sys.modules, "torch", stub)
+
+    policy = BPPRoboTwinPolicy(tmp_path, tmp_path, spec, "pick_and_place", device="cpu")
+    monkeypatch.setattr(policy, "_lowdim", lambda a: np.asarray(a, dtype=np.float32))
+    monkeypatch.setattr(policy, "_mask", lambda a: np.asarray(a, dtype=bool))
+    policy.policy = _Network(chunk)
+    policy.max_chunks = None
+    policy.image_size = 32
+    return policy
+
+
+def _chunk(rows: int) -> np.ndarray:
+    chunk = np.zeros((rows, ACTION_DIM))
+    chunk[:, 0] = 0.5
+    chunk[:, 3:9] = R.matrix_to_rot6d(np.eye(3))
+    chunk[:, 9] = -1.0
+    return chunk
+
+
+def test_the_policy_prompts_the_network_once_with_the_five_keys(spec, tmp_path, monkeypatch):
+    policy = _policy(spec, tmp_path, monkeypatch, _chunk(12))
+    arrays = demo_arrays(arm="left")
+    info = policy.set_prompt(arrays)
+
+    assert len(policy.policy.prompts) == 1
+    prompt = policy.policy.prompts[0]
+    assert set(prompt["obs"]) == set(C.OBSERVATION_KEYS)
+    assert prompt["action"].shape == (info.chunks, policy.chunk_n, ACTION_DIM)
+    assert prompt["metadata"]["mask"].shape == (info.chunks,)
+    assert info.steps == len(policy._prompt.actions)
+    assert policy.policy.exec_horizon == policy.exec_horizon
+
+
+def test_one_action_leaves_the_queue_per_act_and_a_chunk_is_planned_once(
+    spec, tmp_path, monkeypatch
+):
+    """The benchmark's step limit counts model steps, and each delta is applied to the pose
+    measured at the step it is executed at - so a chunk cannot be handed back all at once."""
+    policy = _policy(spec, tmp_path, monkeypatch, _chunk(12))
+    arrays = demo_arrays(arm="left")
+    policy.set_prompt(arrays)
+
+    rows = [policy.act([observation(arrays, i)]) for i in range(policy.exec_horizon)]
+    assert all(row.shape == (1, BIMANUAL_EE_DIM) for row in rows)
+    assert policy.policy.calls == 1
+    assert policy.plans == 1
+    # The queue is empty again, so the next call re-plans.
+    policy.act([observation(arrays, 0)])
+    assert policy.policy.calls == 2
+
+
+def test_reset_forgets_the_episode(spec, tmp_path, monkeypatch):
+    policy = _policy(spec, tmp_path, monkeypatch, _chunk(12))
+    arrays = demo_arrays(arm="left")
+    policy.set_prompt(arrays)
+    policy.act([observation(arrays, 0)])
+    policy.reset()
+    assert not policy._queue and policy._prompt is None and policy.episode_info() == {}
+    with pytest.raises(ConversionError, match="set_prompt"):
+        policy.act([observation(arrays, 0)])
+
+
+def test_the_episode_record_says_which_arm_was_driven(spec, tmp_path, monkeypatch):
+    policy = _policy(spec, tmp_path, monkeypatch, _chunk(12))
+    arrays = demo_arrays(arm="right")
+    policy.set_prompt(arrays)
+    policy.act([observation(arrays, 0)])
+    info = policy.episode_info()
+    assert info["active_arm"] == "right" and info["arm_rule"] == "path"
+    assert info["plans"] == 1 and info["calls"] == 1
+    assert "clipped_action_fraction" in info and "reanchors" in info

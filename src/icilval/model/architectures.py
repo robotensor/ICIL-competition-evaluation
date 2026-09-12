@@ -30,7 +30,7 @@ REGISTRY: dict[str, Callable[..., Any]] = {}
 #: The modules that register one when imported, imported once on the first lookup. They are
 #: imported lazily so that `icilval spec validate`, the queue and the dashboard's contract checks
 #: - none of which has torch or a simulator - can import this module for free.
-PROVIDERS = ("icilval.simulators",)
+PROVIDERS = ("icilval.simulators", "icilval.model.bpp_robotwin")
 
 _LOADED = False
 

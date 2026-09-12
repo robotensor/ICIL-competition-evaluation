@@ -21,6 +21,13 @@ def test_every_shipped_architecture_has_a_policy_and_a_template(spec):
         assert arch.exists(root / "arch", name), f"{name} has no template in arch/"
 
 
+def test_the_robotwin_conversion_is_registered_for_its_own_architecture():
+    from icilval.model.bpp_robotwin import ARCHITECTURE
+
+    assert architectures.implemented(ARCHITECTURE)
+    assert architectures.get(ARCHITECTURE) is not None
+
+
 def test_a_policy_is_looked_up_by_architecture_and_not_by_simulator(spec, monkeypatch):
     """Two skills on different simulators but the same architecture get the same policy, and one
     skill's simulator changing does not change which policy it gets."""
@@ -44,7 +51,7 @@ def test_an_unimplemented_architecture_names_the_ones_there_are():
     with pytest.raises(KeyError) as exc:
         architectures.get("no_such_arch_v9")
     message = str(exc.value)
-    assert "no_such_arch_v9" in message and "bpp_libero_v1" in message
+    assert "no_such_arch_v9" in message and "bpp_robotwin_v1" in message
 
 
 def test_registering_an_architecture_twice_is_refused(monkeypatch):
