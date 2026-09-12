@@ -346,31 +346,6 @@ def cmd_pools(args) -> int:
             )
         )
         return 0
-    if args.pools_cmd == "generate-draw":
-        from .simulators.draw.pool import generate_draw, import_generated_draw
-        from .spec import _repo_root as rr
-
-        root = rr() or Path.cwd()
-        bpp = Path(args.bpp_root) if args.bpp_root else root / "vendor" / "behavior_prompting"
-        run_dir = Path(args.run_dir)
-        if not args.import_only:
-            generate_draw(
-                bpp,
-                run_dir,
-                n_tasks=args.n_tasks,
-                demos_per_task=args.demos_per_task,
-                base_seed=args.base_seed,
-                workers=args.workers,
-                python=args.python,
-                dry_run=args.dry_run,
-            )
-        if args.pool and not args.dry_run:
-            pool = Pool.load(args.pool)
-            pool.pool_id = None
-            got = import_generated_draw(pool, spec, run_dir, skill=args.skill, limit=args.limit)
-            print("imported", got)
-            print("eligible:", json.dumps(finalize(pool, spec)))
-        return 0
     return 2
 
 
@@ -792,21 +767,6 @@ def build_parser() -> argparse.ArgumentParser:
     po_l.add_argument("--repo", default=None)
     po_l.add_argument("--version", default=None)
     po_l.add_argument("--revision", default=None)
-    po_gd = po_sub.add_parser(
-        "generate-draw", help="run BPP's procedural drawing generator, then import"
-    )
-    po_gd.add_argument("--run-dir", required=True)
-    po_gd.add_argument("--pool", default=None)
-    po_gd.add_argument("--skill", default="draw_anything", help="the drawing skill the run feeds")
-    po_gd.add_argument("--n-tasks", type=int, default=50)
-    po_gd.add_argument("--demos-per-task", type=int, default=10)
-    po_gd.add_argument("--base-seed", type=int, required=True, help="the organizer's secret seed")
-    po_gd.add_argument("--workers", type=int, default=8)
-    po_gd.add_argument("--python", default="python")
-    po_gd.add_argument("--bpp-root", default=None)
-    po_gd.add_argument("--limit", type=int, default=None)
-    po_gd.add_argument("--dry-run", action="store_true")
-    po_gd.add_argument("--import-only", action="store_true")
     po.set_defaults(func=cmd_pools)
 
     u = sub.add_parser("units", help="derive a duel's unit list")

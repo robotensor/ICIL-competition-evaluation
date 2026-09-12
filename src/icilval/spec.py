@@ -188,7 +188,12 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
                 isinstance(own_sizes, dict) and set(own_sizes) == set(sizes),
             )
             for name, entry in (own_sizes or {}).items():
-                n = (entry or {}).get("units_per_skill")
+                # A stray key here - a comment, most likely - used to raise rather than be
+                # reported, so a typo in the contract came back as a traceback.
+                if not isinstance(entry, dict):
+                    need(f"tracks.{tid}.sizes.{name} is an object", False)
+                    continue
+                n = entry.get("units_per_skill")
                 need(f"tracks.{tid}.sizes.{name}.units_per_skill>=1", isinstance(n, int) and n >= 1)
         need(
             f"tracks.{tid}.default_size in sizes",
@@ -212,9 +217,16 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
     need("baselines", isinstance(doc.get("baselines"), dict))
     for tid in tracks:
         need(f"baselines.{tid}", tid in (doc.get("baselines") or {}))
-        need(f"pools.tracks.{tid}", tid in ((doc.get("pools") or {}).get("tracks") or {}))
-    for name, s in sizes.items():
-        n = s.get("units_per_skill")
+        # Only a field that draws its prompts from a pool needs one pinned. A field that
+        # materializes them per duel has no pool at all - demanding an entry would mean pinning
+        # an id that names nothing, which is worse than having none.
+        if (tracks[tid] or {}).get("prompts") == "pool":
+            need(f"pools.tracks.{tid}", tid in ((doc.get("pools") or {}).get("tracks") or {}))
+    for name, entry in sizes.items():
+        if not isinstance(entry, dict):
+            need(f"duel.sizes.{name} is an object", False)
+            continue
+        n = entry.get("units_per_skill")
         need(f"duel.sizes.{name}.units_per_skill>=1", isinstance(n, int) and n >= 1)
     margin = duel.get("score_margin")
     need("duel.score_margin in [0,100]", isinstance(margin, (int, float)) and 0 <= margin <= 100)

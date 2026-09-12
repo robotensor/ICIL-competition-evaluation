@@ -172,8 +172,8 @@ class _Sink(BaseHTTPRequestHandler):
 def test_live_frame_and_reporter(spec):
     units = [
         {
-            "unit_id": "pp-000",
-            "skill": "pick_and_place",
+            "unit_id": "mp-000",
+            "skill": "rt_sm_pick_and_place",
             "task": "t",
             "instance": 0,
             "king_success": True,
@@ -182,8 +182,8 @@ def test_live_frame_and_reporter(spec):
             "demo_video": "a" * 64,
         },
         {
-            "unit_id": "da-000",
-            "skill": "draw_anything",
+            "unit_id": "mu-000",
+            "skill": "rt_sm_press_push",
             "task": "t2",
             "instance": 1,
             "king_success": None,
@@ -203,7 +203,7 @@ def test_live_frame_and_reporter(spec):
         phase="evaluating",
         side="king",
         units=units,
-        current={"unit_id": "da-000", "skill": "draw_anything"},
+        current={"unit_id": "mu-000", "skill": "rt_sm_press_push"},
         recent_media=None,
         message="m" * 400,
         started_at="2026-01-01T00:00:00Z",
@@ -211,12 +211,12 @@ def test_live_frame_and_reporter(spec):
     assert (
         frame["done"] == 1
         and frame["total"] == 2
-        and frame["skill_progress"]["king"]["pick_and_place"] == {"done": 1, "total": 1}
+        and frame["skill_progress"]["king"]["rt_sm_pick_and_place"] == {"done": 1, "total": 1}
     )
-    assert frame["skill_progress"]["challenger"]["pick_and_place"]["done"] == 0
+    assert frame["skill_progress"]["challenger"]["rt_sm_pick_and_place"]["done"] == 0
     assert (
-        frame["units"][0]["skill"] == "pick_and_place"
-        and frame["units"][1]["skill"] == "draw_anything"
+        frame["units"][0]["skill"] == "rt_sm_pick_and_place"
+        and frame["units"][1]["skill"] == "rt_sm_press_push"
     )
     assert (
         len(frame["message"]) == 300

@@ -4,6 +4,24 @@
 
 ### Two fields on pluggable benchmarks
 
+- (feat): **spec v6 - the orchestrator ships no benchmark.** `simulators/libero/` and
+  `simulators/draw/` are gone, with their tests and the drawing pool generator; nothing is
+  imported for its `register()` side effect any more, and what this validator can score is exactly
+  what is plugged into it. Both fields therefore run on RoboTwin, the one benchmark that is
+  plugged, and because the fields must partition the skills the sensorimotor field gets three of
+  its own: `rt_sm_pick_and_place`, `rt_sm_stacking`, `rt_sm_press_push` on `bpp_robotwin_v1`.
+  Both thrones are empty: the v5 sensorimotor genesis was BPP on LIBERO and DrawAnything, which
+  are no longer scored here.
+- (fix): only a field whose prompts come from a pool needs one pinned. Demanding a `pools.tracks`
+  entry from a field that materializes its prompts meant pinning an id that names nothing.
+- **The sensorimotor field is degenerate at v6, and the contract says so.** RoboTwin V1 implements
+  only `same_scene`, so that field is now Same Scene *with* the action trajectory - and replaying
+  the demonstration's own actions into the identical scene solves the episode, which is what the
+  benchmark's replay oracle does to score 18/18. The field no longer closes the replay shortcut at
+  all. `tracks.sensorimotor._comment` says this, and the test that used to assert the two fields
+  closed it in opposite ways now asserts that only one of them does - so restoring a real
+  sensorimotor field is a visible change to that file rather than a silent one.
+
 - (feat): a duel for a field whose prompts are materialized no longer needs a pool. Unit
   derivation goes to the plugin, the materialized prompt directory is what each side runs against,
   the demonstration clip the benchmark already wrote beside its prompt is published as it is

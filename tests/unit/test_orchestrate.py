@@ -34,7 +34,7 @@ def make_rt(spec, tmp_path):
 
 
 def unit(skill, i):
-    code = {"pick_and_place": "pp", "draw_anything": "da"}[skill]
+    code = {"rt_sm_pick_and_place": "mp", "rt_sm_press_push": "mu"}[skill]
     return unit_verdict_from_unit(
         {
             "unit_id": f"{code}-{i:03d}",
@@ -53,7 +53,7 @@ def test_merge_and_media_flush(spec, tmp_path):
     rt = make_rt(spec, tmp_path)
     orch = Orchestrator(rt)
     state = {
-        "units": [unit("pick_and_place", 0), unit("draw_anything", 0)],
+        "units": [unit("rt_sm_pick_and_place", 0), unit("rt_sm_press_push", 0)],
         "media_done": {},
         "recent_media": None,
         "event_id": "e" * 64,
@@ -69,7 +69,7 @@ def test_merge_and_media_flush(spec, tmp_path):
         state,
         "king",
         {
-            "unit_id": "pp-000",
+            "unit_id": "mp-000",
             "success": True,
             "progress": 1.0,
             "steps": 50,
@@ -78,7 +78,7 @@ def test_merge_and_media_flush(spec, tmp_path):
         },
     )
     orch._merge(
-        state, "challenger", {"unit_id": "pp-000", "success": False, "progress": 0.0, "steps": 400}
+        state, "challenger", {"unit_id": "mp-000", "success": False, "progress": 0.0, "steps": 400}
     )
     u = state["units"][0]
     assert (
@@ -87,9 +87,9 @@ def test_merge_and_media_flush(spec, tmp_path):
         and u["outcome"] == "king"
         and u["prompt"]["chunks"] == 5
     )
-    orch._merge(state, "king", {"unit_id": "da-000", "success": True, "metric": 6.5, "steps": 120})
+    orch._merge(state, "king", {"unit_id": "mu-000", "success": True, "metric": 6.5, "steps": 120})
     assert state["units"][1]["king_metric"] == 6.5
-    orch._merge(state, "king", {"unit_id": "da-000", "void": True, "error": "boom"})
+    orch._merge(state, "king", {"unit_id": "mu-000", "void": True, "error": "boom"})
     assert state["units"][1]["void"] and state["units"][1]["king_error"] == "boom"
 
     side_dir = tmp_path / "runs" / "king"
@@ -101,7 +101,7 @@ def test_merge_and_media_flush(spec, tmp_path):
     (side_dir / "units.jsonl").write_text(
         json.dumps(
             {
-                "unit_id": "pp-000",
+                "unit_id": "mp-000",
                 "success": True,
                 "video": "media/pp-000.mp4",
                 "video_sha256": sha256_file(clip),
@@ -112,14 +112,14 @@ def test_merge_and_media_flush(spec, tmp_path):
     orch._flush_media(state, "king", side_dir)  # below the flush threshold: nothing copied yet
     assert not state["media_done"]
     orch._flush_media(state, "king", side_dir, force=True)
-    sha = state["media_done"][("king", "pp-000")]
+    sha = state["media_done"][("king", "mp-000")]
     assert rt.store.has_media(sha, "mp4") and state["units"][0]["king_video"] == sha
     assert state["recent_media"]["side"] == "king" and state["recent_media"]["video"] == sha
-    assert state["recent_media"]["unit"]["skill"] == "pick_and_place"
+    assert state["recent_media"]["unit"]["skill"] == "rt_sm_pick_and_place"
     frame = orch._frame(state)
     assert frame["units"][0]["king_video"] == sha
-    assert frame["skill_progress"]["king"]["pick_and_place"] == {"done": 1, "total": 1}
-    assert frame["skill_progress"]["king"]["draw_anything"] == {
+    assert frame["skill_progress"]["king"]["rt_sm_pick_and_place"] == {"done": 1, "total": 1}
+    assert frame["skill_progress"]["king"]["rt_sm_press_push"] == {
         "done": 1,
         "total": 1,
     }  # void counts

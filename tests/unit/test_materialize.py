@@ -43,8 +43,24 @@ def _units(n=2):
     ]
 
 
-def test_a_pool_field_materializes_nothing(spec):
-    assert materialize.needed(spec, "sensorimotor") is False
+def test_a_pool_field_materializes_nothing(spec, tmp_path):
+    """Both shipped fields materialize at v6, so the pool case is checked on a field told to
+    draw from one - the branch still has to exist for a benchmark that ships a pool."""
+    import json
+
+    from icilval.spec import load_spec_file
+
+    doc = json.loads(json.dumps(spec.raw))
+    doc["tracks"]["sensorimotor"]["prompts"] = "pool"
+    doc["tracks"]["sensorimotor"]["protocol"] = "different_initial_state"
+    doc["tracks"]["sensorimotor"]["prompt_instance_disjoint"] = True
+    doc.setdefault("pools", {}).setdefault("tracks", {})["sensorimotor"] = {
+        "version": "t",
+        "pool_id": None,
+    }
+    path = tmp_path / "spec.json"
+    path.write_text(json.dumps(doc))
+    assert materialize.needed(load_spec_file(path), "sensorimotor") is False
 
 
 def test_every_unit_gets_a_verified_prompt(spec, tmp_path):

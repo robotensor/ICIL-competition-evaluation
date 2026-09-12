@@ -24,6 +24,9 @@ TEMPLATE_MODEL = {
 TENSORS = {
     "bpp_libero_v1": {"a.weight": ([4, 3], "F32"), "b": ([2], "F32")},
     "bpp_draw_v1": {"a.weight": ([4, 3], "F32"), "c": ([3], "F32")},
+    # Same tensors as the LIBERO template, which is also true of the real ones: the
+    # network is identical and only the benchmark-side conversion differs.
+    "bpp_robotwin_v1": {"a.weight": ([4, 3], "F32"), "b": ([2], "F32")},
 }
 
 
@@ -80,18 +83,19 @@ def test_diff_and_targets():
 def test_header_and_accept(spec, tmp_path):
     arch = make_arch(tmp_path)
     sub = make_submission(spec, tmp_path)
-    assert read_safetensors_header(sub / "pick_and_place" / "model.safetensors")["a.weight"][
-        "shape"
-    ] == [4, 3]
+    assert read_safetensors_header(sub / spec.skills("sensorimotor")[0] / "model.safetensors")[
+        "a.weight"
+    ]["shape"] == [4, 3]
     report = check_submission(sub, spec, arch, spec.skills("sensorimotor"))
     assert report.ok, report.errors
     assert set(report.skills) == set(spec.skills("sensorimotor"))
-    assert report.skills["pick_and_place"].param_count == 14
-    assert report.skills["draw_anything"].param_count == 15
+    assert report.skills[spec.skills("sensorimotor")[0]].param_count == 14
+    assert report.skills[spec.skills("sensorimotor")[2]].param_count == 14
     assert report.param_count == sum(r.param_count for r in report.skills.values())
     assert all(r.model_sha256 and r.config_sha256 for r in report.skills.values())
-    one = check_skill(sub / "draw_anything", spec, arch, "draw_anything")
-    assert one.ok and one.architecture == "bpp_draw_v1"
+    third = spec.skills("sensorimotor")[2]
+    one = check_skill(sub / third, spec, arch, third)
+    assert one.ok and one.architecture == spec.architecture(third)
 
 
 def test_rejections(spec, tmp_path):
@@ -107,7 +111,7 @@ def test_rejections(spec, tmp_path):
             spec,
             tmp_path,
             tensors={"a.weight": ([4, 4], "F32"), "b": ([2], "F32")},
-            skills={"pick_and_place": "bpp_libero_v1"},
+            skills={spec.skills("sensorimotor")[0]: "bpp_robotwin_v1"},
         ),
         spec,
         arch,
@@ -128,20 +132,23 @@ def test_rejections(spec, tmp_path):
     )
     assert any("extension" in e for e in r.errors)
     (tmp_path / "sub" / "weights.ckpt").unlink()
-    (tmp_path / "sub" / "draw_anything" / "config.yaml").write_text(
+    (tmp_path / "sub" / spec.skills("sensorimotor")[2] / "config.yaml").write_text(
         "architecture: other\nmodel: {}\n"
     )
     r = check_submission(tmp_path / "sub", spec, arch, spec.skills("sensorimotor"))
-    assert any("draw_anything: config.yaml: architecture" in e for e in r.errors)
-    assert r.skills["pick_and_place"].ok
-    (tmp_path / "sub" / "draw_anything" / "config.yaml").unlink()
+    assert any(
+        f"{spec.skills('sensorimotor')[2]}: config.yaml: architecture" in e for e in r.errors
+    )
+    assert r.skills[spec.skills("sensorimotor")[0]].ok
+    (tmp_path / "sub" / spec.skills("sensorimotor")[2] / "config.yaml").unlink()
     r = check_submission(tmp_path / "sub", spec, arch, spec.skills("sensorimotor"))
-    assert any("draw_anything: config.yaml missing" in e for e in r.errors)
+    assert any(f"{spec.skills('sensorimotor')[2]}: config.yaml missing" in e for e in r.errors)
 
 
 def test_missing_skill_directory(spec, tmp_path):
     arch = make_arch(tmp_path)
-    sub = make_submission(spec, tmp_path, skills={"pick_and_place": "bpp_libero_v1"})
+    first, *rest = spec.skills("sensorimotor")
+    sub = make_submission(spec, tmp_path, skills={first: spec.architecture(first)})
     r = check_submission(sub, spec, arch, spec.skills("sensorimotor"))
-    assert not r.ok and any("draw_anything: directory missing" in e for e in r.errors)
-    assert r.skills["pick_and_place"].ok
+    assert not r.ok and any(f"{rest[0]}: directory missing" in e for e in r.errors)
+    assert r.skills[first].ok
