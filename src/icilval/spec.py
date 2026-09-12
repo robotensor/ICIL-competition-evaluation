@@ -14,7 +14,6 @@ from .canon import canonical_sha256
 
 SPEC_ENV = "ICILVAL_SPEC"
 SCHEMA_ENV = "ICILVAL_STORE_SCHEMA"
-SIMULATORS = ("libero", "draw")
 SKILL_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 SKILL_CODE_RE = re.compile(r"^[a-z]{2}$")
 
@@ -49,6 +48,9 @@ def schema_path() -> Path:
 
 
 def validate_spec(doc: dict[str, Any]) -> list[str]:
+    from .simulators import get as simulator
+    from .simulators import names as simulator_names
+
     errors: list[str] = []
 
     def need(path: str, cond: bool) -> None:
@@ -74,13 +76,15 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
         codes.add(str(code))
         need(f"skills.{sid}.title", isinstance(s.get("title"), str) and bool(s.get("title")))
         need(f"skills.{sid}.architecture", isinstance(s.get("architecture"), str))
-        need(f"skills.{sid}.simulator", s.get("simulator") in SIMULATORS)
+        need(f"skills.{sid}.simulator", s.get("simulator") in simulator_names())
         need(f"skills.{sid}.max_steps", isinstance(s.get("max_steps"), int) and s["max_steps"] > 0)
         need(f"skills.{sid}.environment", isinstance(s.get("environment"), dict))
         env = s.get("environment") or {}
         for key in ("obs_history", "action_horizon", "exec_horizon", "prompt_actions_per_chunk"):
             need(f"skills.{sid}.environment.{key}", isinstance(env.get(key), int) and env[key] > 0)
         need(f"skills.{sid}.perturbations removed", "perturbations" not in s)
+        if s.get("simulator") in simulator_names():
+            errors.extend(simulator(str(s["simulator"])).validate_skill(sid, s))
         tasks = s.get("tasks") or {}
         need(
             f"skills.{sid}.tasks.dataset",
@@ -95,21 +99,6 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
             (isinstance(tasks.get("views"), list) and bool(tasks["views"]))
             or (isinstance(tasks.get("files"), dict) and bool(tasks["files"])),
         )
-        if s.get("simulator") == "draw":
-            for key in ("board_angle_range_rad", "cursor_start_range_px"):
-                rng = env.get(key)
-                need(
-                    f"skills.{sid}.environment.{key} range",
-                    isinstance(rng, list)
-                    and len(rng) == 2
-                    and all(isinstance(x, (int, float)) for x in rng)
-                    and rng[0] < rng[1],
-                )
-            success = s.get("success") or {}
-            need(
-                f"skills.{sid}.success.threshold>0",
-                isinstance(success.get("threshold"), (int, float)) and success["threshold"] > 0,
-            )
     duel = doc.get("duel") or {}
     sizes = duel.get("sizes") or {}
     need("duel.default_size in sizes", duel.get("default_size") in sizes)

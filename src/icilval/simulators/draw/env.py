@@ -14,7 +14,7 @@ from typing import Any
 
 import numpy as np
 
-from ..spec import Spec
+from ...spec import Spec
 
 PEN_BLUE = (0, 0, 255)
 

@@ -225,7 +225,7 @@ def cmd_pools(args) -> int:
         )
         return 0
     if args.pools_cmd == "generate-draw":
-        from .pools.build_draw import generate_draw, import_generated_draw
+        from .simulators.draw.pool import generate_draw, import_generated_draw
         from .spec import _repo_root as rr
 
         root = rr() or Path.cwd()

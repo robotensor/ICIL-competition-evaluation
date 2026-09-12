@@ -2,7 +2,8 @@ import pytest
 
 from icilval.ids import ModelRef, duel_id
 from icilval.pools.schema import Pool, PoolTask
-from icilval.pools.units import derive_units, draw_instance
+from icilval.pools.units import derive_units
+from icilval.simulators.draw.units import draw_instance
 
 PP, GC, DA = "pick_and_place", "goal_chain", "draw_anything"
 

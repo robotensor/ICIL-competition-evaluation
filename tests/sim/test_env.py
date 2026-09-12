@@ -1,14 +1,14 @@
 import numpy as np
 import pytest
 
-from icilval.sim.libero_env import LiberoEnv, load_init_states
-from icilval.sim.video import VideoWriter, is_faststart
+from icilval.simulators.libero.env import LiberoEnv, load_init_states
+from icilval.video import VideoWriter, is_faststart
 
 pytestmark = pytest.mark.sim
 
 
 def first_base_task(pool):
-    return next(t for t in pool.tasks.values() if t.suite == "libero_spatial")
+    return next(t for _, t in sorted(pool.tasks.items()) if t.skill == "pick_and_place")
 
 
 def first_draw_task(pool):
@@ -67,7 +67,7 @@ def test_replay_demo_actions_succeed(spec, smoke_pool):
 def test_draw_board_replays_demo_to_zero_chamfer(spec, smoke_pool):
     """A demonstration's own actions on its own board redraw its strokes exactly."""
     from icilval.pools.demos import load_demo
-    from icilval.sim.draw_env import DrawBoard
+    from icilval.simulators.draw.env import DrawBoard
 
     task = first_draw_task(smoke_pool)
     demo = load_demo(smoke_pool.path("demos") / f"{task.demos[0]}.npz")
@@ -101,8 +101,8 @@ def test_draw_episode_with_replaying_policy(spec, smoke_pool, tmp_path):
     from icilval.model.prompt import PromptInfo
     from icilval.pools.demos import load_demo
     from icilval.pools.units import derive_units
-    from icilval.sim.draw_env import DrawBoard
-    from icilval.sim.draw_episode import run_draw_episode
+    from icilval.simulators.draw.env import DrawBoard
+    from icilval.simulators.draw.episode import run_draw_episode
 
     did = duel_id(spec.version, spec.track_id, ModelRef.make("a/b", "1" * 40), None)
     unit = next(

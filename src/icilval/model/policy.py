@@ -1,7 +1,7 @@
-"""BPP inference for one unit: instantiate the allow-listed architecture, load weights strictly,
-prompt with one demonstration, predict action chunks. Runs where behavior_prompting is
-importable. `BPPPolicy` is the LIBERO (pick-and-place) policy; `draw.DrawPolicy` shares the
-loading and tensor plumbing and differs in observation keys and action shape.
+"""BPP inference, the simulator-independent part: instantiate the allow-listed architecture,
+load weights strictly, move tensors, seed. Each simulator's policy (`simulators/<sim>/policy.py`)
+adds the prompt encoding and the observation keys and action shape of its domain. Runs where
+behavior_prompting is importable.
 """
 
 from __future__ import annotations
@@ -15,8 +15,7 @@ from typing import Any
 import numpy as np
 
 from ..spec import Spec
-from .prompt import PromptInfo, build_prompt
-from .rotations import actions_10_to_7, quat_xyzw_to_rotation_6d
+from .prompt import PromptInfo
 
 log = logging.getLogger(__name__)
 
@@ -137,52 +136,3 @@ class PolicyBase:
 
     def act(self, history: list[dict[str, Any]]) -> np.ndarray:
         raise NotImplementedError
-
-
-class BPPPolicy(PolicyBase):
-    """LIBERO: two 128 px cameras, end-effector pose, gripper; 7-d delta actions."""
-
-    def set_prompt(self, demo: dict[str, Any]) -> PromptInfo:
-        prompt, info = build_prompt(demo, self.chunk_n, self.max_chunks, self.pad_end)
-        prompt_dict = {
-            "obs": {
-                "agentview_rgb": self._images(prompt["obs"]["agentview_rgb"]),
-                "eye_in_hand_rgb": self._images(prompt["obs"]["eye_in_hand_rgb"]),
-                "ee_pos": self._lowdim(prompt["obs"]["ee_pos"]),
-                "ee_ori": self._lowdim(prompt["obs"]["ee_ori"]),
-                "gripper_states": self._lowdim(prompt["obs"]["gripper_states"]),
-            },
-            "action": self._lowdim(prompt["action"]),
-            "metadata": {"mask": self._mask(prompt["mask"])},
-        }
-        self.policy.reset(action_exec_horizon=self.exec_horizon)
-        self.policy.prompt(prompt_dict)
-        return info
-
-    def act(self, history: list[dict[str, Any]]) -> np.ndarray:
-        """history: last observations (oldest first); returns (exec_horizon, 7) actions."""
-        import torch
-
-        obs = self._history(history)
-        obs_dict = {
-            "agentview_rgb": self._images(np.stack([o["agentview"] for o in obs])),
-            "eye_in_hand_rgb": self._images(np.stack([o["eye_in_hand"] for o in obs])),
-            "ee_pos": self._lowdim(np.stack([o["ee_pos"] for o in obs])),
-            "ee_ori": self._lowdim(quat_xyzw_to_rotation_6d(np.stack([o["ee_quat"] for o in obs]))),
-            "gripper_states": self._lowdim(np.stack([o["gripper"] for o in obs])),
-        }
-        with torch.inference_mode():
-            out = self.policy.predict_action(obs_dict)
-        a10 = out["action"][0].detach().float().cpu().numpy()
-        return actions_10_to_7(a10)[: self.exec_horizon]
-
-
-def make_policy(
-    model_dir: str | Path, arch_dir: str | Path, spec: Spec, skill: str, device: str = "cuda"
-) -> PolicyBase:
-    """The policy class for a skill's simulator."""
-    if spec.simulator(skill) == "draw":
-        from .draw import DrawPolicy
-
-        return DrawPolicy(model_dir, arch_dir, spec, skill, device=device)
-    return BPPPolicy(model_dir, arch_dir, spec, skill, device=device)
