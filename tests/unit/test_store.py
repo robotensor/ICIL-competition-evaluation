@@ -230,3 +230,29 @@ def test_two_fields_are_verified_independently(spec, tmp_path):
     report = verify_store(tmp_path / "store", sp)
     assert report.ok, report.errors
     assert report.records == 2 and report.events == 2
+
+
+def test_a_foreign_kind_carrying_a_king_does_not_take_the_crown(spec, tmp_path):
+    """Crowning is an allow-list.
+
+    The head is what every reader treats as "who holds this field's crown". A record of some
+    other kind that happens to carry `king`/`new_king` - a kind added later, or a tool reusing
+    the record shape - must not move it. Before the allow-list, `new_king` alone was enough.
+    """
+    sp = small_spec(spec, tmp_path, lines_per_part=1000)
+    signer = Signer.generate()
+    store = Store(tmp_path / "store", sp, signer)
+    store.init(signer.verify_key_hex, None)
+    king = ModelRef.make("org/genesis", "a" * 40)
+    usurper = ModelRef.make("org/usurper", "c" * 40)
+    track = "sensorimotor"
+    publish(store, sp, make_record(sp, "genesis", 0, king, None))
+    assert store.head(track)["king"]["key"] == king.key
+
+    foreign = make_record(sp, "duel", 1, king, usurper, dethroned=True)
+    foreign["kind"] = "something_else"
+    store.append(track, foreign)
+
+    head = store.head(track)
+    assert head["king"]["key"] == king.key, "a non-crowning kind moved the crown"
+    assert head["seq"] == 2, "it is still recorded; only the crown is left alone"
