@@ -45,6 +45,8 @@ class DuelFailed(Exception):
 
 @dataclass
 class DuelRequest:
+    #: The field this duel is fought in. Each has its own king, queue, lineage and skills.
+    track: str
     challenger: ModelRef
     king: ModelRef | None
     size: str | None = None
@@ -78,6 +80,7 @@ class Orchestrator:
     def _frame(self, state: dict[str, Any], **kw: Any) -> dict[str, Any]:
         return build_frame(
             self.spec,
+            track=state["track"],
             validator_key=self.rt.signer.verify_key_hex,
             event_id=state["event_id"],
             kind=state["kind"],
@@ -189,6 +192,7 @@ class Orchestrator:
             pool=self.rt.pool,
             units=state["unit_defs"],
             spec=self.spec,
+            track=req.track,
             out_dir=side_dir,
             device=req.device,
             on_unit=on_unit,
@@ -236,6 +240,8 @@ class Orchestrator:
             "/work/units.json",
             "--side",
             side,
+            "--track",
+            req.track,
             "--out",
             "/work",
         ]
@@ -269,14 +275,15 @@ class Orchestrator:
         # Before anything is fetched: a duel that would score a skill whose benchmark is not
         # installed must stop here, not halfway through with half a score.
         simulators.require(spec)
-        track = spec.sole_track
+        track = req.track
         size = spec.size_of(track, req.size)
-        did = duel_id(spec.version, spec.sole_track, req.challenger, req.king)
-        eid = event_id(req.kind, spec.sole_track, block, did)
+        did = duel_id(spec.version, track, req.challenger, req.king)
+        eid = event_id(req.kind, track, block, did)
         run_dir = self.rt.run_root / eid[:16]
         run_dir.mkdir(parents=True, exist_ok=True)
         state: dict[str, Any] = {
             "event_id": eid,
+            "track": track,
             "kind": req.kind,
             "size": size,
             "king": req.king,
@@ -307,7 +314,7 @@ class Orchestrator:
                 state, force=True, phase="checking", message="checking architectures and weights"
             )
             for side, d in dirs.items():
-                rep = check_submission(d, spec, self.rt.arch_dir)
+                rep = check_submission(d, spec, self.rt.arch_dir, spec.skills(track))
                 sides_meta[side] = {
                     "repo_bytes": rep.repo_bytes,
                     "skills": {
@@ -322,7 +329,7 @@ class Orchestrator:
                 if not rep.ok and not (req.skip_model_check and side == "challenger"):
                     raise DuelFailed(f"{side} failed the model check: " + "; ".join(rep.errors[:5]))
             # ---- units
-            units = derive_units(self.rt.pool, spec, did, size)
+            units = derive_units(self.rt.pool, spec, did, size, track=track)
             state["unit_defs"] = [u.as_dict() for u in units]
             state["units"] = [unit_verdict_from_unit(u.as_dict()) for u in units]
             self._render_demos(state, run_dir)
@@ -359,7 +366,7 @@ class Orchestrator:
                 schema=int(spec.store["schema"]),
                 event_id=eid,
                 kind=req.kind,
-                track=spec.sole_track,
+                track=track,
                 block=block,
                 finished_at=now_iso(),
                 king=req.king,
@@ -386,8 +393,8 @@ class Orchestrator:
                 sides=sides_meta,
                 notes=[],
             )
-            self.rt.store.write_event(spec.sole_track, event)
-            record["seq"] = self.rt.store.append(spec.sole_track, record)
+            self.rt.store.write_event(track, event)
+            record["seq"] = self.rt.store.append(track, record)
             (run_dir / "record.json").write_text(json.dumps(record, indent=2))
             self._post(
                 state,
@@ -454,6 +461,7 @@ def read_summary(side_dir: Path) -> dict[str, Any]:
 
 def publish_genesis(
     rt: Runtime,
+    track: str,
     king: ModelRef,
     block: int,
     *,
@@ -464,22 +472,22 @@ def publish_genesis(
     simulators.require(spec)
     if check:
         got = fetch_model(king, rt.run_root / "models" / king.key, spec, local_models=local_models)
-        rep = check_submission(got.path, spec, rt.arch_dir)
+        rep = check_submission(got.path, spec, rt.arch_dir, spec.skills(track))
         if not rep.ok:
             raise DuelFailed("genesis model failed the check: " + "; ".join(rep.errors[:5]))
-    eid = event_id("genesis", spec.sole_track, block, king.key)
+    eid = event_id("genesis", track, block, king.key)
     record = index_record(
         schema=int(spec.store["schema"]),
         event_id=eid,
         kind="genesis",
-        track=spec.sole_track,
+        track=track,
         block=block,
         finished_at=now_iso(),
         king=king,
         challenger=None,
         king_scores=None,
         challenger_scores=None,
-        score_margin=spec.score_margin(spec.sole_track),
+        score_margin=spec.score_margin(track),
         dethroned=False,
         new_king=None,
         media_count=0,
@@ -497,8 +505,8 @@ def publish_genesis(
         wall_seconds=0.0,
         notes=["The opening entrant took an empty throne."],
     )
-    rt.store.write_event(spec.sole_track, event)
-    record["seq"] = rt.store.append(spec.sole_track, record)
+    rt.store.write_event(track, event)
+    record["seq"] = rt.store.append(track, record)
     return record
 
 
