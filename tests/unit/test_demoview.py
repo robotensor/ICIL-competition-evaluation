@@ -204,3 +204,91 @@ class _Policy:
 
     def unload(self):
         pass
+
+
+# A benchmark whose video channel is one array per camera, and which carries its own metadata.
+# This is RoboTwin's shape, and neither half of it fits an exact-name allow-list.
+PREFIXED = {
+    "video": ("frames_*",),
+    "proprio": ("qpos", "endpose", "gripper_joints"),
+    "actions": ("actions",),
+    "metadata": ("times",),
+}
+
+PREFIXED_DEMO = {
+    "frames_head_camera": np.zeros((2, 4, 4, 3), dtype=np.uint8),
+    "frames_far_side_camera": np.ones((2, 4, 4, 3), dtype=np.uint8),
+    "qpos": np.zeros((2, 14)),
+    "endpose": np.zeros((2, 16)),
+    "gripper_joints": np.zeros((2, 4)),
+    "actions": np.zeros((2, 16)),
+    "times": np.array([0.0, 0.05]),
+    "meta": {"task": "place_a2b_left"},
+}
+
+
+def test_a_prefixed_video_channel_survives_the_allow_list():
+    """One array per camera cannot be enumerated by the orchestrator, which knows no camera list.
+
+    Before prefixes, `frames_head_camera` matched no entry and was dropped - so a video-only
+    prompt over this benchmark contained no video at all.
+    """
+    view = demoview.DemoView(name="video_only", keep=("video",), withheld=("actions", "proprio"))
+    out = demoview.apply(PREFIXED_DEMO, PREFIXED, view)
+
+    assert "frames_head_camera" in out and "frames_far_side_camera" in out
+    assert out["frames_head_camera"].shape == (2, 4, 4, 3)
+
+
+def test_the_benchmarks_own_metadata_is_kept_under_every_view():
+    """`times` is not an observation and no field's modalities would ever claim it."""
+    for name, keep in (
+        ("video_only", ("video",)),
+        ("sensorimotor", ("video", "actions", "proprio")),
+    ):
+        view = demoview.DemoView(name=name, keep=keep, withheld=())
+        out = demoview.apply(PREFIXED_DEMO, PREFIXED, view)
+        assert "times" in out, f"{name} lost the frame timestamps"
+        assert "meta" in out
+
+
+def test_video_only_still_withholds_every_action_and_proprio_array_of_a_prefixed_benchmark():
+    """The prefix must widen the video channel only - not the allow-list in general."""
+    view = demoview.DemoView(name="video_only", keep=("video",), withheld=("actions", "proprio"))
+    out = demoview.apply(PREFIXED_DEMO, PREFIXED, view)
+
+    for withheld in ("actions", "qpos", "endpose", "gripper_joints"):
+        assert withheld not in out, f"{withheld} reached a video-only prompt"
+    assert demoview.check(out, PREFIXED, view) == []
+    # And the full view does hand them over, so the test above is about redaction, not absence.
+    full = demoview.DemoView(name="sensorimotor", keep=("video", "actions", "proprio"), withheld=())
+    assert set(demoview.apply(PREFIXED_DEMO, PREFIXED, full)) == set(PREFIXED_DEMO)
+
+
+def test_a_prefix_admits_only_what_actually_carries_it():
+    """`frames_*` must not become a licence for anything vaguely similar.
+
+    A prefix widens the allow-list, which is the one direction that can leak, so it matches the
+    declared string exactly and nothing near it.
+    """
+    view = demoview.DemoView(name="video_only", keep=("video",), withheld=("actions",))
+    demo = {
+        **PREFIXED_DEMO,
+        "frame_actions": np.zeros((2, 16)),  # `frame_`, not `frames_`
+        "framesactions": np.zeros((2, 16)),  # no separator at all
+        "frames_": np.zeros((2, 16)),  # the prefix itself, carrying no camera
+    }
+    out = demoview.apply(demo, PREFIXED, view)
+
+    assert "frame_actions" not in out, "a shorter prefix was admitted"
+    assert "framesactions" not in out, "a name merely starting with the letters was admitted"
+    assert "frames_" in out, "the declared prefix admits its own exact string"
+
+
+def test_the_handed_digest_covers_the_prefixed_arrays():
+    view = demoview.DemoView(name="video_only", keep=("video",), withheld=("actions", "proprio"))
+    out = demoview.apply(PREFIXED_DEMO, PREFIXED, view)
+    first = demoview.handed_sha256(out)
+
+    changed = {**out, "frames_head_camera": np.full((2, 4, 4, 3), 7, dtype=np.uint8)}
+    assert demoview.handed_sha256(changed) != first, "a camera's frames are not in the digest"
