@@ -22,7 +22,9 @@ def small_spec(spec, tmp_path, lines_per_part=2):
     return load_spec_file(p)
 
 
-def make_record(spec, kind, block, king, challenger, dethroned=False, event=None):
+def make_record(
+    spec, kind, block, king, challenger, dethroned=False, event=None, track="sensorimotor"
+):
     eid = "%064x" % (block + 1)
     ks = (
         {**empty_skill_scores(spec.all_skills), "pick_and_place": 0.5, "average": 0.5}
@@ -38,32 +40,32 @@ def make_record(spec, kind, block, king, challenger, dethroned=False, event=None
         schema=spec.store["schema"],
         event_id=eid,
         kind=kind,
-        track="sensorimotor",
+        track=track,
         block=block,
         finished_at=now_iso(),
         king=king,
         challenger=challenger,
         king_scores=ks,
         challenger_scores=cs,
-        score_margin=spec.score_margin("sensorimotor"),
+        score_margin=spec.score_margin(track),
         dethroned=dethroned,
         new_king=challenger if dethroned else None,
         duel_size="smoke",
     )
 
 
-def publish(store, spec, record, units=None, media_count=0):
+def publish(store, spec, record, units=None, media_count=0, track="sensorimotor"):
     event = duel_event(
         record,
         spec_version=spec.version,
         spec_fingerprint=spec.fingerprint,
         units=units or [],
-        units_per_skill=spec.units_per_skill("sensorimotor", "smoke"),
+        units_per_skill=spec.units_per_skill(track, "smoke"),
         started_at=now_iso(),
         wall_seconds=1.5,
     )
-    store.write_event("sensorimotor", event)
-    return store.append("sensorimotor", record)
+    store.write_event(track, event)
+    return store.append(track, record)
 
 
 def test_store_append_rotate_head_and_verify(spec, tmp_path):
@@ -195,3 +197,36 @@ def test_prune_keeps_the_repository_own_files():
     remote = {"README.md", ".gitattributes", "manifest.json", "events/t/old.json", "media/aa/x.mp4"}
     local = {"manifest.json", "events/t/new.json"}
     assert sorted(remote - local - REPO_OWNED) == ["events/t/old.json", "media/aa/x.mp4"]
+
+
+def test_two_fields_are_verified_independently(spec, tmp_path):
+    """Each field has its own index, head and sequence, and `store verify` walks every one the
+    manifest names. A duel in one leaves the other's lineage untouched."""
+    sp = small_spec(spec, tmp_path)
+    signer = Signer.generate()
+    store = Store(tmp_path / "store", sp, signer)
+    manifest = store.init(signer.verify_key_hex, None)
+    assert manifest["tracks"] == list(sp.tracks)
+
+    king = ModelRef.make("org/genesis", "a" * 40)
+    other = ModelRef.make("org/vo", "c" * 40)
+    assert publish(store, sp, make_record(sp, "genesis", 0, king, None)) == 1
+    assert (
+        publish(
+            store,
+            sp,
+            make_record(sp, "genesis", 0, other, None, track="video_only"),
+            track="video_only",
+        )
+        == 1
+    )
+
+    # Separate sequences, separate kings.
+    assert store.head("sensorimotor")["king"]["key"] == king.key
+    assert store.head("video_only")["king"]["key"] == other.key
+    assert [r["seq"] for r in store.iter_index("sensorimotor")] == [1]
+    assert [r["seq"] for r in store.iter_index("video_only")] == [1]
+
+    report = verify_store(tmp_path / "store", sp)
+    assert report.ok, report.errors
+    assert report.records == 2 and report.events == 2
