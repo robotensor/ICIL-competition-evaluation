@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import shutil
 import subprocess
 import time
@@ -127,33 +128,44 @@ def make_run_units(name: str, benchmark: Any):
         media_dir: Path,
         record_video: bool,
     ) -> None:
-        address = getattr(policy, "address", None)
+        from ..model.host import PolicyHost
+
         unit_wall = float(spec.budgets["unit_wall_seconds"])
         work_root = Path(media_dir).parent / "units"
 
-        for unit in units:
-            if ctx.out_of_time():
-                ctx.finish(unit, ctx.timed_out(unit), None)
-                continue
+        # One host for the whole skill, not one per unit. The policy is loaded once and stays
+        # loaded - that is the frozen-policy guarantee, and a host per unit would reload it
+        # between units and let inference-time state be laundered by the reload.
+        with PolicyHost(policy) as host:
+            env = {**os.environ, **host.env()}
+            errors_before = host.errors
+            for unit in units:
+                if ctx.out_of_time():
+                    ctx.finish(unit, ctx.timed_out(unit), None)
+                    continue
 
-            unit_id = str(unit["unit_id"])
-            out_dir = work_root / unit_id
-            out_dir.mkdir(parents=True, exist_ok=True)
-            clip = Path(media_dir) / f"{unit_id}.mp4"
+                unit_id = str(unit["unit_id"])
+                out_dir = work_root / unit_id
+                out_dir.mkdir(parents=True, exist_ok=True)
+                clip = Path(media_dir) / f"{unit_id}.mp4"
 
-            started = time.monotonic()
-            outcome = _run_one(
-                name=name,
-                benchmark=benchmark,
-                unit=unit,
-                out_dir=out_dir,
-                address=address,
-                timeout_s=unit_wall,
-                record_video=record_video,
-            )
-            outcome.wall_s = round(time.monotonic() - started, 2)
-            _collect_clip(out_dir, clip, record_video)
-            ctx.finish(unit, ctx.record(unit, outcome, clip), outcome)
+                started = time.monotonic()
+                outcome = _run_one(
+                    name=name,
+                    benchmark=benchmark,
+                    unit=unit,
+                    out_dir=out_dir,
+                    address=host.address,
+                    env=env,
+                    timeout_s=unit_wall,
+                    record_video=record_video,
+                )
+                outcome.wall_s = round(time.monotonic() - started, 2)
+                # What the model itself got wrong, from the side of the wire that saw it.
+                outcome.model_errors = max(outcome.model_errors, host.errors - errors_before)
+                errors_before = host.errors
+                _collect_clip(out_dir, clip, record_video)
+                ctx.finish(unit, ctx.record(unit, outcome, clip), outcome)
 
     return run_units
 
@@ -165,6 +177,7 @@ def _run_one(
     unit: dict[str, Any],
     out_dir: Path,
     address: str | None,
+    env: dict[str, str] | None,
     timeout_s: float,
     record_video: bool,
 ) -> Outcome:
@@ -188,7 +201,7 @@ def _run_one(
         return voided(f"{name}: run_command failed: {exc}")
 
     try:
-        completed = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_s)
+        completed = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_s, env=env)
     except subprocess.TimeoutExpired:
         return voided(f"{name}: unit exceeded its {timeout_s:.0f}s budget")
     except OSError as exc:

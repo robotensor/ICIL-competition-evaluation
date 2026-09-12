@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import json
 import sys
+from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
 
 from icilval.benchmarks import subprocess_runner as runner
@@ -107,9 +109,9 @@ def test_a_unit_runs_in_a_subprocess_and_its_result_comes_back(tmp_path):
     _, rec, res = ctx.finished[0]
     assert rec["success"] is True and rec["void"] is False and rec["steps"] == 7
     assert res.wall_s >= 0
-    # The benchmark was handed the prompt and the served policy's address.
+    # The benchmark was handed the prompt and a real served address, not a placeholder.
     assert bench.seen[0]["prompt"] == "/prompts/u0"
-    assert bench.seen[0]["policy_address"] == "unix:///tmp/policy.sock"
+    assert bench.seen[0]["policy_address"].endswith("policy.sock")
 
 
 def test_the_clip_the_benchmark_wrote_lands_where_the_record_addresses_it(tmp_path):
@@ -225,3 +227,110 @@ def test_demo_frames_come_from_whatever_the_benchmark_calls_video():
     # Two cameras side by side, and nothing but cameras.
     assert frames[0].shape == (4, 8, 3)
     assert runner.demo_frames_from(demo, {"video": ()}) == []
+
+
+# A benchmark subprocess that connects back to the orchestrator's policy and drives it, using the
+# client this repository publishes for benchmarks to vendor. This is the whole architecture in one
+# test: the orchestrator holds the weights, the benchmark holds the simulator, they meet on a
+# socket, and neither imports the other's stack.
+DRIVER = """
+import json, os, pathlib, sys
+sys.path.insert(0, {src!r})
+from icilval.model.client import PolicyClient
+import numpy as np
+
+out = pathlib.Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
+address = sys.argv[2]
+key = bytes.fromhex(os.environ["ICILVAL_POLICY_AUTHKEY"])
+with PolicyClient(address, key, timeout_s=20.0) as policy:
+    policy.reset()
+    info = policy.prompt({{"frames_head": np.zeros((3, 2, 2, 3), dtype=np.uint8)}})
+    action = policy.act([{{"rgb": np.ones((2, 2, 3), dtype=np.uint8)}}])
+    (out / "result.json").write_text(json.dumps({{
+        "success": bool(action.sum() > 0), "void": False, "steps": int(action.shape[0]),
+        "prompt_steps": info.get("prompt_steps"),
+    }}))
+"""
+
+
+class ConnectingBenchmark(FakeBenchmark):
+    """A benchmark whose subprocess really talks to the served policy."""
+
+    def run_command(self, *, unit, prompt, out_dir, policy_address, **extra):
+        self.seen.append({"unit": dict(unit), "prompt": prompt, "policy_address": policy_address})
+        src = str(Path(__file__).resolve().parents[2] / "src")
+        return [sys.executable, "-c", DRIVER.format(src=src), out_dir, policy_address]
+
+
+class ServedPolicy:
+    """The orchestrator's side: a policy in the shape `PolicyBase` defines."""
+
+    def __init__(self):
+        self.prompts = 0
+        self.resets = 0
+
+    def seed(self, seed):
+        pass
+
+    def reset(self):
+        self.resets += 1
+
+    def set_prompt(self, demo):
+        self.prompts += 1
+        assert set(demo) == {"frames_head"}, demo
+        return type("Info", (), {"steps": 3, "chunks": 1})()
+
+    def act(self, history):
+        assert len(history) == 1 and set(history[0]) == {"rgb"}
+        return np.ones(4, dtype=np.float32)
+
+
+def test_a_benchmark_subprocess_drives_the_orchestrators_policy(tmp_path):
+    """The architecture end to end: weights here, simulator there, a socket between."""
+    policy = ServedPolicy()
+    bench = ConnectingBenchmark()
+    ctx = Ctx()
+    media = tmp_path / "media"
+    media.mkdir(parents=True)
+    runner.make_run_units("fakesim", bench)(
+        ctx, "rt_pick_and_place", policy, None, [unit(0), unit(1)], Spec(), media, False
+    )
+
+    assert [r["void"] for _, r, _ in ctx.finished] == [False, False]
+    assert [r["success"] for _, r, _ in ctx.finished] == [True, True]
+    # One host for the whole skill: the policy was never reloaded between units.
+    assert policy.resets == 2 and policy.prompts == 2
+
+
+# The same driver, but connecting with a key it invented rather than the one it was given.
+INTRUDER = """
+import pathlib, sys
+sys.path.insert(0, {src!r})
+from icilval.model.client import PolicyClient, PolicyError
+pathlib.Path(sys.argv[1]).mkdir(parents=True, exist_ok=True)
+try:
+    PolicyClient(sys.argv[2], b"guessed", timeout_s=5.0)
+except PolicyError:
+    raise SystemExit(9)
+raise SystemExit(0)
+"""
+
+
+def test_the_address_alone_does_not_let_a_subprocess_drive_the_policy(tmp_path):
+    """The socket is 0600 and authenticated; knowing where it is must not be enough."""
+
+    class Intruder(FakeBenchmark):
+        def run_command(self, *, unit, prompt, out_dir, policy_address, **extra):
+            src = str(Path(__file__).resolve().parents[2] / "src")
+            return [sys.executable, "-c", INTRUDER.format(src=src), out_dir, policy_address]
+
+    ctx = Ctx()
+    media = tmp_path / "media"
+    media.mkdir(parents=True)
+    runner.make_run_units("fakesim", Intruder())(
+        ctx, "s", ServedPolicy(), None, [unit(0)], Spec(), media, False
+    )
+
+    _, rec, _ = ctx.finished[0]
+    # Exit 9 is the driver saying it was refused, which reaches the record as a void unit.
+    assert rec["void"] is True and "exited 9" in rec["error"]
