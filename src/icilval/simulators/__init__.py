@@ -132,7 +132,7 @@ def require(spec: Any, skills: Any = None) -> None:
     """
     _ensure_loaded()
     missing: dict[str, list[str]] = {}
-    for skill in skills if skills is not None else spec.skills:
+    for skill in skills if skills is not None else spec.all_skills:
         name = spec.simulator(skill)
         if name not in REGISTRY:
             missing.setdefault(name, []).append(skill)
@@ -171,7 +171,7 @@ def audit(spec: Any) -> list[dict[str, Any]]:
     from importlib.metadata import version as dist_version
 
     pins = benchmark_pins(spec)
-    wanted = {spec.simulator(skill) for skill in spec.skills} | set(pins)
+    wanted = {spec.simulator(skill) for skill in spec.all_skills} | set(pins)
     rows: list[dict[str, Any]] = []
     for name in sorted(wanted):
         pin = pins.get(name) or {}
@@ -195,7 +195,7 @@ def audit(spec: Any) -> list[dict[str, Any]]:
         pinned = pin.get("version")
         if pinned and row["version"] and pinned != row["version"]:
             row["problems"].append(f"version {row['version']} is not the pinned {pinned}")
-        row["skills"] = [s for s in spec.skills if spec.simulator(s) == name]
+        row["skills"] = [s for s in spec.all_skills if spec.simulator(s) == name]
         rows.append(row)
     return rows
 

@@ -123,7 +123,7 @@ def run_side(
 
     ctx = SideContext()
     try:
-        for skill in spec.skills:
+        for skill in spec.all_skills:
             todo = [u for u in units if u["skill"] == skill and u["unit_id"] not in done]
             if not todo:
                 continue

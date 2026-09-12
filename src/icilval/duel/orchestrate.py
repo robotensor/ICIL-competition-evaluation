@@ -347,7 +347,7 @@ class Orchestrator:
                 if time.monotonic() - t0 > float(spec.budgets["duel_wall_seconds"]):
                     raise DuelFailed("duel wall time exceeded")
             # ---- scoring
-            v = score.verdict(state["units"], spec.score_margin, spec.skills)
+            v = score.verdict(state["units"], spec.score_margin, spec.all_skills)
             if score.void_fraction(state["units"]) > spec.max_void_fraction:
                 raise DuelFailed(f"{v.tally.void} of {len(state['units'])} units void")
             # ---- publishing

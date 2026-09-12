@@ -145,7 +145,12 @@ class Spec:
 
     # -- skills
     @property
-    def skills(self) -> tuple[str, ...]:
+    def all_skills(self) -> tuple[str, ...]:
+        """Every skill in the contract, in declaration order.
+
+        Named `all_` because with more than one field "the skills" is ambiguous: a duel scores
+        one field's skills, not the contract's. `Spec.skills(track)` is that other reading.
+        """
         return tuple(self.raw["skills"].keys())
 
     def skill(self, name: str) -> dict[str, Any]:
@@ -155,7 +160,7 @@ class Spec:
         return str(self.skill(name)["code"])
 
     def skill_for_code(self, code: str) -> str:
-        for s in self.skills:
+        for s in self.all_skills:
             if self.skill_code(s) == code:
                 return s
         raise KeyError(code)
@@ -202,7 +207,7 @@ class Spec:
         return int(self.raw["duel"]["sizes"][self.size_of(size)]["units_per_skill"])
 
     def units_per_duel(self, size: str | None = None) -> int:
-        return self.units_per_skill(size) * len(self.skills)
+        return self.units_per_skill(size) * len(self.all_skills)
 
     @property
     def score_margin(self) -> float:

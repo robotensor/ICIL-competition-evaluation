@@ -50,7 +50,7 @@ def make_submission(spec, tmp_path, model=None, tensors=None, extra=None, skills
     """One directory per spec skill (or per `skills`: skill -> architecture)."""
     root = tmp_path / "sub"
     root.mkdir(exist_ok=True)
-    skills = skills or {s: spec.architecture(s) for s in spec.skills}
+    skills = skills or {s: spec.architecture(s) for s in spec.all_skills}
     for skill, arch in skills.items():
         d = root / skill
         d.mkdir(exist_ok=True)
@@ -83,7 +83,7 @@ def test_header_and_accept(spec, tmp_path):
     ] == [4, 3]
     report = check_submission(sub, spec, arch)
     assert report.ok, report.errors
-    assert set(report.skills) == set(spec.skills)
+    assert set(report.skills) == set(spec.all_skills)
     assert report.skills["pick_and_place"].param_count == 14
     assert report.skills["draw_anything"].param_count == 15
     assert report.param_count == sum(r.param_count for r in report.skills.values())
@@ -98,7 +98,7 @@ def test_rejections(spec, tmp_path):
     m["obs_encoder"]["obs_encoder"]["_target_"] = "evil.Loader"
     r = check_submission(make_submission(spec, tmp_path, model=m), spec, arch)
     assert any("allow-listed" in e for e in r.errors)
-    assert all(e.startswith(tuple(f"{s}:" for s in spec.skills)) for e in r.errors)
+    assert all(e.startswith(tuple(f"{s}:" for s in spec.all_skills)) for e in r.errors)
 
     r = check_submission(
         make_submission(

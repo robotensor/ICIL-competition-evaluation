@@ -48,7 +48,7 @@ def test_an_unknown_simulator_names_the_ones_there_are():
 
 
 def test_for_skill_reads_the_skill_s_simulator(spec):
-    for skill in spec.skills:
+    for skill in spec.all_skills:
         assert simulators.for_skill(spec, skill).name == spec.simulator(skill)
 
 

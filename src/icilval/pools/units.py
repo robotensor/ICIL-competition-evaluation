@@ -72,7 +72,7 @@ def _spread(n: int, entries: list[str], rng: HashRng) -> list[str]:
 def derive_units(pool: Pool, spec: Spec, duel: str, size: str | None = None) -> list[Unit]:
     per_skill = spec.units_per_skill(size)
     out: list[Unit] = []
-    for skill in spec.skills:
+    for skill in spec.all_skills:
         rng = HashRng(duel, skill)
         entries = pool.eligible(skill)
         if per_skill and not entries:

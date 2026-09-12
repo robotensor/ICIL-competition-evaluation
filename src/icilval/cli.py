@@ -193,8 +193,8 @@ def cmd_pools(args) -> int:
     if args.pools_cmd == "build":
         out = Path(args.out)
         src = sources()
-        stages = args.stage or [*spec.skills, "finalize"]
-        unknown = [st for st in stages if st != "finalize" and st not in spec.skills]
+        stages = args.stage or [*spec.all_skills, "finalize"]
+        unknown = [st for st in stages if st != "finalize" and st not in spec.all_skills]
         if unknown:
             print("unknown stage(s):", *unknown, "- stages are the skill ids and finalize")
             return 2

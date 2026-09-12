@@ -25,12 +25,12 @@ def small_spec(spec, tmp_path, lines_per_part=2):
 def make_record(spec, kind, block, king, challenger, dethroned=False, event=None):
     eid = "%064x" % (block + 1)
     ks = (
-        {**empty_skill_scores(spec.skills), "pick_and_place": 0.5, "average": 0.5}
+        {**empty_skill_scores(spec.all_skills), "pick_and_place": 0.5, "average": 0.5}
         if kind == "duel"
         else None
     )
     cs = (
-        {**empty_skill_scores(spec.skills), "pick_and_place": 0.9, "average": 0.9}
+        {**empty_skill_scores(spec.all_skills), "pick_and_place": 0.9, "average": 0.9}
         if kind == "duel"
         else None
     )
