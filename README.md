@@ -1,17 +1,28 @@
 # icilval
 
-Validator for the RoboTensor **one-demonstration in-context imitation learning** competition.
-A submission holds one Behavior Prompting Policy (BPP) checkpoint per **skill** — pick and place
-(BPP's LIBERO-Gen Combination), goal chain (LIBERO-Gen Chain) and draw anything
-(DrawAnything-Sim). For every unit the model is shown one demonstration of the task, no
-language, and must do it from another initial state. Each skill
-is one success rate; the final score is their mean; a challenger takes the crown by beating the
-reigning model's average by `duel.score_margin` points on an identical unit list. Everything
-published is signed and reproducible from `spec.json`, the pool id and the two model references.
+Orchestration layer for the RoboTensor **one-demonstration in-context imitation learning**
+competition: duels, scoring, the signed store and the dashboard feed. Benchmarks are plugins.
+There are two **fields**, each with its own king, queue, lineage and crown:
+
+| Field | What the model is shown | Where it starts | Benchmark |
+|---|---|---|---|
+| **Sensorimotor** | frames, the action trajectory and proprioception | a **different** initial state | LIBERO, DrawAnything-Sim |
+| **Video-only** | the frames alone | the **identical** scene | RoboTwin 2.0 |
+
+They close the same shortcut by different means. A model shown what the robot did, in the very
+scene it is scored in, is being asked to copy a trajectory rather than imitate from watching — so
+the sensorimotor field scores a state it did not demonstrate, and the video-only field withholds
+the actions instead. See [`docs/protocol.md`](docs/protocol.md).
+
+A submission is to one field: one checkpoint per skill of that field, weights only, no
+participant code. Each skill is one success rate; a field's score is the mean over *its own*
+skills; a challenger takes that field's crown by beating the reigning model's average by
+`score_margin` points on an identical unit list. Everything published is signed and reproducible
+from `spec.json`, the pool id and the two model references.
 
 - `spec.json`, `store-schema.json` — the contract (also vendored by the dashboard).
 - `arch/` — the allow-listed architecture templates, one per architecture, exported from the genesis checkpoints.
-- `docs/` — protocol, submissions, pools, operations.
+- `docs/` — protocol, submissions, benchmarks, pools, operations.
 - `vendor/behavior_prompting` — BPP pinned as a git submodule (`git submodule update --init --recursive`).
 
 ## Quick start (organizer)
