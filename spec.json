@@ -32,7 +32,7 @@
    "_comment": "Renamed from the v3 track id 'icil_1demo'. At v6 this field runs on RoboTwin, because the orchestrator ships no benchmark of its own and RoboTwin is the one that is plugged. RoboTwin V1 implements only `same_scene`, so this field is Same Scene WITH the action trajectory - and that combination is degenerate: replaying the demonstration's own actions into the identical scene solves the episode, and the benchmark's replay oracle scores 18/18 doing exactly that. So this field no longer closes the replay shortcut at all, and its scores must not be read as if it did. It is honest only as a measurement of what a model does when copying is available to it, and as the path that exercises the orchestration while the video-only field has no trained checkpoint. Restoring a real sensorimotor field needs a benchmark that can score from a different initial state; `prompt_instance_disjoint` is false here because it must be, not because the field was designed that way.",
    "sizes": {
     "smoke": {
-     "units_per_skill": 2
+     "units_per_skill": 1
     },
     "light": {
      "units_per_skill": 3
@@ -44,7 +44,8 @@
      "units_per_skill": 12
     }
    },
-   "max_void_fraction": 0.2
+   "max_void_fraction": 0.2,
+   "_sizes_comment": "A RoboTwin unit is a scene build, an expert demonstration and a rollout of up to 900 steps, so a smoke duel is one unit per skill: six rollouts across both sides. The size names are the same vocabulary every field shows a submitter; only the counts differ."
   },
   "video_only": {
    "id": "video_only",
