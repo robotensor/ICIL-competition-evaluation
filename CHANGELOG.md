@@ -10,6 +10,14 @@
   and spec validation look a skill's simulator up and never name one. `sim/` and the
   per-simulator halves of `model/` and `pools/` moved under `simulators/libero/` and
   `simulators/draw/`; unit lists and pool ids are unchanged (#6).
+- (fix): a simulator checks its own pool tasks. `verify_pool` walks a pool generically and
+  cannot read a simulator's file formats, so LIBERO's BDDL parse check had been dropped: a
+  present-but-unreadable BDDL passed the pool build and failed the duel. `Simulator.verify_pool_task`
+  (default no-op) is the seam, and LIBERO supplies the parse (#37).
+- (test): the boundary is checked, not just documented. A guard fails if a simulator name appears
+  in `src/icilval` outside `simulators/` — `robotwin`, `sapien` and `uniskill` are listed before
+  they exist so it cannot rot when the first out-of-repo benchmark lands — and no simulator
+  package may import a model stack at module scope (#37).
 
 ### Spec v3: BPP's unit protocol (pool schema 3, store schema 3, live schema 3)
 
