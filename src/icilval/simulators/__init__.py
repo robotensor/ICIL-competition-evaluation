@@ -282,6 +282,7 @@ def make_policy(model_dir: Any, arch_dir: Any, spec: Any, skill: str, device: st
     return for_skill(spec, skill).make_policy(model_dir, arch_dir, spec, skill, device=device)
 
 
-# The simulators this validator ships. Each import registers one.
-from . import draw as _draw  # noqa: E402, F401
-from . import libero as _libero  # noqa: E402, F401
+# No simulator is imported here. This validator ships no benchmark: what it can score is exactly
+# what is plugged into it through the `icilval.benchmarks` entry point group, and `load_plugins`
+# finds that. A benchmark living here again would be a benchmark the orchestrator cannot be run
+# without, which is the thing being undone.

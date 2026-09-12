@@ -197,3 +197,26 @@ def test_concurrent_clients_do_not_interleave_into_one_session():
             assert done.wait(20.0), "the second client never got served"
             t.join(5.0)
     assert seen == ["first", "second"]
+
+
+def test_closing_while_a_session_is_open_does_not_hang():
+    """The deadlock this guards against was real and only appeared under a particular ordering.
+
+    `close()` wakes a thread blocked in `accept()` by connecting to its own address. Done inline,
+    that blocks for good whenever the serving thread is inside a session instead: nobody is there
+    to complete the handshake. It passed in isolation and hung the whole suite when the test
+    before it left a session open.
+    """
+    import time
+
+    host = PolicyHost(Recorder())
+    host.__enter__()
+    client = connected(host)
+    client.reset()  # the serving thread is now inside a session, not in accept()
+
+    started = time.monotonic()
+    host.close()
+    elapsed = time.monotonic() - started
+
+    assert elapsed < 5.0, f"close() took {elapsed:.1f}s - it is waiting on something"
+    assert not host.authkey_file.parent.exists()

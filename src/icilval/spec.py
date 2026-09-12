@@ -212,7 +212,11 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
     need("baselines", isinstance(doc.get("baselines"), dict))
     for tid in tracks:
         need(f"baselines.{tid}", tid in (doc.get("baselines") or {}))
-        need(f"pools.tracks.{tid}", tid in ((doc.get("pools") or {}).get("tracks") or {}))
+        # Only a field that draws its prompts from a pool needs one pinned. A field that
+        # materializes them per duel has no pool at all - demanding an entry would mean pinning
+        # an id that names nothing, which is worse than having none.
+        if (tracks[tid] or {}).get("prompts") == "pool":
+            need(f"pools.tracks.{tid}", tid in ((doc.get("pools") or {}).get("tracks") or {}))
     for name, s in sizes.items():
         n = s.get("units_per_skill")
         need(f"duel.sizes.{name}.units_per_skill>=1", isinstance(n, int) and n >= 1)

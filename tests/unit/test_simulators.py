@@ -29,15 +29,14 @@ def _sim(name: str, **kw) -> Simulator:
     return Simulator(name=name, **base)
 
 
-#: The simulators this repository ships. A benchmark from another repository may also be
-#: installed, which is the point of the registry - so these are a subset, never the whole list.
-IN_REPO = {"libero", "draw"}
-
-
-def test_the_shipped_simulators_are_registered():
-    assert IN_REPO <= set(simulators.names())
-    assert simulators.get("libero").name == "libero"
-    assert all(simulators.get(name).distribution == "icilval" for name in IN_REPO)
+def test_this_repository_ships_no_benchmark():
+    """The orchestration layer's defining property: what it can score is exactly what is plugged
+    into it. A simulator registered from this distribution would be one the orchestrator cannot
+    be run without, which is the thing that was undone."""
+    simulators.load_plugins()
+    assert all(sim.distribution != "icilval" for sim in simulators.REGISTRY.values()), (
+        "a benchmark is shipping in the orchestrator again"
+    )
 
 
 def test_registering_a_name_twice_is_refused(monkeypatch):
@@ -46,16 +45,24 @@ def test_registering_a_name_twice_is_refused(monkeypatch):
         simulators.register(_sim("fake"))
 
 
-def test_an_unknown_simulator_names_the_ones_there_are():
+def test_an_unknown_simulator_names_the_ones_there_are(monkeypatch):
+    monkeypatch.setitem(simulators.REGISTRY, "somesim", _sim("somesim"))
     with pytest.raises(KeyError) as exc:
         simulators.get("nope")
     message = str(exc.value)
-    assert "nope" in message and "libero" in message
+    assert "nope" in message and "somesim" in message
 
 
 def test_for_skill_reads_the_skill_s_simulator(spec):
-    for skill in spec.skills("sensorimotor"):
-        assert simulators.for_skill(spec, skill).name == spec.simulator(skill)
+    """Every shipped skill is on a benchmark in another repository now, so this asserts the
+    lookup rather than that a particular simulator is registered here."""
+    for skill in spec.all_skills:
+        name = spec.simulator(skill)
+        if simulators.installed(name):
+            assert simulators.for_skill(spec, skill).name == name
+        else:
+            with pytest.raises(KeyError, match=name):
+                simulators.for_skill(spec, skill)
 
 
 def test_an_uninstalled_benchmark_names_what_is_registered(spec):
@@ -64,7 +71,7 @@ def test_an_uninstalled_benchmark_names_what_is_registered(spec):
     happens to be pip-installed in the environment running the suite."""
     with pytest.raises(KeyError) as exc:
         simulators.get("nosuchsim")
-    assert "nosuchsim" in str(exc.value) and "libero" in str(exc.value)
+    assert "nosuchsim" in str(exc.value) and "registered" in str(exc.value)
 
 
 def test_a_simulator_need_not_check_its_pool_tasks():
@@ -72,18 +79,17 @@ def test_a_simulator_need_not_check_its_pool_tasks():
     assert _sim("bare").verify_pool_task(None, None) == []
 
 
-def test_libero_refuses_an_unparsable_bddl(tmp_path):
-    (tmp_path / "broken.bddl").write_text("(define (problem")
+def test_a_simulator_may_check_its_own_pool_tasks():
+    """The hook exists because only a benchmark can read its own file formats - it is how the
+    BDDL parse check survived the registry. Nothing ships one here now, so the test is that the
+    hook is honoured, not that a particular benchmark implements it."""
 
-    class _Pool:
-        def path(self, rel):
-            return tmp_path / rel
+    def refuse(pool, task):
+        return ["bddl unparsable"]
 
-    class _Task:
-        bddl = "broken.bddl"
-
-    errors = simulators.get("libero").verify_pool_task(_Pool(), _Task())
-    assert errors and "bddl unparsable" in errors[0]
+    assert _sim("checker", verify_pool_task=refuse).verify_pool_task(None, None) == [
+        "bddl unparsable"
+    ]
 
 
 # ------------------------------------------------------------------ the boundary
@@ -137,13 +143,12 @@ def _packages() -> set[str]:
     return {p.name for p in pkg.iterdir() if p.is_dir() and (p / "__init__.py").exists()}
 
 
-def test_every_simulator_package_registers_itself():
-    """`simulators/__init__` imports each package for its `register()` side effect. A package
-    added without that import would be dead code, and the spec would reject its skills."""
+def test_no_simulator_package_ships_here():
+    """There is no `simulators/<name>/` any more, and a new one would be a benchmark the
+    orchestrator cannot be run without."""
     if _repo_root() is None:
         pytest.skip("not a source checkout")
-    assert _packages() <= set(simulators.names())
-    assert _packages() == IN_REPO
+    assert _packages() == set()
 
 
 #: The libraries a simulator package must not pull in at module scope. `icilval spec validate`,

@@ -1,486 +1,467 @@
 {
-  "spec_version": 5,
-  "_comment": "Normative constants for the RoboTensor one-demonstration in-context imitation learning competition. Version 4 was published and then rolled back; that number is retired and never reused. Version 5 splits the competition into fields: each has its own demonstration modality, skills, pool, baseline, king, queue and lineage. Bumping spec_version changes every derived duel id.",
-  "tracks": {
-    "sensorimotor": {
-      "id": "sensorimotor",
-      "code": "sm",
-      "slug": "sensorimotor",
-      "short": "Sensorimotor",
-      "title": "Sensorimotor demonstration",
-      "blurb": "The model is shown one demonstration - the frames, the action trajectory and the proprioception - and must do the task from a different initial state.",
-      "k_demos": 1,
-      "language": "none",
-      "demonstration": {
-        "view": "sensorimotor",
-        "modalities": [
-          "video",
-          "actions",
-          "proprio"
-        ],
-        "withheld": []
-      },
-      "protocol": "different_initial_state",
-      "prompt_instance_disjoint": true,
-      "prompts": "pool",
-      "skills": [
-        "pick_and_place",
-        "goal_chain",
-        "draw_anything"
-      ],
-      "default_size": "heavy",
-      "_comment": "Renamed from the v3 track id 'icil_1demo'; the id is inside every signed record, so the store is rebuilt at v5. The replay shortcut is closed here by scoring from a different initial state than the demonstration started from (prompt_instance_disjoint)."
-    },
-    "video_only": {
-      "id": "video_only",
-      "code": "vo",
-      "slug": "video-only",
-      "short": "Video-only",
-      "title": "Video-only demonstration",
-      "blurb": "The model is shown one demonstration as frames only - no action trajectory, no proprioception - and must do the task from the identical initial scene.",
-      "k_demos": 1,
-      "language": "none",
-      "demonstration": {
-        "view": "video_only",
-        "modalities": [
-          "video"
-        ],
-        "withheld": [
-          "actions",
-          "proprio"
-        ]
-      },
-      "protocol": "same_initial_state",
-      "prompt_instance_disjoint": false,
-      "prompts": "materialized",
-      "skills": [
-        "rt_pick_and_place",
-        "rt_stacking",
-        "rt_press_push"
-      ],
-      "default_size": "smoke",
-      "sizes": {
-        "smoke": {
-          "units_per_skill": 1
-        },
-        "light": {
-          "units_per_skill": 3
-        },
-        "medium": {
-          "units_per_skill": 6
-        },
-        "heavy": {
-          "units_per_skill": 12
-        }
-      },
-      "max_void_fraction": 0.2,
-      "_comment": "Same Scene: the demonstration starts in the very scene the rollout is scored in, so replaying its actions would be perfect - which is exactly why they are withheld, and why this field and the sensorimotor one close the same shortcut in opposite ways. Its prompts are materialized per duel and published with the event rather than up front, because a demonstration of the scored scene is the answer for it. Sizes are small and the void tolerance higher: a unit is a scene rebuild plus a rollout, and a rebuild that drifts is the benchmark's fault rather than the model's."
-    }
-  },
-  "benchmarks": {
-    "libero": {
-      "distribution": "icilval",
-      "in_repo": true
-    },
-    "draw": {
-      "distribution": "icilval",
-      "in_repo": true
-    },
-    "robotwin": {
-      "distribution": "robotwin-icil-competition",
-      "in_repo": false,
-      "repo": "robotensor/robotwin-icil-benchmark",
-      "version": null,
-      "wheel_sha256": null,
-      "_comment": "Pinned by distribution, version and wheel sha256 once published: entry-point discovery imports code into the validator, so what it may import is part of the contract."
-    }
-  },
-  "_benchmarks_comment": "Which distribution provides each simulator a skill names. An in-repo one needs no pin; one from another repository is found through the 'icilval.benchmarks' entry point group and is pinned by distribution, version and wheel sha256, because entry-point discovery imports code into the validator.",
-  "skills": {
-    "pick_and_place": {
-      "code": "pp",
-      "title": "Pick and place",
-      "blurb": "Grasp one object and place it at a destination: BPP's LIBERO-Gen Combination domain. Every task moves the black bowl from one pick location to one placement in the LIBERO-Spatial scene; the pool holds every combination BPP generated demonstrations for, and a unit starts from one of the task's initial states with another episode of the same task as the demonstration.",
-      "architecture": "bpp_libero_v1",
-      "simulator": "libero",
-      "max_steps": 550,
-      "tasks": {
-        "dataset": "austinpatel/libero_gen_spatial_combination_hdf5",
-        "views": [
-          "libero_spatial_selected_combinations_view",
-          "libero_spatial_selected_combinations_inverse_view"
-        ],
-        "kind": "combination",
-        "_comment": "Every task in these views of BPP's LIBERO-Gen Combination release: bddl_files/<view>/<task>.bddl, init_files/<view>/<task>.pruned_init, demonstration_data/<view>/<task>_demo.hdf5. The pool holds demos_per_task demonstrations of each and treats the views alike."
-      },
-      "environment": {
-        "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
-        "libero_commit": "8f1084e3132a39270c3a13ebe37270a43ece2a01",
-        "mujoco": "3.3.0",
-        "robosuite": "1.4.0",
-        "controller": "OSC_POSE",
-        "control_delta": true,
-        "control_freq": 20,
-        "cameras": [
-          "agentview",
-          "robot0_eye_in_hand"
-        ],
-        "camera_resolution": 128,
-        "policy_image_resolution": 224,
-        "action_dim": 7,
-        "obs_history": 2,
-        "action_horizon": 16,
-        "exec_horizon": 12,
-        "warmup_open_gripper_steps": 12,
-        "prompt_actions_per_chunk": 20,
-        "prompt_pad_end": "zeros"
-      }
-    },
-    "goal_chain": {
-      "code": "gc",
-      "title": "Goal chain",
-      "blurb": "Do two things in order - open a drawer, turn on the stove or push a plate, then place an object - as BPP's LIBERO-Gen Chain domain defines it. The pool holds every two-step chain BPP generated demonstrations for; a unit starts from one of the task's initial states with another episode of the same task as the demonstration, and succeeds when both goals hold.",
-      "architecture": "bpp_libero_v1",
-      "simulator": "libero",
-      "max_steps": 550,
-      "tasks": {
-        "dataset": "austinpatel/libero_gen_goal_chain_hdf5",
-        "views": [
-          "libero_goal_chain_selected_view",
-          "libero_goal_chain_selected_inverse_view"
-        ],
-        "kind": "chain",
-        "_comment": "The two chain views of BPP's LIBERO-Gen Chain release; the first-step and second-step views are single steps, not chains, and stay out."
-      },
-      "environment": {
-        "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
-        "libero_commit": "8f1084e3132a39270c3a13ebe37270a43ece2a01",
-        "mujoco": "3.3.0",
-        "robosuite": "1.4.0",
-        "controller": "OSC_POSE",
-        "control_delta": true,
-        "control_freq": 20,
-        "cameras": [
-          "agentview",
-          "robot0_eye_in_hand"
-        ],
-        "camera_resolution": 128,
-        "policy_image_resolution": 224,
-        "action_dim": 7,
-        "obs_history": 2,
-        "action_horizon": 16,
-        "exec_horizon": 12,
-        "warmup_open_gripper_steps": 12,
-        "prompt_actions_per_chunk": 20,
-        "prompt_pad_end": "zeros"
-      }
-    },
-    "draw_anything": {
-      "code": "da",
-      "title": "Draw anything",
-      "blurb": "Reproduce a drawing shown once. The demonstration is a human drawing the shape on a square whiteboard; the model draws it again on a board turned to a random angle, with the pen starting at a random place, as BPP's DrawAnything-Sim domain evaluates it.",
-      "architecture": "bpp_draw_v1",
-      "simulator": "draw",
-      "max_steps": 400,
-      "tasks": {
-        "dataset": "austinpatel/drawanything_sim",
-        "files": {
-          "drawanything_handmade": "eval_handmade.zarr",
-          "drawanything_procedural_2000_10": "procedural_2000_10.zarr.zip"
-        },
-        "kind": "drawing",
-        "_comment": "BPP's DrawAnything-Sim replay buffers, one pool group per file: the human-drawn evaluation set (50 drawings, 5 demonstrations each) and the procedural training set (2000 drawings, 10 each), treated alike."
-      },
-      "environment": {
-        "behavior_prompting_commit": "ec29e62dde999ac3423df7d99a773c1dd28b480e",
-        "control_freq": 10,
-        "window_size": 512,
-        "board_length": 350,
-        "policy_image_resolution": 224,
-        "render_resolution": 256,
-        "action_dim": 3,
-        "obs_history": 2,
-        "action_horizon": 16,
-        "exec_horizon": 12,
-        "prompt_actions_per_chunk": 10,
-        "prompt_pad_end": "no",
-        "board_angle_range_rad": [
-          -0.7853981633974483,
-          0.7853981633974483
-        ],
-        "cursor_start_range_px": [
-          50,
-          450
-        ],
-        "idle_stop_steps": 20,
-        "idle_stop_px": 20,
-        "_comment": "DrawAnything-Sim as BPP evaluates it: a 512 px canvas with a 350 px square board, 10 Hz position control of a pen (x, y, pen_down), one 224 px observation, prompts chunked every 10 actions with the trailing partial chunk dropped. A unit's board angle is uniform in board_angle_range_rad and its pen start uniform in cursor_start_range_px, the ranges DrawEnv samples from; both are derived from the task id and instance index. An episode also ends when the pen has not moved idle_stop_px for idle_stop_steps steps, as in BPP's runner."
-      },
-      "success": {
-        "metric": "chamfer_px",
-        "threshold": 4.0,
-        "_comment": "A unit succeeds iff the lowest symmetric Chamfer distance, in canvas pixels, between the demonstrated strokes and the drawn strokes at any step of the episode is at most threshold (the pen is 12 px wide). Calibrated on 80 units drawn from pool 2026.09-v2 with the genesis checkpoint: best-Chamfer percentiles 10/25/50/75/90 = 0.96/1.39/2.46/3.83/7.21 px; the baseline succeeds on 0.79 of the units at 4 px, its misses being the long multi-part drawings. See docs/pools.md."
-      }
-    },
-    "rt_pick_and_place": {
-      "code": "rp",
-      "title": "Pick and place (RoboTwin)",
-      "blurb": "Watch one demonstration of a bimanual pick and place, as frames only, then do it from the identical initial scene. RoboTwin 2.0's own expert produced the demonstration and its own check decides the outcome.",
-      "architecture": "uniskill_v1",
-      "simulator": "robotwin",
-      "max_steps": 500,
-      "tasks": {
-        "dataset": "robotensor/robotwin-icil-catalogue",
-        "kind": "same_scene",
-        "files": {
-          "v1": "catalogue.json"
-        },
-        "suite": "v1",
-        "category": "pick_and_place"
-      },
-      "environment": {
-        "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
-        "embodiment": "aloha-agilex",
-        "camera_profile": "stock",
-        "cameras": [
-          "head_camera",
-          "front_camera",
-          "left_camera",
-          "right_camera"
-        ],
-        "camera_resolution": 320,
-        "control_freq": 20,
-        "action_dim": 14,
-        "action_type": "qpos",
-        "obs_history": 2,
-        "action_horizon": 16,
-        "exec_horizon": 8,
-        "policy_image_resolution": 128,
-        "skill_encoder": {
-          "repo": "HanjungKim/UniSkill",
-          "revision": "b8d6cba",
-          "file": "UniSkill_final_weight/idm.pth",
-          "sha256": null,
-          "skill_dim": 64,
-          "k": 20,
-          "rate_hz": 20,
-          "_comment": "Organizer-owned and frozen: the skill encoder is a preprocessor in the validator's image, not part of a submission, so two entrants are comparable and nobody can smuggle capability into it. sha256 is pinned when the architecture template is emitted."
-        }
-      }
-    },
-    "rt_stacking": {
-      "code": "rs",
-      "title": "Stacking (RoboTwin)",
-      "blurb": "Watch one demonstration of stacking two objects, as frames only, then do it from the identical initial scene. The longest-horizon of the three, so its step cap is the highest.",
-      "architecture": "uniskill_v1",
-      "simulator": "robotwin",
-      "max_steps": 900,
-      "tasks": {
-        "dataset": "robotensor/robotwin-icil-catalogue",
-        "kind": "same_scene",
-        "files": {
-          "v1": "catalogue.json"
-        },
-        "suite": "v1",
-        "category": "stacking"
-      },
-      "environment": {
-        "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
-        "embodiment": "aloha-agilex",
-        "camera_profile": "stock",
-        "cameras": [
-          "head_camera",
-          "front_camera",
-          "left_camera",
-          "right_camera"
-        ],
-        "camera_resolution": 320,
-        "control_freq": 20,
-        "action_dim": 14,
-        "action_type": "qpos",
-        "obs_history": 2,
-        "action_horizon": 16,
-        "exec_horizon": 8,
-        "policy_image_resolution": 128,
-        "skill_encoder": {
-          "repo": "HanjungKim/UniSkill",
-          "revision": "b8d6cba",
-          "file": "UniSkill_final_weight/idm.pth",
-          "sha256": null,
-          "skill_dim": 64,
-          "k": 20,
-          "rate_hz": 20,
-          "_comment": "Organizer-owned and frozen: the skill encoder is a preprocessor in the validator's image, not part of a submission, so two entrants are comparable and nobody can smuggle capability into it. sha256 is pinned when the architecture template is emitted."
-        }
-      }
-    },
-    "rt_press_push": {
-      "code": "ru",
-      "title": "Press and push (RoboTwin)",
-      "blurb": "Watch one demonstration of pressing or pushing something, as frames only, then do it from the identical initial scene. The shortest-horizon of the three.",
-      "architecture": "uniskill_v1",
-      "simulator": "robotwin",
-      "max_steps": 400,
-      "tasks": {
-        "dataset": "robotensor/robotwin-icil-catalogue",
-        "kind": "same_scene",
-        "files": {
-          "v1": "catalogue.json"
-        },
-        "suite": "v1",
-        "category": "press_push"
-      },
-      "environment": {
-        "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
-        "embodiment": "aloha-agilex",
-        "camera_profile": "stock",
-        "cameras": [
-          "head_camera",
-          "front_camera",
-          "left_camera",
-          "right_camera"
-        ],
-        "camera_resolution": 320,
-        "control_freq": 20,
-        "action_dim": 14,
-        "action_type": "qpos",
-        "obs_history": 2,
-        "action_horizon": 16,
-        "exec_horizon": 8,
-        "policy_image_resolution": 128,
-        "skill_encoder": {
-          "repo": "HanjungKim/UniSkill",
-          "revision": "b8d6cba",
-          "file": "UniSkill_final_weight/idm.pth",
-          "sha256": null,
-          "skill_dim": 64,
-          "k": 20,
-          "rate_hz": 20,
-          "_comment": "Organizer-owned and frozen: the skill encoder is a preprocessor in the validator's image, not part of a submission, so two entrants are comparable and nobody can smuggle capability into it. sha256 is pinned when the architecture template is emitted."
-        }
-      }
-    }
-  },
-  "pools": {
-    "repo": "robotensor/icil-competition-pools",
-    "demos_per_task": 10,
-    "init_states_per_task": 50,
-    "_comment": "pool_id is filled by `icilval pools build` and must equal pool.json's id; the validator refuses to run on a mismatch. demos_per_task is how many of a task's demonstrations the pool keeps; init_states_per_task also sizes the drawing skill's table of (board angle, cursor start) instances.",
-    "tracks": {
-      "sensorimotor": {
-        "version": "2026.09-v3",
-        "pool_id": "73a98b0821be1fdbb5fb7b08219be6041c644ba35d634a7068688aaf501db843"
-      },
-      "video_only": {
-        "version": null,
-        "pool_id": null,
-        "_comment": "No pool: this field materializes its prompts per duel and publishes them with the event."
-      }
-    }
-  },
-  "duel": {
-    "default_size": "heavy",
-    "sizes": {
-      "smoke": {
-        "units_per_skill": 3
-      },
-      "light": {
-        "units_per_skill": 9
-      },
-      "medium": {
-        "units_per_skill": 21
-      },
-      "heavy": {
-        "units_per_skill": 42
-      }
-    },
-    "score_margin": 3.0,
-    "max_void_fraction": 0.1,
-    "_crown_comment": "Both sides run the identical unit list (same tasks, initial states, prompt demonstrations and seeds). Per-skill success rate is stored as a fraction in [0, 1]; the final score is the mean over skills. A skill's units are spread evenly over its eligible tasks. The challenger takes the crown iff challenger.average >= king.average + score_margin / 100. Paired per-unit outcomes are published as a diagnostic and never decide the crown.",
-    "derivation": {
-      "duel_id": "sha256(spec_version|track|challenger.key|challenger.revision|king.key|king.revision)",
-      "unit_seed": "int(sha256(duel_id|skill|index)[:8], 16)"
-    },
-    "_max_steps_comment": "skills.<skill>.max_steps are per-skill caps; each task carries its own (smaller) limit from its source benchmark.",
-    "_default_comment": "Defaults. A track may override sizes, score_margin or max_void_fraction; an override must declare the same size names, so a submitter sees one vocabulary."
-  },
-  "budgets": {
-    "act_soft_timeout_s": 1.0,
-    "act_hard_timeout_s": 30.0,
-    "max_model_errors_per_episode": 3,
-    "unit_wall_seconds": 300,
-    "side_wall_seconds": 10800,
-    "duel_wall_seconds": 28800,
-    "model_load_seconds": 600
-  },
-  "model": {
-    "layout": "<skill>/model.safetensors and <skill>/config.yaml for every skill in `skills`",
-    "required_files": [
-      "model.safetensors",
-      "config.yaml"
+ "spec_version": 6,
+ "_comment": "Normative constants for the RoboTensor one-demonstration in-context imitation learning competition. Version 4 was published and then rolled back; that number is retired and never reused. Version 5 splits the competition into fields: each has its own demonstration modality, skills, pool, baseline, king, queue and lineage. Bumping spec_version changes every derived duel id.",
+ "tracks": {
+  "sensorimotor": {
+   "id": "sensorimotor",
+   "code": "sm",
+   "slug": "sensorimotor",
+   "short": "Sensorimotor",
+   "title": "Sensorimotor demonstration",
+   "blurb": "The model is shown one demonstration - the frames, the action trajectory and the proprioception - and must do the task from the initial scene it was shown.",
+   "k_demos": 1,
+   "language": "none",
+   "demonstration": {
+    "view": "sensorimotor",
+    "modalities": [
+     "video",
+     "actions",
+     "proprio"
     ],
-    "max_params": 800000000,
-    "max_repo_bytes": 8589934592,
-    "allowed_extensions": [
-      ".safetensors",
-      ".yaml",
-      ".yml",
-      ".json",
-      ".md",
-      ".txt"
-    ],
-    "allowed_dtypes": [
-      "F32",
-      "BF16",
-      "F16"
-    ],
-    "mutable_keys": [
-      "name"
-    ],
-    "_comment": "A submission is a Hugging Face model repo holding one directory per skill, each with model.safetensors and config.yaml. For every skill the validator instantiates the architecture from its own allow-listed template (arch/<architecture>.cfg.json), diffs the submitted config against it, checks the safetensors header against arch/<architecture>.tensors.json, and loads weights strictly. No pickle is ever read and no entrant code runs. max_params applies per skill; max_repo_bytes to the whole repo.",
-    "_mutable_comment": "Dotted paths under `model` that may differ from the template without affecting inference. Training-only keys are overwritten by the converter, so they never differ."
-  },
-  "media": {
-    "video": {
-      "format": "mp4",
-      "codec": "libx264",
-      "pix_fmt": "yuv420p",
-      "crf": 20,
-      "preset": "veryfast",
-      "faststart": true,
-      "fps": 20,
-      "resolution": 256,
-      "camera": "agentview",
-      "scope": "all"
+    "withheld": []
+   },
+   "protocol": "same_initial_state",
+   "prompt_instance_disjoint": false,
+   "prompts": "materialized",
+   "skills": [
+    "rt_sm_pick_and_place",
+    "rt_sm_stacking",
+    "rt_sm_press_push"
+   ],
+   "default_size": "smoke",
+   "_comment": "Renamed from the v3 track id 'icil_1demo'. At v6 this field runs on RoboTwin, because the orchestrator ships no benchmark of its own and RoboTwin is the one that is plugged. RoboTwin V1 implements only `same_scene`, so this field is Same Scene WITH the action trajectory - and that combination is degenerate: replaying the demonstration's own actions into the identical scene solves the episode, and the benchmark's replay oracle scores 18/18 doing exactly that. So this field no longer closes the replay shortcut at all, and its scores must not be read as if it did. It is honest only as a measurement of what a model does when copying is available to it, and as the path that exercises the orchestration while the video-only field has no trained checkpoint. Restoring a real sensorimotor field needs a benchmark that can score from a different initial state; `prompt_instance_disjoint` is false here because it must be, not because the field was designed that way.",
+   "sizes": {
+    "smoke": {
+     "units_per_skill": 2
     },
-    "demo_video": true,
-    "_comment": "resolution and camera describe LIBERO clips; draw clips are the board render at skills.draw_anything.environment.render_resolution and draw demonstration clips are the 224 px observation frames."
-  },
-  "store": {
-    "schema": 4,
-    "index_lines_per_part": 1000,
-    "media_bucket_hex": 2,
-    "_layout_comment": "manifest.json; tracks/{track}/{head.json,queue.json,index-NNNN.jsonl}; events/{track}/{event_id}.json; media/{sha[:2]}/{sha}.mp4. Index lines are '<canonical_json>\\t<ed25519_signature_hex>', append-only."
-  },
-  "live": {
-    "schema": 4,
-    "path": "/api/live",
-    "media_flush_units": 4,
-    "max_frame_bytes": 524288,
-    "min_interval_s": 1.0
-  },
-  "admin": {
-    "bind": "127.0.0.1",
-    "port": 8799,
-    "max_body_bytes": 8192
-  },
-  "baselines": {
-    "sensorimotor": {
-      "repo": "robotensor/bpp-genesis",
-      "revision": "aa24179bcc6d18185b4b07c995bbd0d15ac10b8a",
-      "label": "BPP public checkpoints, converted (austinpatel/liberogen_spatial_combination, austinpatel/liberogen_goal_chain, austinpatel/drawanything_sim)",
-      "_comment": "The genesis king: one repo holding one converted public checkpoint per skill, one directory per skill."
+    "light": {
+     "units_per_skill": 3
     },
-    "video_only": null
+    "medium": {
+     "units_per_skill": 6
+    },
+    "heavy": {
+     "units_per_skill": 12
+    }
+   },
+   "max_void_fraction": 0.2
+  },
+  "video_only": {
+   "id": "video_only",
+   "code": "vo",
+   "slug": "video-only",
+   "short": "Video-only",
+   "title": "Video-only demonstration",
+   "blurb": "The model is shown one demonstration as frames only - no action trajectory, no proprioception - and must do the task from the identical initial scene.",
+   "k_demos": 1,
+   "language": "none",
+   "demonstration": {
+    "view": "video_only",
+    "modalities": [
+     "video"
+    ],
+    "withheld": [
+     "actions",
+     "proprio"
+    ]
+   },
+   "protocol": "same_initial_state",
+   "prompt_instance_disjoint": false,
+   "prompts": "materialized",
+   "skills": [
+    "rt_pick_and_place",
+    "rt_stacking",
+    "rt_press_push"
+   ],
+   "default_size": "smoke",
+   "sizes": {
+    "smoke": {
+     "units_per_skill": 1
+    },
+    "light": {
+     "units_per_skill": 3
+    },
+    "medium": {
+     "units_per_skill": 6
+    },
+    "heavy": {
+     "units_per_skill": 12
+    }
+   },
+   "max_void_fraction": 0.2,
+   "_comment": "Same Scene: the demonstration starts in the very scene the rollout is scored in, so replaying its actions would be perfect - which is exactly why they are withheld, and why this field and the sensorimotor one close the same shortcut in opposite ways. Its prompts are materialized per duel and published with the event rather than up front, because a demonstration of the scored scene is the answer for it. Sizes are small and the void tolerance higher: a unit is a scene rebuild plus a rollout, and a rebuild that drifts is the benchmark's fault rather than the model's."
   }
+ },
+ "benchmarks": {
+  "robotwin": {
+   "distribution": "robotwin-icil-competition",
+   "in_repo": false,
+   "repo": "robotensor/robotwin-icil-benchmark",
+   "version": null,
+   "wheel_sha256": null,
+   "_comment": "Pinned by distribution, version and wheel sha256 once published: entry-point discovery imports code into the validator, so what it may import is part of the contract."
+  }
+ },
+ "_benchmarks_comment": "Every benchmark is a separate distribution found through the `icilval.benchmarks` entry point group. The orchestrator ships none: what it can score is exactly what is plugged into it.",
+ "skills": {
+  "rt_sm_pick_and_place": {
+   "code": "mp",
+   "title": "Pick and place (RoboTwin)",
+   "blurb": "Grasp one object and place it somewhere: RoboTwin's place_a2b_left, place_a2b_right, place_empty_cup and place_container_plate. The model is shown one demonstration - frames, the action trajectory and proprioception - and is then scored from the identical initial scene. RoboTwin 2.0's own expert produces the demonstration at evaluation time and its own check decides the outcome.",
+   "architecture": "bpp_robotwin_v1",
+   "simulator": "robotwin",
+   "max_steps": 900,
+   "tasks": {
+    "dataset": "robotensor/robotwin-icil-catalogue",
+    "kind": "same_scene",
+    "files": {
+     "v1": "catalogue.json"
+    },
+    "suite": "v1",
+    "category": "pick_and_place"
+   },
+   "environment": {
+    "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
+    "embodiment": "aloha-agilex",
+    "camera_profile": "far_side",
+    "cameras": [
+     "far_side_camera",
+     "left_camera",
+     "right_camera"
+    ],
+    "camera_resolution": 320,
+    "control_freq": 20,
+    "action_dim": 16,
+    "action_type": "ee",
+    "obs_history": 2,
+    "action_horizon": 16,
+    "exec_horizon": 12,
+    "policy_image_resolution": 224,
+    "prompt_actions_per_chunk": 20,
+    "prompt_pad_end": "zeros",
+    "_comment": "The camera profile replaces one static camera in its slot; every static camera draws from numpy's RNG before the scene is built, so adding or removing one would move every seed's scene where the fingerprint cannot see it. far_side is what the BPP adapter was measured with. `action_type: ee` is the 16-number bimanual end-effector command RoboTwin's `take_action` accepts, not the 14-dim qpos."
+   }
+  },
+  "rt_sm_stacking": {
+   "code": "ms",
+   "title": "Stacking (RoboTwin)",
+   "blurb": "Put one object on another and leave it standing: RoboTwin's stack_blocks_two and stack_bowls_two. The model is shown one demonstration - frames, the action trajectory and proprioception - and is then scored from the identical initial scene. RoboTwin 2.0's own expert produces the demonstration at evaluation time and its own check decides the outcome.",
+   "architecture": "bpp_robotwin_v1",
+   "simulator": "robotwin",
+   "max_steps": 900,
+   "tasks": {
+    "dataset": "robotensor/robotwin-icil-catalogue",
+    "kind": "same_scene",
+    "files": {
+     "v1": "catalogue.json"
+    },
+    "suite": "v1",
+    "category": "stacking"
+   },
+   "environment": {
+    "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
+    "embodiment": "aloha-agilex",
+    "camera_profile": "far_side",
+    "cameras": [
+     "far_side_camera",
+     "left_camera",
+     "right_camera"
+    ],
+    "camera_resolution": 320,
+    "control_freq": 20,
+    "action_dim": 16,
+    "action_type": "ee",
+    "obs_history": 2,
+    "action_horizon": 16,
+    "exec_horizon": 12,
+    "policy_image_resolution": 224,
+    "prompt_actions_per_chunk": 20,
+    "prompt_pad_end": "zeros",
+    "_comment": "The camera profile replaces one static camera in its slot; every static camera draws from numpy's RNG before the scene is built, so adding or removing one would move every seed's scene where the fingerprint cannot see it. far_side is what the BPP adapter was measured with. `action_type: ee` is the 16-number bimanual end-effector command RoboTwin's `take_action` accepts, not the 14-dim qpos."
+   }
+  },
+  "rt_sm_press_push": {
+   "code": "mu",
+   "title": "Press and push (RoboTwin)",
+   "blurb": "Reach and actuate rather than carry: RoboTwin's click_bell, click_alarmclock and press_stapler. The model is shown one demonstration - frames, the action trajectory and proprioception - and is then scored from the identical initial scene. RoboTwin 2.0's own expert produces the demonstration at evaluation time and its own check decides the outcome.",
+   "architecture": "bpp_robotwin_v1",
+   "simulator": "robotwin",
+   "max_steps": 900,
+   "tasks": {
+    "dataset": "robotensor/robotwin-icil-catalogue",
+    "kind": "same_scene",
+    "files": {
+     "v1": "catalogue.json"
+    },
+    "suite": "v1",
+    "category": "press_push"
+   },
+   "environment": {
+    "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
+    "embodiment": "aloha-agilex",
+    "camera_profile": "far_side",
+    "cameras": [
+     "far_side_camera",
+     "left_camera",
+     "right_camera"
+    ],
+    "camera_resolution": 320,
+    "control_freq": 20,
+    "action_dim": 16,
+    "action_type": "ee",
+    "obs_history": 2,
+    "action_horizon": 16,
+    "exec_horizon": 12,
+    "policy_image_resolution": 224,
+    "prompt_actions_per_chunk": 20,
+    "prompt_pad_end": "zeros",
+    "_comment": "The camera profile replaces one static camera in its slot; every static camera draws from numpy's RNG before the scene is built, so adding or removing one would move every seed's scene where the fingerprint cannot see it. far_side is what the BPP adapter was measured with. `action_type: ee` is the 16-number bimanual end-effector command RoboTwin's `take_action` accepts, not the 14-dim qpos."
+   }
+  },
+  "rt_pick_and_place": {
+   "code": "rp",
+   "title": "Pick and place (RoboTwin)",
+   "blurb": "Watch one demonstration of a bimanual pick and place, as frames only, then do it from the identical initial scene. RoboTwin 2.0's own expert produced the demonstration and its own check decides the outcome.",
+   "architecture": "uniskill_v1",
+   "simulator": "robotwin",
+   "max_steps": 500,
+   "tasks": {
+    "dataset": "robotensor/robotwin-icil-catalogue",
+    "kind": "same_scene",
+    "files": {
+     "v1": "catalogue.json"
+    },
+    "suite": "v1",
+    "category": "pick_and_place"
+   },
+   "environment": {
+    "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
+    "embodiment": "aloha-agilex",
+    "camera_profile": "stock",
+    "cameras": [
+     "head_camera",
+     "front_camera",
+     "left_camera",
+     "right_camera"
+    ],
+    "camera_resolution": 320,
+    "control_freq": 20,
+    "action_dim": 14,
+    "action_type": "qpos",
+    "obs_history": 2,
+    "action_horizon": 16,
+    "exec_horizon": 8,
+    "policy_image_resolution": 128,
+    "skill_encoder": {
+     "repo": "HanjungKim/UniSkill",
+     "revision": "b8d6cba",
+     "file": "UniSkill_final_weight/idm.pth",
+     "sha256": null,
+     "skill_dim": 64,
+     "k": 20,
+     "rate_hz": 20,
+     "_comment": "Organizer-owned and frozen: the skill encoder is a preprocessor in the validator's image, not part of a submission, so two entrants are comparable and nobody can smuggle capability into it. sha256 is pinned when the architecture template is emitted."
+    }
+   }
+  },
+  "rt_stacking": {
+   "code": "rs",
+   "title": "Stacking (RoboTwin)",
+   "blurb": "Watch one demonstration of stacking two objects, as frames only, then do it from the identical initial scene. The longest-horizon of the three, so its step cap is the highest.",
+   "architecture": "uniskill_v1",
+   "simulator": "robotwin",
+   "max_steps": 900,
+   "tasks": {
+    "dataset": "robotensor/robotwin-icil-catalogue",
+    "kind": "same_scene",
+    "files": {
+     "v1": "catalogue.json"
+    },
+    "suite": "v1",
+    "category": "stacking"
+   },
+   "environment": {
+    "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
+    "embodiment": "aloha-agilex",
+    "camera_profile": "stock",
+    "cameras": [
+     "head_camera",
+     "front_camera",
+     "left_camera",
+     "right_camera"
+    ],
+    "camera_resolution": 320,
+    "control_freq": 20,
+    "action_dim": 14,
+    "action_type": "qpos",
+    "obs_history": 2,
+    "action_horizon": 16,
+    "exec_horizon": 8,
+    "policy_image_resolution": 128,
+    "skill_encoder": {
+     "repo": "HanjungKim/UniSkill",
+     "revision": "b8d6cba",
+     "file": "UniSkill_final_weight/idm.pth",
+     "sha256": null,
+     "skill_dim": 64,
+     "k": 20,
+     "rate_hz": 20,
+     "_comment": "Organizer-owned and frozen: the skill encoder is a preprocessor in the validator's image, not part of a submission, so two entrants are comparable and nobody can smuggle capability into it. sha256 is pinned when the architecture template is emitted."
+    }
+   }
+  },
+  "rt_press_push": {
+   "code": "ru",
+   "title": "Press and push (RoboTwin)",
+   "blurb": "Watch one demonstration of pressing or pushing something, as frames only, then do it from the identical initial scene. The shortest-horizon of the three.",
+   "architecture": "uniskill_v1",
+   "simulator": "robotwin",
+   "max_steps": 400,
+   "tasks": {
+    "dataset": "robotensor/robotwin-icil-catalogue",
+    "kind": "same_scene",
+    "files": {
+     "v1": "catalogue.json"
+    },
+    "suite": "v1",
+    "category": "press_push"
+   },
+   "environment": {
+    "robotwin_commit": "96c1feab536306b50c26af200044fcdf126e8904",
+    "embodiment": "aloha-agilex",
+    "camera_profile": "stock",
+    "cameras": [
+     "head_camera",
+     "front_camera",
+     "left_camera",
+     "right_camera"
+    ],
+    "camera_resolution": 320,
+    "control_freq": 20,
+    "action_dim": 14,
+    "action_type": "qpos",
+    "obs_history": 2,
+    "action_horizon": 16,
+    "exec_horizon": 8,
+    "policy_image_resolution": 128,
+    "skill_encoder": {
+     "repo": "HanjungKim/UniSkill",
+     "revision": "b8d6cba",
+     "file": "UniSkill_final_weight/idm.pth",
+     "sha256": null,
+     "skill_dim": 64,
+     "k": 20,
+     "rate_hz": 20,
+     "_comment": "Organizer-owned and frozen: the skill encoder is a preprocessor in the validator's image, not part of a submission, so two entrants are comparable and nobody can smuggle capability into it. sha256 is pinned when the architecture template is emitted."
+    }
+   }
+  }
+ },
+ "pools": {
+  "repo": "robotensor/icil-competition-pools",
+  "demos_per_task": 10,
+  "init_states_per_task": 50,
+  "_comment": "Kept for a future field whose prompts are drawn from a pool built offline. Both fields at v6 materialize their prompts per duel, so no pool is built or pinned."
+ },
+ "duel": {
+  "default_size": "heavy",
+  "sizes": {
+   "smoke": {
+    "units_per_skill": 3
+   },
+   "light": {
+    "units_per_skill": 9
+   },
+   "medium": {
+    "units_per_skill": 21
+   },
+   "heavy": {
+    "units_per_skill": 42
+   }
+  },
+  "score_margin": 3.0,
+  "max_void_fraction": 0.1,
+  "_crown_comment": "Both sides run the identical unit list (same tasks, initial states, prompt demonstrations and seeds). Per-skill success rate is stored as a fraction in [0, 1]; the final score is the mean over skills. A skill's units are spread evenly over its eligible tasks. The challenger takes the crown iff challenger.average >= king.average + score_margin / 100. Paired per-unit outcomes are published as a diagnostic and never decide the crown.",
+  "derivation": {
+   "duel_id": "sha256(spec_version|track|challenger.key|challenger.revision|king.key|king.revision)",
+   "unit_seed": "int(sha256(duel_id|skill|index)[:8], 16)"
+  },
+  "_max_steps_comment": "skills.<skill>.max_steps are per-skill caps; each task carries its own (smaller) limit from its source benchmark.",
+  "_default_comment": "Defaults. A track may override sizes, score_margin or max_void_fraction; an override must declare the same size names, so a submitter sees one vocabulary."
+ },
+ "budgets": {
+  "act_soft_timeout_s": 1.0,
+  "act_hard_timeout_s": 30.0,
+  "max_model_errors_per_episode": 3,
+  "unit_wall_seconds": 300,
+  "side_wall_seconds": 10800,
+  "duel_wall_seconds": 28800,
+  "model_load_seconds": 600
+ },
+ "model": {
+  "layout": "<skill>/model.safetensors and <skill>/config.yaml for every skill in `skills`",
+  "required_files": [
+   "model.safetensors",
+   "config.yaml"
+  ],
+  "max_params": 800000000,
+  "max_repo_bytes": 8589934592,
+  "allowed_extensions": [
+   ".safetensors",
+   ".yaml",
+   ".yml",
+   ".json",
+   ".md",
+   ".txt"
+  ],
+  "allowed_dtypes": [
+   "F32",
+   "BF16",
+   "F16"
+  ],
+  "mutable_keys": [
+   "name"
+  ],
+  "_comment": "A submission is a Hugging Face model repo holding one directory per skill, each with model.safetensors and config.yaml. For every skill the validator instantiates the architecture from its own allow-listed template (arch/<architecture>.cfg.json), diffs the submitted config against it, checks the safetensors header against arch/<architecture>.tensors.json, and loads weights strictly. No pickle is ever read and no entrant code runs. max_params applies per skill; max_repo_bytes to the whole repo.",
+  "_mutable_comment": "Dotted paths under `model` that may differ from the template without affecting inference. Training-only keys are overwritten by the converter, so they never differ."
+ },
+ "media": {
+  "video": {
+   "format": "mp4",
+   "codec": "libx264",
+   "pix_fmt": "yuv420p",
+   "crf": 20,
+   "preset": "veryfast",
+   "faststart": true,
+   "fps": 20,
+   "resolution": 256,
+   "camera": "agentview",
+   "scope": "all"
+  },
+  "demo_video": true,
+  "_comment": "resolution and camera describe LIBERO clips; draw clips are the board render at skills.draw_anything.environment.render_resolution and draw demonstration clips are the 224 px observation frames."
+ },
+ "store": {
+  "schema": 4,
+  "index_lines_per_part": 1000,
+  "media_bucket_hex": 2,
+  "_layout_comment": "manifest.json; tracks/{track}/{head.json,queue.json,index-NNNN.jsonl}; events/{track}/{event_id}.json; media/{sha[:2]}/{sha}.mp4. Index lines are '<canonical_json>\\t<ed25519_signature_hex>', append-only."
+ },
+ "live": {
+  "schema": 4,
+  "path": "/api/live",
+  "media_flush_units": 4,
+  "max_frame_bytes": 524288,
+  "min_interval_s": 1.0
+ },
+ "admin": {
+  "bind": "127.0.0.1",
+  "port": 8799,
+  "max_body_bytes": 8192
+ },
+ "baselines": {
+  "sensorimotor": null,
+  "video_only": null,
+  "_comment": "Both thrones are empty at v6. The sensorimotor field's v5 genesis was BPP on LIBERO and DrawAnything, which are no longer scored here; a genesis on the RoboTwin skills has to be published before there is a king. The protocol already handles an empty throne: the first entrant is crowned by genesis."
+ }
 }

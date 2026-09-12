@@ -29,6 +29,7 @@ import shutil
 import socket
 import tempfile
 import threading
+import time
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
@@ -44,6 +45,9 @@ AUTHKEY_ENV = "ICILVAL_POLICY_AUTHKEY"
 #: How long a client may hold the connection open with nothing to say before the host assumes it
 #: has gone. Generous: a benchmark building a scene between units is not idle, it is working.
 IDLE_TIMEOUT_S = 1800.0
+
+#: How long a single wait on the connection lasts before the stop flag is re-checked.
+POLL_SLICE_S = 0.2
 
 
 class PolicyHost:
@@ -91,22 +95,32 @@ class PolicyHost:
         """Stop serving. Deterministic rather than timed out.
 
         Closing the listener does not interrupt a thread already blocked in `accept()`, so the
-        stop flag is set and then a throwaway connection is made to our own address to wake it -
-        we hold the key, so it authenticates. Waiting for `accept()` to time out instead cost ten
-        seconds on every host, which is ten seconds on every unit of every duel.
+        stop flag is set and a throwaway connection is made to our own address to wake it - we
+        hold the key, so it authenticates. That connect runs on a thread of its own and is never
+        waited on: doing it inline deadlocks whenever the serving thread is inside a session
+        rather than in `accept()`, because nobody is there to complete the handshake. A
+        connection left pending in the listen backlog is harmless - `accept()` takes it the
+        moment the session ends.
         """
         self._stop.set()
         if self._listener is not None:
-            with suppress(Exception):
-                from multiprocessing.connection import Client
-
-                Client(self.address, family="AF_UNIX", authkey=self.authkey).close()
+            threading.Thread(target=self._wake, name="icilval-policy-wake", daemon=True).start()
+        if self._thread is not None:
+            self._thread.join(timeout=5.0)
+            self._thread = None
+        if self._listener is not None:
             with suppress(OSError):
                 self._listener.close()
             self._listener = None
-        if self._thread is not None:
-            self._thread.join(timeout=10.0)
-            self._thread = None
+        if self._own_dir:
+            shutil.rmtree(self._dir, ignore_errors=True)
+
+    def _wake(self) -> None:
+        """Unblock a thread sitting in `accept()`. Closing the listener does not."""
+        with suppress(Exception):
+            from multiprocessing.connection import Client
+
+            Client(self.address, family="AF_UNIX", authkey=self.authkey).close()
         if self._own_dir:
             shutil.rmtree(self._dir, ignore_errors=True)
 
@@ -138,9 +152,16 @@ class PolicyHost:
 
     def _session(self, conn: Any) -> None:
         """One benchmark subprocess, for as long as it holds the connection."""
+        deadline = time.monotonic() + IDLE_TIMEOUT_S
         while not self._stop.is_set():
-            if not conn.poll(IDLE_TIMEOUT_S):
-                return
+            # Polled in slices rather than one long wait, so `close()` is honoured promptly
+            # instead of after the idle timeout. A benchmark building a scene between units is
+            # working, not idle, which is why the deadline itself is generous.
+            if not conn.poll(POLL_SLICE_S):
+                if time.monotonic() > deadline:
+                    return
+                continue
+            deadline = time.monotonic() + IDLE_TIMEOUT_S
             try:
                 op, fields, arrays = wire.recv(conn)
             except (EOFError, ConnectionError):
