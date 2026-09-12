@@ -104,7 +104,7 @@ def test_draw_episode_with_replaying_policy(spec, smoke_pool, tmp_path):
     from icilval.simulators.draw.env import DrawBoard
     from icilval.simulators.draw.episode import run_draw_episode
 
-    did = duel_id(spec.version, spec.track_id, ModelRef.make("a/b", "1" * 40), None)
+    did = duel_id(spec.version, spec.sole_track, ModelRef.make("a/b", "1" * 40), None)
     unit = next(
         u for u in derive_units(smoke_pool, spec, did, "smoke") if u.skill == "draw_anything"
     ).as_dict()

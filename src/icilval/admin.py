@@ -94,7 +94,7 @@ class AdminServer:
                         {
                             "ok": True,
                             "validator_key": server.validator_key,
-                            "track": server.spec.track_id,
+                            "track": server.spec.sole_track,
                             "queue_len": len(st.entries),
                             "in_progress": st.in_progress.event_id if st.in_progress else None,
                             "block": st.block,
@@ -134,13 +134,13 @@ class AdminServer:
         if revision is not None and (not isinstance(revision, str) or not revision.strip()):
             return 422, {"ok": False, "error": "revision must be a string or null."}
         track = body.get("track")
-        if track is not None and track != self.spec.track_id:
-            return 422, {"ok": False, "error": f"track must be {self.spec.track_id}."}
+        if track is not None and track != self.spec.sole_track:
+            return 422, {"ok": False, "error": f"track must be {self.spec.sole_track}."}
         duel_size = body.get("duel_size")
-        if duel_size is not None and duel_size not in self.spec.sizes:
+        if duel_size is not None and duel_size not in self.spec.sizes(self.spec.sole_track):
             return 422, {
                 "ok": False,
-                "error": f"duel_size must be one of: {', '.join(self.spec.sizes)}.",
+                "error": f"duel_size must be one of: {', '.join(self.spec.sizes(self.spec.sole_track))}.",
             }
         skip = bool(body.get("skip_model_config_check", False))
         source = str(body.get("source") or "")[:64]

@@ -38,14 +38,14 @@ def make_record(spec, kind, block, king, challenger, dethroned=False, event=None
         schema=spec.store["schema"],
         event_id=eid,
         kind=kind,
-        track=spec.track_id,
+        track=spec.sole_track,
         block=block,
         finished_at=now_iso(),
         king=king,
         challenger=challenger,
         king_scores=ks,
         challenger_scores=cs,
-        score_margin=spec.score_margin,
+        score_margin=spec.score_margin(spec.sole_track),
         dethroned=dethroned,
         new_king=challenger if dethroned else None,
         duel_size="smoke",
@@ -58,12 +58,12 @@ def publish(store, spec, record, units=None, media_count=0):
         spec_version=spec.version,
         spec_fingerprint=spec.fingerprint,
         units=units or [],
-        units_per_skill=spec.units_per_skill("smoke"),
+        units_per_skill=spec.units_per_skill(spec.sole_track, "smoke"),
         started_at=now_iso(),
         wall_seconds=1.5,
     )
-    store.write_event(spec.track_id, event)
-    return store.append(spec.track_id, record)
+    store.write_event(spec.sole_track, event)
+    return store.append(spec.sole_track, record)
 
 
 def test_store_append_rotate_head_and_verify(spec, tmp_path):
@@ -73,7 +73,7 @@ def test_store_append_rotate_head_and_verify(spec, tmp_path):
     store.init(signer.verify_key_hex, None)
     king = ModelRef.make("org/genesis", "a" * 40)
     ch = ModelRef.make("org/ch", "b" * 40)
-    track = sp.track_id
+    track = sp.sole_track
     assert publish(store, sp, make_record(sp, "genesis", 0, king, None)) == 1
     assert store.head(track)["king"]["key"] == king.key
     assert publish(store, sp, make_record(sp, "duel", 1, king, ch, dethroned=False)) == 2
@@ -135,10 +135,10 @@ def test_media_and_torn_line(spec, tmp_path):
     publish(store, sp, make_record(sp, "duel", 1, king, ch), units=[unit])
     assert verify_store(tmp_path / "store", sp).ok
     # torn final line is skipped by readers
-    p = store.index_part_path(sp.track_id, 0)
+    p = store.index_part_path(sp.sole_track, 0)
     with open(p, "a") as fh:
         fh.write('{"seq":2,"event_id":"ab')
-    assert [r["seq"] for r in store.iter_index(sp.track_id)] == [1]
+    assert [r["seq"] for r in store.iter_index(sp.sole_track)] == [1]
     # missing media is an error
     store.media_path(sha, "mp4").unlink()
     assert any("media" in e for e in verify_store(tmp_path / "store", sp).errors)
@@ -184,7 +184,7 @@ def test_mirror_lists_only_the_store_files(spec, tmp_path):
     assert (tmp_path / "store" / ".validator.lock").exists()
     files = store_files(tmp_path / "store")
     assert "manifest.json" in files
-    assert f"tracks/{spec.track_id}/head.json" in files
+    assert f"tracks/{spec.sole_track}/head.json" in files
     assert not any(f.startswith(".") or "/." in f for f in files)
 
 

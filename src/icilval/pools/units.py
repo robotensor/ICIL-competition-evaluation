@@ -70,7 +70,7 @@ def _spread(n: int, entries: list[str], rng: HashRng) -> list[str]:
 
 # ---------------------------------------------------------------- derivation
 def derive_units(pool: Pool, spec: Spec, duel: str, size: str | None = None) -> list[Unit]:
-    per_skill = spec.units_per_skill(size)
+    per_skill = spec.units_per_skill(spec.sole_track, size)
     out: list[Unit] = []
     for skill in spec.all_skills:
         rng = HashRng(duel, skill)

@@ -269,9 +269,10 @@ class Orchestrator:
         # Before anything is fetched: a duel that would score a skill whose benchmark is not
         # installed must stop here, not halfway through with half a score.
         simulators.require(spec)
-        size = spec.size_of(req.size)
-        did = duel_id(spec.version, spec.track_id, req.challenger, req.king)
-        eid = event_id(req.kind, spec.track_id, block, did)
+        track = spec.sole_track
+        size = spec.size_of(track, req.size)
+        did = duel_id(spec.version, spec.sole_track, req.challenger, req.king)
+        eid = event_id(req.kind, spec.sole_track, block, did)
         run_dir = self.rt.run_root / eid[:16]
         run_dir.mkdir(parents=True, exist_ok=True)
         state: dict[str, Any] = {
@@ -347,8 +348,8 @@ class Orchestrator:
                 if time.monotonic() - t0 > float(spec.budgets["duel_wall_seconds"]):
                     raise DuelFailed("duel wall time exceeded")
             # ---- scoring
-            v = score.verdict(state["units"], spec.score_margin, spec.all_skills)
-            if score.void_fraction(state["units"]) > spec.max_void_fraction:
+            v = score.verdict(state["units"], spec.score_margin(track), spec.skills(track))
+            if score.void_fraction(state["units"]) > spec.max_void_fraction(track):
                 raise DuelFailed(f"{v.tally.void} of {len(state['units'])} units void")
             # ---- publishing
             self._post(
@@ -358,14 +359,14 @@ class Orchestrator:
                 schema=int(spec.store["schema"]),
                 event_id=eid,
                 kind=req.kind,
-                track=spec.track_id,
+                track=spec.sole_track,
                 block=block,
                 finished_at=now_iso(),
                 king=req.king,
                 challenger=req.challenger,
                 king_scores=v.king_scores if req.king else None,
                 challenger_scores=v.challenger_scores,
-                score_margin=spec.score_margin,
+                score_margin=spec.score_margin(track),
                 dethroned=bool(v.dethroned),
                 new_king=req.challenger if v.dethroned else None,
                 tally=v.tally.as_dict(),
@@ -379,14 +380,14 @@ class Orchestrator:
                 spec_version=spec.version,
                 spec_fingerprint=spec.fingerprint,
                 units=state["units"],
-                units_per_skill=spec.units_per_skill(size),
+                units_per_skill=spec.units_per_skill(track, size),
                 started_at=state["started_at"],
                 wall_seconds=time.monotonic() - t0,
                 sides=sides_meta,
                 notes=[],
             )
-            self.rt.store.write_event(spec.track_id, event)
-            record["seq"] = self.rt.store.append(spec.track_id, record)
+            self.rt.store.write_event(spec.sole_track, event)
+            record["seq"] = self.rt.store.append(spec.sole_track, record)
             (run_dir / "record.json").write_text(json.dumps(record, indent=2))
             self._post(
                 state,
@@ -466,19 +467,19 @@ def publish_genesis(
         rep = check_submission(got.path, spec, rt.arch_dir)
         if not rep.ok:
             raise DuelFailed("genesis model failed the check: " + "; ".join(rep.errors[:5]))
-    eid = event_id("genesis", spec.track_id, block, king.key)
+    eid = event_id("genesis", spec.sole_track, block, king.key)
     record = index_record(
         schema=int(spec.store["schema"]),
         event_id=eid,
         kind="genesis",
-        track=spec.track_id,
+        track=spec.sole_track,
         block=block,
         finished_at=now_iso(),
         king=king,
         challenger=None,
         king_scores=None,
         challenger_scores=None,
-        score_margin=spec.score_margin,
+        score_margin=spec.score_margin(spec.sole_track),
         dethroned=False,
         new_king=None,
         media_count=0,
@@ -496,8 +497,8 @@ def publish_genesis(
         wall_seconds=0.0,
         notes=["The opening entrant took an empty throne."],
     )
-    rt.store.write_event(spec.track_id, event)
-    record["seq"] = rt.store.append(spec.track_id, record)
+    rt.store.write_event(spec.sole_track, event)
+    record["seq"] = rt.store.append(spec.sole_track, record)
     return record
 
 

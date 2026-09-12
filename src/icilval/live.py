@@ -67,7 +67,7 @@ def build_frame(
     return {
         "schema": int(spec.live["schema"]),
         "validator_key": validator_key,
-        "track": spec.track_id,
+        "track": spec.sole_track,
         "event_id": event_id,
         "kind": kind,
         "duel_size": duel_size,

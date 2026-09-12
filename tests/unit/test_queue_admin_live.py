@@ -72,7 +72,7 @@ def test_admin_server_contract(spec, tmp_path):
             {
                 "repo": "org/model",
                 "revision": None,
-                "track": spec.track_id,
+                "track": spec.sole_track,
                 "duel_size": "smoke",
                 "skip_model_config_check": False,
                 "source": "dashboard-dev-mode",
