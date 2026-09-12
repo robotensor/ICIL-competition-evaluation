@@ -9,7 +9,7 @@ import pytest
 from icilval.admin import AdminServer
 from icilval.ids import ModelRef
 from icilval.live import LiveReporter, build_frame
-from icilval.queue import Queue
+from icilval.queue import Queue, Queues
 
 
 def test_queue_replace_moves_to_back_and_persists(tmp_path):
@@ -51,8 +51,10 @@ def test_admin_server_contract(spec, tmp_path):
             raise RuntimeError("no such repo")
         return (revision or "c") * 40 if len(revision or "c") == 1 else "d" * 40
 
-    q = Queue(tmp_path / "q.json")
-    server = AdminServer(spec, q, "secret", "k" * 64, bind="127.0.0.1", port=0, resolver=resolver)
+    queues = Queues(tmp_path / "queue", spec.tracks)
+    server = AdminServer(
+        spec, queues, "secret", "k" * 64, bind="127.0.0.1", port=0, resolver=resolver
+    )
     server.start_background()
     base = f"http://127.0.0.1:{server.port}"
     try:
@@ -61,7 +63,7 @@ def test_admin_server_contract(spec, tmp_path):
         assert (
             status == 200
             and body["ok"]
-            and body["queue_len"] == 0
+            and body["tracks"][spec.sole_track]["queue_len"] == 0
             and body["validator_key"] == "k" * 64
         )
         assert _call(base + "/nope", "secret")[0] == 404
@@ -180,6 +182,7 @@ def test_live_frame_and_reporter(spec):
     ]
     frame = build_frame(
         spec,
+        track=spec.sole_track,
         validator_key="k",
         event_id="e" * 64,
         kind="duel",
@@ -212,6 +215,7 @@ def test_live_frame_and_reporter(spec):
     with pytest.raises(ValueError):
         build_frame(
             spec,
+            track=spec.sole_track,
             validator_key="k",
             event_id="e",
             kind="duel",
