@@ -49,6 +49,12 @@
   answer for the very scene it is scored on. Both sides still see identical bytes and a third
   party still verifies by hash, just not before. A unit whose expert never succeeds is replaced
   during materializing, so a generation failure cannot strike mid-duel (#44).
+- (feat): a field's withheld channels must be absent from its architecture, not merely from the
+  mapping its policies are handed. The Behavior Prompting templates already carry
+  `ignore_prompt_obs` / `ignore_prompt_proprio` / `ignore_prompt_action`, and the fingerprint
+  pins every template value outside `model.mutable_keys`, so a submission cannot flip one back
+  on. `spec validate --strict` checks it, along with a declared architecture that has no template
+  (#45).
 
 ### Pluggable simulators
 
