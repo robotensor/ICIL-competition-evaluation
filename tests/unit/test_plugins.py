@@ -234,12 +234,30 @@ def test_a_plugin_calling_itself_something_else_is_refused(entry_points):
         simulators.load_plugins()
 
 
-def test_the_in_process_hooks_refuse_rather_than_pretend(entry_points):
-    """An out-of-repo benchmark runs its simulator in a subprocess. A hook that quietly did
-    nothing would score a field on no episodes at all."""
+def test_the_hooks_that_cannot_work_in_this_process_refuse_rather_than_pretend(entry_points):
+    """A hook that quietly did nothing would score a field on no episodes at all.
+
+    `run_units` is deliberately not in this list: it is implemented for a plugged benchmark, by
+    driving `run_command` and `read_result` in a subprocess. The rest genuinely cannot happen
+    here - the orchestrator owns the weights and the architecture template, so a policy is
+    *served* rather than loaded into the benchmark's process, and a pool is built from a
+    benchmark's own sources on its own side.
+    """
     entry_points.append(_EntryPoint("fakesim", "fakepkg.plugin", lambda: _Plugin()))
     simulators.load_plugins()
     sim = simulators.get("fakesim")
-    for hook in (sim.make_policy, sim.run_units, sim.build_stage, sim.make_unit):
+    for hook in (sim.make_policy, sim.build_stage, sim.make_unit):
         with pytest.raises(MissingBenchmark, match="out of process"):
             hook()
+
+
+def test_a_plugged_benchmark_can_actually_run_units(entry_points):
+    """The capability this repository lacked: an orchestration layer that can only run the
+    benchmarks it ships is not one."""
+    entry_points.append(_EntryPoint("fakesim", "fakepkg.plugin", lambda: _Plugin()))
+    simulators.load_plugins()
+    sim = simulators.get("fakesim")
+    assert callable(sim.run_units)
+    # It is the subprocess runner, not a refusal.
+    with pytest.raises(TypeError):
+        sim.run_units()

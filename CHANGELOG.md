@@ -4,6 +4,17 @@
 
 ### Two fields on pluggable benchmarks
 
+- (feat): a plugged benchmark can actually be **run**. `simulators.adapt` wired `run_units` to a
+  refusal and nothing in `src/` ever called the ABI's `run_command` or `read_result`, so the only
+  benchmarks that could execute a duel were the two shipped here - an orchestration layer that can
+  only run its own benchmarks is not one. `benchmarks/subprocess_runner.py` builds the argv, runs
+  it, and turns the result file back into the record a duel scores, importing nothing of the
+  benchmark's simulator. A unit that crashes, times out, cannot be started or writes something
+  unreadable is **void with the reason on it** rather than fatal, so one bad unit does not lose
+  the rest; `max_void_fraction` still decides whether too many invalidate the duel. A plugged
+  benchmark's demonstration clip also renders now, from whatever arrays its video channel names
+  (#69).
+
 - (feat): `icilval.reference` publishes a measurement that is no field's score, to
   `references/<id>.json` — signed like an index record, clips in the same content-addressed
   `media/` tree, and in no index at all. Where a record lives is itself a claim:
