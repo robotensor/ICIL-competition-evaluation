@@ -104,3 +104,44 @@ def test_the_listing_is_rebuilt_from_disk_and_repeats_only_what_is_signed(tmp_pa
     reference.write_listing(tmp_path)
     doc = json.loads(path.read_text())
     assert [item["reference_id"] for item in doc["references"]] == ["bpp-robotwin-same-scene"]
+
+
+def test_an_exhibit_is_published_and_verifiable_without_being_a_record(spec, tmp_path):
+    """Two properties that would each break silently.
+
+    It must reach the mirror: an exhibit only the validator's disk holds is not published at all,
+    and `store_files` walking the whole tree is what makes that true without `references/` being
+    named anywhere in the mirror.
+
+    And it must not disturb `store verify`, which counts index records, events and the media they
+    reference. An exhibit is none of those, so the counts are unchanged and the store still
+    verifies - a clip that no index record points at is not an orphan to be reported.
+    """
+    from icilval.store.mirror import store_files
+    from icilval.store.verify import verify_store
+    from icilval.store.writer import Store
+
+    signer = Signer.generate()
+    store = Store(tmp_path / "store", spec, signer)
+    store.init(signer.verify_key_hex, None)
+    before = verify_store(tmp_path / "store", spec)
+
+    clip = tmp_path / "clip.mp4"
+    clip.write_bytes(b"\x00\x00\x00\x18ftypmp42" + b"y" * 64)
+    sha = store.put_media(clip)
+    doc = reference.exhibit(**{**GOOD, "media": [{"label": "a clip", "sha256": sha}]})
+    reference.write(tmp_path / "store", doc, signer)
+    reference.write_listing(tmp_path / "store")
+
+    files = store_files(tmp_path / "store")
+    assert "references/bpp-robotwin-same-scene.json" in files
+    assert "references/index.json" in files
+    assert f"media/{sha[:2]}/{sha}.mp4" in files
+
+    after = verify_store(tmp_path / "store", spec)
+    assert after.ok, after.errors
+    assert (after.records, after.events, after.media) == (
+        before.records,
+        before.events,
+        before.media,
+    ), "an exhibit is not an index record and must not be counted as one"
