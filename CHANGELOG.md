@@ -4,6 +4,12 @@
 
 ### Two fields on pluggable benchmarks
 
+- (feat): a duel for a field whose prompts are materialized no longer needs a pool. Unit
+  derivation goes to the plugin, the materialized prompt directory is what each side runs against,
+  the demonstration clip the benchmark already wrote beside its prompt is published as it is
+  rather than re-encoded, and the record carries no `pool_id` because there is no pool - the
+  prompts are published with the event instead (#69).
+
 - (feat): a field whose skills are on a plugged benchmark derives its units from the plugin.
   `pools/units.py` knows what a LIBERO initial state and a drawing board's angle ranges are,
   because those benchmarks ship here; only a benchmark knows what one of *its* units is. What the

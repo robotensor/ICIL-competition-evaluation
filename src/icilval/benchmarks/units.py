@@ -68,16 +68,41 @@ def plugin_units(spec: Any, track: str, duel_id: str, size: str | None = None) -
         for index, unit in enumerate(derived):
             if not isinstance(unit, dict):
                 raise DerivationError(f"{skill}: unit {index} is {type(unit).__name__}, not a dict")
+            uid = unit_id(code, len(out))
+            passed = {k: v for k, v in unit.items() if k not in RESERVED}
             out.append(
                 {
-                    **{k: v for k, v in unit.items() if k not in RESERVED},
-                    "unit_id": unit_id(code, len(out)),
+                    **passed,
+                    "unit_id": uid,
                     "skill": skill,
                     "index": index,
                     "seed": unit_seed(duel_id, skill, index),
+                    # The published record's shape is the same for every field, so a plugin unit
+                    # has to answer the same questions a pool unit does. These are answers, not
+                    # placeholders:
+                    #   task_label - what a reader should see; the benchmark's own name unless it
+                    #     offered a nicer one.
+                    #   instance - which initial state of the task. A field that scores from the
+                    #     state it demonstrated has exactly one, so it is 0 rather than an index
+                    #     into a list that does not exist.
+                    #   demo - which demonstration was shown. For a field whose prompts are
+                    #     materialized per duel, the prompt made for this unit *is* its
+                    #     demonstration, so the unit names itself.
+                    #   instance_params - whatever the benchmark said its unit was, so the record
+                    #     carries enough to rebuild the scene.
+                    "task": passed.get("task", uid),
+                    "task_label": passed.get("task_label", passed.get("task", uid)),
+                    "instance": passed.get("instance", 0),
+                    "demo": uid,
+                    "instance_params": dict(passed.get("instance_params") or _params(passed)),
                 }
             )
     return out
+
+
+def _params(unit: dict[str, Any]) -> dict[str, Any]:
+    """What a benchmark said its unit was, minus what the record carries in its own right."""
+    return {k: v for k, v in unit.items() if k not in ("task", "task_label", "instance")}
 
 
 def derives_its_own_units(spec: Any, track: str) -> bool:
