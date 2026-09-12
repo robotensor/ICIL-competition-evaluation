@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 
 import numpy as np
-import pytest
 
 from icilval import demoview
 from icilval.demoview import DemoView
