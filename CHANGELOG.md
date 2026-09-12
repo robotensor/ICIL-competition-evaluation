@@ -43,6 +43,12 @@
   restricted view. A duel reads a demonstration through one chokepoint, which also hashes what it
   handed over; store schema 4 publishes that digest and the view on every unit, and what the
   field withheld on every event, so a third party can confirm it (#43).
+- (feat): a field says where its prompts come from. `pool` is published up front, as the
+  sensorimotor field has always done; `materialized` is produced per duel on the validator host
+  and published **with the event**, which is what a field must use when the demonstration is the
+  answer for the very scene it is scored on. Both sides still see identical bytes and a third
+  party still verifies by hash, just not before. A unit whose expert never succeeds is replaced
+  during materializing, so a generation failure cannot strike mid-duel (#44).
 
 ### Pluggable simulators
 
