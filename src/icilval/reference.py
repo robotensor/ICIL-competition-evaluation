@@ -110,3 +110,49 @@ def read(path: str | Path) -> dict[str, Any]:
     line = Path(path).read_text(encoding="utf-8").strip()
     body = line.split("\t", 1)[0]
     return json.loads(body)
+
+
+#: The listing a reader needs to find exhibits at all. Unsigned and rewritten in place, like the
+#: queue: it is navigation, not provenance, and every claim it repeats is also in the signed
+#: document it points at. A reader that cares about provenance reads that document.
+INDEX = "index.json"
+INDEX_SCHEMA = 1
+
+
+def listing(store_root: str | Path) -> dict[str, Any]:
+    """The exhibits this store holds, newest first."""
+    root = Path(store_root) / ROOT
+    items: list[dict[str, Any]] = []
+    for path in sorted(root.glob("*.json")):
+        if path.name == INDEX:
+            continue
+        try:
+            doc = read(path)
+        except (OSError, ValueError):
+            continue
+        items.append(
+            {
+                "reference_id": doc["reference_id"],
+                "headline": doc["headline"],
+                "not_a_competition_score": doc["not_a_competition_score"],
+                "published_at": doc.get("published_at", ""),
+                # Which benchmark it ran on, so a page can work out where the exhibit is worth
+                # offering without the exhibit naming a field - which it must not do.
+                "benchmark": {
+                    "name": doc.get("benchmark", {}).get("name", ""),
+                    "simulator": doc.get("benchmark", {}).get("simulator", ""),
+                },
+            }
+        )
+    items.sort(key=lambda item: item["published_at"], reverse=True)
+    return {"schema": INDEX_SCHEMA, "references": items}
+
+
+def write_listing(store_root: str | Path) -> Path:
+    """Rebuild `references/index.json` from what is on disk, atomically."""
+    out = Path(store_root) / ROOT / INDEX
+    out.parent.mkdir(parents=True, exist_ok=True)
+    tmp = out.with_name(out.name + ".tmp")
+    tmp.write_text(canonical_json(listing(store_root)) + "\n", encoding="utf-8")
+    tmp.replace(out)
+    return out

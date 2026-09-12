@@ -71,3 +71,36 @@ def test_it_lands_beside_the_ladders_never_inside_one(tmp_path):
     reference.write(tmp_path, reference.exhibit(**GOOD), Signer.generate())
     assert (tmp_path / "references").is_dir()
     assert not (tmp_path / "tracks").exists()
+
+
+def test_the_listing_is_rebuilt_from_disk_and_repeats_only_what_is_signed(tmp_path):
+    """Navigation, not provenance.
+
+    A reader needs some way to find an exhibit at all, and a directory cannot be listed over
+    HTTP. The listing carries no claim that is not also in the signed document it points at,
+    and it is rebuilt rather than appended to, so it cannot drift from what the store holds.
+    """
+    signer = Signer.generate()
+    first = {**GOOD, "benchmark": {"name": "robotwin-icil", "simulator": "robotwin"}}
+    second = {
+        **first,
+        "reference_id": "later-run",
+        "published_at": "2026-09-13T00:00:00Z",
+    }
+    reference.write(tmp_path, reference.exhibit(**first), signer)
+    reference.write(tmp_path, reference.exhibit(**second), signer)
+    path = reference.write_listing(tmp_path)
+
+    doc = json.loads(path.read_text())
+    assert [item["reference_id"] for item in doc["references"]] == [
+        "later-run",
+        "bpp-robotwin-same-scene",
+    ], "newest first"
+    assert doc["references"][0]["benchmark"]["simulator"] == "robotwin"
+    assert all("track" not in item for item in doc["references"]), "an exhibit is under no field"
+
+    # It is rebuilt, not appended: an exhibit removed from disk leaves the listing.
+    (tmp_path / reference.ROOT / "later-run.json").unlink()
+    reference.write_listing(tmp_path)
+    doc = json.loads(path.read_text())
+    assert [item["reference_id"] for item in doc["references"]] == ["bpp-robotwin-same-scene"]

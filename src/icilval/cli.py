@@ -117,6 +117,74 @@ def cmd_store(args) -> int:
     return 2
 
 
+def cmd_reference(args) -> int:
+    """Publish a measurement that is no field's score.
+
+    The document is read from a file rather than assembled from flags: what an exhibit says about
+    what the policy was shown is the load-bearing part, and it should be reviewable as a file and
+    diffable in a pull request, not typed on a command line once.
+
+    Clips are ingested into the same content-addressed `media/` tree the ladders use, so an
+    exhibit's videos play through the ordinary media route. The document names them, each with the
+    `source` file it comes from, resolved relative to the document; the sha256 is computed here,
+    so the document cannot claim a clip the store does not hold.
+    """
+    from . import reference as ref
+    from .canon import Signer
+    from .store.records import now_iso
+    from .store.writer import Store
+
+    spec = _spec(args)
+    signer = Signer.from_file(args.key)
+    store = Store(args.store, spec, signer)
+
+    doc = json.loads(Path(args.doc).read_text(encoding="utf-8"))
+
+    # A clip is declared in the document, with the file it comes from. `source` is where the bytes
+    # are on this machine and is stripped before publishing; `sha256`, if the document states one,
+    # must match what was actually ingested, so a document cannot claim a clip it does not have.
+    # Declaring them here rather than on the command line is what makes republishing idempotent:
+    # the first version of this took clips as flags, and re-running it without them quietly
+    # published an exhibit with no videos.
+    media = []
+    for entry in doc.get("media") or []:
+        entry = dict(entry)
+        source = entry.pop("source", None)
+        if source:
+            sha = store.put_media(Path(args.doc).parent / source)
+            if entry.get("sha256") and entry["sha256"] != sha:
+                print(f"error: {source} hashes to {sha}, not {entry['sha256']} as declared")
+                return 2
+            entry["sha256"] = sha
+        if not entry.get("sha256"):
+            print(f"error: clip {entry.get('label')!r} has neither a source nor a sha256")
+            return 2
+        media.append(entry)
+
+    out = ref.write(
+        args.store,
+        ref.exhibit(
+            reference_id=doc["reference_id"],
+            headline=doc["headline"],
+            not_a_competition_score=doc["not_a_competition_score"],
+            benchmark=doc.get("benchmark", {}),
+            protocol=doc.get("protocol", {}),
+            demonstration_shown=doc["demonstration_shown"],
+            subject=doc.get("subject", {}),
+            results=doc.get("results", {}),
+            ceiling=doc.get("ceiling"),
+            published_at=doc.get("published_at") or now_iso(),
+            media=media,
+        ),
+        signer,
+    )
+    # The listing is rebuilt from disk rather than appended to, so it cannot drift from what the
+    # store actually holds.
+    ref.write_listing(args.store)
+    print(out)
+    return 0
+
+
 def cmd_queue(args) -> int:
     from .queue import Queues
 
@@ -653,6 +721,15 @@ def build_parser() -> argparse.ArgumentParser:
         "path the store no longer has (for a rebuilt store, e.g. after a schema change)",
     )
     st.set_defaults(func=cmd_store)
+
+    rf = sub.add_parser(
+        "reference",
+        help="publish a measurement that is no field's score (references/<id>.json, on no ladder)",
+    )
+    rf.add_argument("--store", required=True)
+    rf.add_argument("--key", required=True, help="validator.ed25519 secret file")
+    rf.add_argument("--doc", required=True, help="the exhibit, as JSON")
+    rf.set_defaults(func=cmd_reference)
 
     q = sub.add_parser("queue", help="challenger queues, one per field")
     q.add_argument("--queue", default="queue", help="the queue directory, one file per field")
