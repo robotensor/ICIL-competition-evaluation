@@ -77,6 +77,7 @@ def duel_event(
     wall_seconds: float,
     sides: dict[str, Any] | None = None,
     notes: list[str] | None = None,
+    demonstration: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     event = dict(record)
     event.pop("seq", None)
@@ -88,6 +89,8 @@ def duel_event(
             "started_at": started_at,
             "wall_seconds": round(float(wall_seconds), 3),
             "sides": sides or {},
+            # What this field let its policies see of a demonstration, and what it withheld.
+            "demonstration": demonstration or {},
             "units": units,
             "notes": notes or [],
         }
@@ -95,7 +98,7 @@ def duel_event(
     return event
 
 
-def unit_verdict_from_unit(unit: dict[str, Any]) -> dict[str, Any]:
+def unit_verdict_from_unit(unit: dict[str, Any], view: str | None = None) -> dict[str, Any]:
     """The published shape of a unit before either side has run."""
     return {
         "unit_id": unit["unit_id"],
@@ -106,7 +109,15 @@ def unit_verdict_from_unit(unit: dict[str, Any]) -> dict[str, Any]:
         "instance": unit["instance"],
         "seed": unit["seed"],
         "instance_params": dict(unit.get("instance_params") or {}),
-        "prompt": {"demo_id": unit["demo"], "steps": 0, "chunks": 0},
+        "prompt": {
+            "demo_id": unit["demo"],
+            "steps": 0,
+            "chunks": 0,
+            # What the policy was allowed to see, and a digest of exactly what it was handed.
+            # A third party holding the prompt recomputes the digest and sees what was withheld.
+            "view": view,
+            "handed_sha256": None,
+        },
         "demo_video": None,
         "king_video": None,
         "challenger_video": None,

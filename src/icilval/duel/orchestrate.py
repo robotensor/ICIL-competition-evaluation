@@ -164,10 +164,12 @@ class Orchestrator:
                 u[f"{side}_error"] = rec.get("error")
                 if rec.get("prompt_chunks"):
                     u["prompt"] = {
-                        "demo_id": u["prompt"]["demo_id"],
+                        **u["prompt"],
                         "steps": rec.get("prompt_steps", 0),
                         "chunks": rec.get("prompt_chunks", 0),
                     }
+                if rec.get("handed_sha256"):
+                    u["prompt"]["handed_sha256"] = rec["handed_sha256"]
             u["outcome"] = score.paired_outcome(u.get("king_success"), u.get("challenger_success"))
             return
 
@@ -331,7 +333,8 @@ class Orchestrator:
             # ---- units
             units = derive_units(self.rt.pool, spec, did, size, track=track)
             state["unit_defs"] = [u.as_dict() for u in units]
-            state["units"] = [unit_verdict_from_unit(u.as_dict()) for u in units]
+            view = spec.demo_view(track)
+            state["units"] = [unit_verdict_from_unit(u.as_dict(), view) for u in units]
             self._render_demos(state, run_dir)
             # ---- evaluating
             for side in ("challenger", "king"):
@@ -391,6 +394,7 @@ class Orchestrator:
                 started_at=state["started_at"],
                 wall_seconds=time.monotonic() - t0,
                 sides=sides_meta,
+                demonstration=_demonstration(spec, track),
                 notes=[],
             )
             self.rt.store.write_event(track, event)
@@ -457,6 +461,16 @@ def read_summary(side_dir: Path) -> dict[str, Any]:
         return json.loads(p.read_text())
     except (OSError, ValueError):
         return {}
+
+
+def _demonstration(spec: Spec, track: str) -> dict[str, Any]:
+    """What a field's record says about what its policies were shown."""
+    demo = spec.track(track)["demonstration"]
+    return {
+        "view": demo["view"],
+        "modalities": list(demo["modalities"]),
+        "withheld": list(demo.get("withheld", [])),
+    }
 
 
 def publish_genesis(

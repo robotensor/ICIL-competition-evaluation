@@ -1,790 +1,829 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://robotensor.ai/icil-competition/store-schema.json",
-  "title": "ICIL competition result store",
-  "description": "Shapes of every file the validator publishes. Records may carry extra fields; readers ignore what they do not know. Schema 2: scores are per skill (see spec.json `skills`), not per perturbation axis. Schema 3: a unit is a task, an initial state, a prompt demonstration and a seed; it carries instance_params instead of a perturbation group.",
-  "$defs": {
-    "sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://robotensor.ai/icil-competition/store-schema.json",
+ "title": "ICIL competition result store",
+ "description": "Shapes of every file the validator publishes. Records may carry extra fields; readers ignore what they do not know. Schema 2: scores are per skill (see spec.json `skills`), not per perturbation axis. Schema 3: a unit is a task, an initial state, a prompt demonstration and a seed; it carries instance_params instead of a perturbation group. Schema 4: records are filed per field (spec.json `tracks`); a unit's prompt carries the demonstration view it was read under and a digest of exactly what the policy was handed.",
+ "$defs": {
+  "sha256": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{64}$"
+  },
+  "hex64": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{64}$"
+  },
+  "isoDate": {
+   "type": "string",
+   "minLength": 20
+  },
+  "eventKind": {
+   "type": "string",
+   "enum": [
+    "duel",
+    "genesis",
+    "succession",
+    "vacancy"
+   ]
+  },
+  "outcome": {
+   "type": "string",
+   "enum": [
+    "challenger",
+    "king",
+    "tie"
+   ]
+  },
+  "rate": {
+   "type": [
+    "number",
+    "null"
+   ],
+   "minimum": 0,
+   "maximum": 1
+  },
+  "skill": {
+   "type": "string",
+   "pattern": "^[a-z][a-z0-9_]*$",
+   "description": "A skill id from spec.json `skills`."
+  },
+  "SkillScores": {
+   "type": "object",
+   "description": "One success rate per skill (keyed by skill id, fractions in [0, 1]) and their mean under `average`.",
+   "required": [
+    "average"
+   ],
+   "properties": {
+    "average": {
+     "$ref": "#/$defs/rate"
+    }
+   },
+   "additionalProperties": {
+    "$ref": "#/$defs/rate"
+   }
+  },
+  "ModelRef": {
+   "type": "object",
+   "required": [
+    "key",
+    "repo",
+    "revision"
+   ],
+   "properties": {
+    "key": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{16}$"
     },
-    "hex64": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
+    "repo": {
+     "type": "string",
+     "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$"
     },
-    "isoDate": {
-      "type": "string",
-      "minLength": 20
+    "revision": {
+     "type": "string",
+     "minLength": 7
+    }
+   }
+  },
+  "Prompt": {
+   "type": "object",
+   "required": [
+    "demo_id"
+   ],
+   "properties": {
+    "demo_id": {
+     "type": "string"
     },
-    "eventKind": {
-      "type": "string",
-      "enum": [
-        "duel",
-        "genesis",
-        "succession",
-        "vacancy"
-      ]
+    "steps": {
+     "type": "integer",
+     "minimum": 0
     },
-    "outcome": {
-      "type": "string",
-      "enum": [
-        "challenger",
-        "king",
-        "tie"
-      ]
+    "chunks": {
+     "type": "integer",
+     "minimum": 0
     },
-    "rate": {
-      "type": [
-        "number",
-        "null"
-      ],
-      "minimum": 0,
-      "maximum": 1
+    "view": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "description": "What this field let its policies see of the demonstration: 'sensorimotor' (frames, actions and proprioception) or 'video_only' (frames alone)."
+    },
+    "handed_sha256": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/sha256"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "description": "Digest of exactly the arrays the policy was handed. Recomputable from the published prompt, so a third party can confirm what was withheld."
+    }
+   }
+  },
+  "UnitVerdict": {
+   "type": "object",
+   "required": [
+    "unit_id",
+    "skill",
+    "index",
+    "task",
+    "instance",
+    "seed",
+    "instance_params",
+    "prompt",
+    "king_success",
+    "challenger_success",
+    "outcome",
+    "void"
+   ],
+   "properties": {
+    "unit_id": {
+     "type": "string"
     },
     "skill": {
-      "type": "string",
-      "pattern": "^[a-z][a-z0-9_]*$",
-      "description": "A skill id from spec.json `skills`."
+     "$ref": "#/$defs/skill"
     },
-    "SkillScores": {
-      "type": "object",
-      "description": "One success rate per skill (keyed by skill id, fractions in [0, 1]) and their mean under `average`.",
-      "required": [
-        "average"
-      ],
-      "properties": {
-        "average": {
-          "$ref": "#/$defs/rate"
-        }
+    "index": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "task": {
+     "type": "string"
+    },
+    "task_label": {
+     "type": "string"
+    },
+    "instance": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "seed": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "instance_params": {
+     "type": "object",
+     "description": "How the unit's initial state was set up beyond the instance index: empty on LIBERO (the instance is one of the task's benchmark initial states); on the drawing board the board angle (angle_rad), the pen start (cursor_px) and the demonstration's own board angle (demo_angle_rad)."
+    },
+    "prompt": {
+     "$ref": "#/$defs/Prompt"
+    },
+    "demo_video": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/sha256"
       },
-      "additionalProperties": {
-        "$ref": "#/$defs/rate"
+      {
+       "type": "null"
       }
+     ]
     },
-    "ModelRef": {
-      "type": "object",
-      "required": [
-        "key",
-        "repo",
-        "revision"
-      ],
-      "properties": {
-        "key": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{16}$"
+    "king_video": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/sha256"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "challenger_video": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/sha256"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "king_success": {
+     "type": [
+      "boolean",
+      "null"
+     ]
+    },
+    "challenger_success": {
+     "type": [
+      "boolean",
+      "null"
+     ]
+    },
+    "outcome": {
+     "$ref": "#/$defs/outcome"
+    },
+    "king_progress": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "minimum": 0,
+     "maximum": 1
+    },
+    "challenger_progress": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "minimum": 0,
+     "maximum": 1
+    },
+    "king_metric": {
+     "type": [
+      "number",
+      "null"
+     ],
+     "description": "The skill's raw measure for this side, when it has one: the best Chamfer distance in canvas pixels on draw_anything; null elsewhere."
+    },
+    "challenger_metric": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "king_steps": {
+     "type": [
+      "integer",
+      "null"
+     ],
+     "minimum": 0
+    },
+    "challenger_steps": {
+     "type": [
+      "integer",
+      "null"
+     ],
+     "minimum": 0
+    },
+    "king_error": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "challenger_error": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "void": {
+     "type": "boolean"
+    }
+   }
+  },
+  "RecordBase": {
+   "type": "object",
+   "required": [
+    "schema",
+    "event_id",
+    "kind",
+    "track",
+    "block",
+    "finished_at",
+    "king",
+    "challenger",
+    "king_scores",
+    "challenger_scores",
+    "score_margin",
+    "dethroned",
+    "new_king",
+    "wins",
+    "losses",
+    "ties",
+    "decided",
+    "void",
+    "media_count"
+   ],
+   "properties": {
+    "schema": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "event_id": {
+     "$ref": "#/$defs/hex64"
+    },
+    "kind": {
+     "$ref": "#/$defs/eventKind"
+    },
+    "track": {
+     "type": "string"
+    },
+    "block": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "finished_at": {
+     "$ref": "#/$defs/isoDate"
+    },
+    "duel_size": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "duel_id": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/hex64"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "pool_id": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/hex64"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "king": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/ModelRef"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "challenger": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/ModelRef"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "king_scores": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/SkillScores"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "challenger_scores": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/SkillScores"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "score_margin": {
+     "type": "number",
+     "minimum": 0,
+     "maximum": 100
+    },
+    "dethroned": {
+     "type": "boolean"
+    },
+    "new_king": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/ModelRef"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "wins": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "losses": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "ties": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "decided": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "void": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "media_count": {
+     "type": "integer",
+     "minimum": 0
+    }
+   }
+  },
+  "IndexRecord": {
+   "allOf": [
+    {
+     "$ref": "#/$defs/RecordBase"
+    },
+    {
+     "type": "object",
+     "required": [
+      "seq"
+     ],
+     "properties": {
+      "seq": {
+       "type": "integer",
+       "minimum": 1
+      }
+     }
+    }
+   ]
+  },
+  "DuelEvent": {
+   "allOf": [
+    {
+     "$ref": "#/$defs/RecordBase"
+    },
+    {
+     "type": "object",
+     "required": [
+      "spec_version",
+      "spec_fingerprint",
+      "units"
+     ],
+     "properties": {
+      "spec_version": {
+       "type": "integer"
+      },
+      "spec_fingerprint": {
+       "$ref": "#/$defs/sha256"
+      },
+      "units_per_skill": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "started_at": {
+       "$ref": "#/$defs/isoDate"
+      },
+      "wall_seconds": {
+       "type": "number",
+       "minimum": 0
+      },
+      "sides": {
+       "type": "object"
+      },
+      "units": {
+       "type": "array",
+       "items": {
+        "$ref": "#/$defs/UnitVerdict"
+       }
+      },
+      "notes": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "demonstration": {
+       "type": "object",
+       "description": "What this field's policies were shown of a demonstration: the view, the channels kept, and the channels withheld.",
+       "properties": {
+        "view": {
+         "type": "string"
         },
-        "repo": {
-          "type": "string",
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$"
+        "modalities": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
         },
-        "revision": {
-          "type": "string",
-          "minLength": 7
+        "withheld": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
         }
+       }
       }
+     }
+    }
+   ]
+  },
+  "Head": {
+   "type": "object",
+   "required": [
+    "schema",
+    "seq",
+    "event_id",
+    "block",
+    "finished_at",
+    "king"
+   ],
+   "properties": {
+    "schema": {
+     "type": "integer"
     },
-    "Prompt": {
-      "type": "object",
-      "required": [
-        "demo_id"
-      ],
-      "properties": {
-        "demo_id": {
-          "type": "string"
-        },
-        "steps": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "chunks": {
-          "type": "integer",
-          "minimum": 0
-        }
+    "seq": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "event_id": {
+     "type": "string"
+    },
+    "block": {
+     "type": "integer"
+    },
+    "finished_at": {
+     "type": "string"
+    },
+    "king": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/ModelRef"
+      },
+      {
+       "type": "null"
       }
+     ]
+    }
+   }
+  },
+  "Manifest": {
+   "type": "object",
+   "required": [
+    "schema",
+    "validator_key",
+    "spec_version",
+    "spec_fingerprint",
+    "tracks"
+   ],
+   "properties": {
+    "schema": {
+     "type": "integer"
     },
-    "UnitVerdict": {
-      "type": "object",
-      "required": [
-        "unit_id",
-        "skill",
-        "index",
-        "task",
-        "instance",
-        "seed",
-        "instance_params",
-        "prompt",
-        "king_success",
-        "challenger_success",
-        "outcome",
-        "void"
-      ],
-      "properties": {
-        "unit_id": {
-          "type": "string"
-        },
-        "skill": {
-          "$ref": "#/$defs/skill"
-        },
-        "index": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "task": {
-          "type": "string"
-        },
-        "task_label": {
-          "type": "string"
-        },
-        "instance": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "seed": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "instance_params": {
-          "type": "object",
-          "description": "How the unit's initial state was set up beyond the instance index: empty on LIBERO (the instance is one of the task's benchmark initial states); on the drawing board the board angle (angle_rad), the pen start (cursor_px) and the demonstration's own board angle (demo_angle_rad)."
-        },
-        "prompt": {
-          "$ref": "#/$defs/Prompt"
-        },
-        "demo_video": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/sha256"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "king_video": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/sha256"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "challenger_video": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/sha256"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "king_success": {
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "challenger_success": {
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "outcome": {
-          "$ref": "#/$defs/outcome"
-        },
-        "king_progress": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "minimum": 0,
-          "maximum": 1
-        },
-        "challenger_progress": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "minimum": 0,
-          "maximum": 1
-        },
-        "king_metric": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "description": "The skill's raw measure for this side, when it has one: the best Chamfer distance in canvas pixels on draw_anything; null elsewhere."
-        },
-        "challenger_metric": {
-          "type": [
-            "number",
-            "null"
-          ]
-        },
-        "king_steps": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "challenger_steps": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "king_error": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "challenger_error": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "void": {
-          "type": "boolean"
-        }
+    "validator_key": {
+     "$ref": "#/$defs/hex64"
+    },
+    "spec_version": {
+     "type": "integer"
+    },
+    "spec_fingerprint": {
+     "$ref": "#/$defs/sha256"
+    },
+    "pool_id": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/hex64"
+      },
+      {
+       "type": "null"
       }
+     ]
     },
-    "RecordBase": {
-      "type": "object",
-      "required": [
-        "schema",
+    "tracks": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "QueueEntry": {
+   "type": "object",
+   "required": [
+    "position",
+    "key",
+    "repo",
+    "revision",
+    "commit_block",
+    "duel_size",
+    "skip_model_config_check"
+   ],
+   "properties": {
+    "position": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "key": {
+     "type": "string"
+    },
+    "repo": {
+     "type": "string"
+    },
+    "revision": {
+     "type": "string"
+    },
+    "commit_block": {
+     "type": "integer"
+    },
+    "duel_size": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "skip_model_config_check": {
+     "type": "boolean"
+    },
+    "accepted_at": {
+     "type": "string"
+    }
+   }
+  },
+  "QueueSnapshot": {
+   "type": "object",
+   "required": [
+    "schema",
+    "track",
+    "block",
+    "written_at",
+    "king",
+    "in_progress",
+    "entries"
+   ],
+   "properties": {
+    "schema": {
+     "type": "integer"
+    },
+    "track": {
+     "type": "string"
+    },
+    "block": {
+     "type": "integer"
+    },
+    "written_at": {
+     "type": "string"
+    },
+    "king": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/ModelRef"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "in_progress": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "object",
+       "required": [
         "event_id",
-        "kind",
-        "track",
-        "block",
-        "finished_at",
-        "king",
         "challenger",
-        "king_scores",
-        "challenger_scores",
-        "score_margin",
-        "dethroned",
-        "new_king",
-        "wins",
-        "losses",
-        "ties",
-        "decided",
-        "void",
-        "media_count"
-      ],
-      "properties": {
-        "schema": {
-          "type": "integer",
-          "minimum": 1
-        },
+        "started_at"
+       ],
+       "properties": {
         "event_id": {
-          "$ref": "#/$defs/hex64"
-        },
-        "kind": {
-          "$ref": "#/$defs/eventKind"
-        },
-        "track": {
-          "type": "string"
-        },
-        "block": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "finished_at": {
-          "$ref": "#/$defs/isoDate"
-        },
-        "duel_size": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "duel_id": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/hex64"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "pool_id": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/hex64"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "king": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/ModelRef"
-            },
-            {
-              "type": "null"
-            }
-          ]
+         "type": "string"
         },
         "challenger": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/ModelRef"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "king_scores": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/SkillScores"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "challenger_scores": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/SkillScores"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "score_margin": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 100
-        },
-        "dethroned": {
-          "type": "boolean"
-        },
-        "new_king": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/ModelRef"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "wins": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "losses": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "ties": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "decided": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "void": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "media_count": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "IndexRecord": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/RecordBase"
-        },
-        {
-          "type": "object",
-          "required": [
-            "seq"
-          ],
-          "properties": {
-            "seq": {
-              "type": "integer",
-              "minimum": 1
-            }
-          }
-        }
-      ]
-    },
-    "DuelEvent": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/RecordBase"
-        },
-        {
-          "type": "object",
-          "required": [
-            "spec_version",
-            "spec_fingerprint",
-            "units"
-          ],
-          "properties": {
-            "spec_version": {
-              "type": "integer"
-            },
-            "spec_fingerprint": {
-              "$ref": "#/$defs/sha256"
-            },
-            "units_per_skill": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "started_at": {
-              "$ref": "#/$defs/isoDate"
-            },
-            "wall_seconds": {
-              "type": "number",
-              "minimum": 0
-            },
-            "sides": {
-              "type": "object"
-            },
-            "units": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/UnitVerdict"
-              }
-            },
-            "notes": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      ]
-    },
-    "Head": {
-      "type": "object",
-      "required": [
-        "schema",
-        "seq",
-        "event_id",
-        "block",
-        "finished_at",
-        "king"
-      ],
-      "properties": {
-        "schema": {
-          "type": "integer"
-        },
-        "seq": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "event_id": {
-          "type": "string"
-        },
-        "block": {
-          "type": "integer"
-        },
-        "finished_at": {
-          "type": "string"
-        },
-        "king": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/ModelRef"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "Manifest": {
-      "type": "object",
-      "required": [
-        "schema",
-        "validator_key",
-        "spec_version",
-        "spec_fingerprint",
-        "tracks"
-      ],
-      "properties": {
-        "schema": {
-          "type": "integer"
-        },
-        "validator_key": {
-          "$ref": "#/$defs/hex64"
-        },
-        "spec_version": {
-          "type": "integer"
-        },
-        "spec_fingerprint": {
-          "$ref": "#/$defs/sha256"
-        },
-        "pool_id": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/hex64"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "tracks": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "QueueEntry": {
-      "type": "object",
-      "required": [
-        "position",
-        "key",
-        "repo",
-        "revision",
-        "commit_block",
-        "duel_size",
-        "skip_model_config_check"
-      ],
-      "properties": {
-        "position": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "key": {
-          "type": "string"
-        },
-        "repo": {
-          "type": "string"
-        },
-        "revision": {
-          "type": "string"
-        },
-        "commit_block": {
-          "type": "integer"
-        },
-        "duel_size": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "skip_model_config_check": {
-          "type": "boolean"
-        },
-        "accepted_at": {
-          "type": "string"
-        }
-      }
-    },
-    "QueueSnapshot": {
-      "type": "object",
-      "required": [
-        "schema",
-        "track",
-        "block",
-        "written_at",
-        "king",
-        "in_progress",
-        "entries"
-      ],
-      "properties": {
-        "schema": {
-          "type": "integer"
-        },
-        "track": {
-          "type": "string"
-        },
-        "block": {
-          "type": "integer"
-        },
-        "written_at": {
-          "type": "string"
-        },
-        "king": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/ModelRef"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "in_progress": {
-          "oneOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "object",
-              "required": [
-                "event_id",
-                "challenger",
-                "started_at"
-              ],
-              "properties": {
-                "event_id": {
-                  "type": "string"
-                },
-                "challenger": {
-                  "$ref": "#/$defs/ModelRef"
-                },
-                "started_at": {
-                  "type": "string"
-                }
-              }
-            }
-          ]
-        },
-        "entries": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/QueueEntry"
-          }
-        }
-      }
-    },
-    "LiveFrame": {
-      "type": "object",
-      "required": [
-        "schema",
-        "validator_key",
-        "track",
-        "event_id",
-        "kind",
-        "phase",
-        "side",
-        "done",
-        "total",
-        "units",
-        "message",
-        "started_at",
-        "sent_at"
-      ],
-      "properties": {
-        "schema": {
-          "type": "integer"
-        },
-        "validator_key": {
-          "type": "string"
-        },
-        "track": {
-          "type": "string"
-        },
-        "event_id": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{8,64}$"
-        },
-        "kind": {
-          "type": "string"
-        },
-        "duel_size": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "king": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/ModelRef"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "challenger": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/ModelRef"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "phase": {
-          "type": "string",
-          "enum": [
-            "fetching",
-            "checking",
-            "evaluating",
-            "publishing",
-            "done",
-            "failed"
-          ]
-        },
-        "side": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "enum": [
-            "challenger",
-            "king",
-            null
-          ]
-        },
-        "done": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "total": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "skill_progress": {
-          "type": "object",
-          "description": "Per side, per skill: {done, total}."
-        },
-        "current": {
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        "recent_media": {
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        "units": {
-          "type": "array"
-        },
-        "message": {
-          "type": "string"
+         "$ref": "#/$defs/ModelRef"
         },
         "started_at": {
-          "type": "string"
-        },
-        "sent_at": {
-          "type": "string"
+         "type": "string"
         }
+       }
       }
+     ]
+    },
+    "entries": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/QueueEntry"
+     }
     }
+   }
+  },
+  "LiveFrame": {
+   "type": "object",
+   "required": [
+    "schema",
+    "validator_key",
+    "track",
+    "event_id",
+    "kind",
+    "phase",
+    "side",
+    "done",
+    "total",
+    "units",
+    "message",
+    "started_at",
+    "sent_at"
+   ],
+   "properties": {
+    "schema": {
+     "type": "integer"
+    },
+    "validator_key": {
+     "type": "string"
+    },
+    "track": {
+     "type": "string"
+    },
+    "event_id": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{8,64}$"
+    },
+    "kind": {
+     "type": "string"
+    },
+    "duel_size": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "king": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/ModelRef"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "challenger": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/ModelRef"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "phase": {
+     "type": "string",
+     "enum": [
+      "fetching",
+      "checking",
+      "evaluating",
+      "publishing",
+      "done",
+      "failed"
+     ]
+    },
+    "side": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "enum": [
+      "challenger",
+      "king",
+      null
+     ]
+    },
+    "done": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "total": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "skill_progress": {
+     "type": "object",
+     "description": "Per side, per skill: {done, total}."
+    },
+    "current": {
+     "type": [
+      "object",
+      "null"
+     ]
+    },
+    "recent_media": {
+     "type": [
+      "object",
+      "null"
+     ]
+    },
+    "units": {
+     "type": "array"
+    },
+    "message": {
+     "type": "string"
+    },
+    "started_at": {
+     "type": "string"
+    },
+    "sent_at": {
+     "type": "string"
+    }
+   }
   }
+ }
 }
