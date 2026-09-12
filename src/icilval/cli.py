@@ -110,9 +110,11 @@ def cmd_store(args) -> int:
 
 
 def cmd_queue(args) -> int:
-    from .queue import Queue
+    from .queue import Queues
 
-    q = Queue(args.queue)
+    spec = _spec(args)
+    track = args.track or spec.sole_track
+    q = Queues(args.queue, spec.tracks)[track]
     if args.queue_cmd == "add":
         entry, pos = q.add(args.repo, args.revision, duel_size=args.duel_size, source="cli")
         print(f"{entry.ref.entry} key={entry.key} position={pos}")
@@ -133,11 +135,13 @@ def cmd_queue(args) -> int:
 
 def cmd_admin(args) -> int:
     from .admin import AdminServer
-    from .queue import Queue
+    from .queue import Queues
 
     spec = _spec(args)
     key = Path(args.pub).read_text().strip() if args.pub else ""
-    server = AdminServer(spec, Queue(args.queue), args.token, key, bind=args.bind, port=args.port)
+    server = AdminServer(
+        spec, Queues(args.queue, spec.tracks), args.token, key, bind=args.bind, port=args.port
+    )
     print(f"admin listening on http://{server.bind}:{server.port}")
     try:
         server.serve_forever()
@@ -159,7 +163,7 @@ def cmd_units(args) -> int:
     if args.king:
         k_repo, k_rev = args.king.split("@", 1)
         king = ModelRef.make(k_repo, k_rev)
-    track = spec.sole_track
+    track = args.track or spec.sole_track
     did = duel_id(spec.version, track, challenger, king)
     units = [u.as_dict() for u in derive_units(pool, spec, did, args.size)]
     doc = {
@@ -395,6 +399,8 @@ def cmd_run_side(args) -> int:
     spec = _spec(args)
     doc = json.loads(Path(args.units).read_text())
     units = doc["units"] if isinstance(doc, dict) else doc
+    if isinstance(doc, dict) and not args.track:
+        args.track = doc.get("track")
     summary = run_side(
         side=args.side,
         model_dir=Path(args.model),
@@ -402,6 +408,7 @@ def cmd_run_side(args) -> int:
         pool=Pool.load(args.pool),
         units=units,
         spec=spec,
+        track=args.track or spec.sole_track,
         out_dir=Path(args.out),
         device=args.device,
         record_video=not args.no_video,
@@ -421,6 +428,7 @@ def cmd_duel(args) -> int:
     spec = _spec(args)
     rt = _runtime(args, spec)
     req = DuelRequest(
+        track=args.track or spec.sole_track,
         challenger=_parse_ref(args.challenger),
         king=_parse_ref(args.king) if args.king else None,
         size=args.size,
@@ -472,19 +480,19 @@ def cmd_daemon(args) -> int:
     import threading
 
     from .daemon import Daemon, DaemonConfig
-    from .queue import Queue
+    from .queue import Queues
 
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
     )
     spec = _spec(args)
     rt = _runtime(args, spec)
-    queue = Queue(args.queue)
+    queues = Queues(args.queue, spec.tracks)
     if args.admin_token:
         from .admin import AdminServer
 
         server = AdminServer(
-            spec, queue, args.admin_token, rt.signer.verify_key_hex, lock=threading.Lock()
+            spec, queues, args.admin_token, rt.signer.verify_key_hex, lock=threading.Lock()
         )
         server.start_background()
         print(f"admin listening on http://{server.bind}:{server.port}")
@@ -496,7 +504,7 @@ def cmd_daemon(args) -> int:
         local_models=_local_models(args.local_model),
         once=args.once,
     )
-    Daemon(rt, queue, cfg).run()
+    Daemon(rt, queues, cfg).run()
     return 0
 
 
@@ -529,10 +537,12 @@ def cmd_smoke(args) -> int:
     challenger = ModelRef.make(args.repo, args.revision[::-1] if args.same_model else args.revision)
     local = {args.repo: args.model_dir}
     block = 1
-    if rt.store.head(spec.sole_track) is None or not rt.store.head(spec.sole_track).get("king"):
-        publish_genesis(rt, king, block, local_models=local, check=True)
+    track = args.track or spec.sole_track
+    if rt.store.head(track) is None or not rt.store.head(track).get("king"):
+        publish_genesis(rt, track, king, block, local_models=local, check=True)
         block += 1
     req = DuelRequest(
+        track=track,
         challenger=challenger,
         king=king,
         size=args.size or "smoke",
@@ -635,8 +645,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     st.set_defaults(func=cmd_store)
 
-    q = sub.add_parser("queue", help="challenger queue")
-    q.add_argument("--queue", default="queue/queue.json")
+    q = sub.add_parser("queue", help="challenger queues, one per field")
+    q.add_argument("--queue", default="queue", help="the queue directory, one file per field")
+    q.add_argument("--track", default=None, help="which field (default: the only one)")
     q_sub = q.add_subparsers(dest="queue_cmd", required=True)
     q_add = q_sub.add_parser("add")
     q_add.add_argument("repo")
@@ -649,7 +660,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     a = sub.add_parser("admin", help="submission intake server")
     a.add_argument("admin_cmd", choices=["serve"])
-    a.add_argument("--queue", default="queue/queue.json")
+    a.add_argument("--queue", default="queue")
     a.add_argument("--token", required=True)
     a.add_argument("--pub", default=None, help="validator.pub, echoed by /admin/health")
     a.add_argument("--bind", default=None)
@@ -718,6 +729,7 @@ def build_parser() -> argparse.ArgumentParser:
     u.add_argument("--challenger", required=True, help="repo@revision")
     u.add_argument("--king", default=None, help="repo@revision")
     u.add_argument("--size", default=None)
+    u.add_argument("--track", default=None, help="which field (default: the only one)")
     u.add_argument("--out", default=None)
     u.set_defaults(func=cmd_units)
 
@@ -761,6 +773,9 @@ def build_parser() -> argparse.ArgumentParser:
     rs.add_argument("--side", required=True, choices=["challenger", "king"])
     rs.add_argument("--out", required=True)
     rs.add_argument("--device", default="cuda")
+    rs.add_argument(
+        "--track", default=None, help="the field these units belong to (default: the unit list's)"
+    )
     rs.add_argument("--no-video", action="store_true")
     rs.set_defaults(func=cmd_run_side)
 
@@ -769,6 +784,7 @@ def build_parser() -> argparse.ArgumentParser:
     d.add_argument("--challenger", required=True, help="repo@revision")
     d.add_argument("--king", default=None, help="repo@revision (default: none)")
     d.add_argument("--size", default=None)
+    d.add_argument("--track", default=None, help="which field (default: the only one)")
     d.add_argument("--block", type=int, default=1)
     d.add_argument("--skip-model-check", action="store_true")
     d.add_argument("--gpus", default="all")
@@ -784,7 +800,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     dm = sub.add_parser("daemon", help="the validator loop")
     _add_runtime_args(dm)
-    dm.add_argument("--queue", default="queue/queue.json")
+    dm.add_argument("--queue", default="queue")
     dm.add_argument("--admin-token", default=None, help="also serve the submission intake")
     dm.add_argument("--once", action="store_true")
     dm.set_defaults(func=cmd_daemon)
@@ -807,6 +823,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="challenger = a distinct ref to the same weights (copy-of-king case)",
     )
     sm.add_argument("--size", default="smoke")
+    sm.add_argument("--track", default=None, help="which field (default: the only one)")
     sm.add_argument("--no-video", action="store_true")
     sm.set_defaults(func=cmd_smoke)
 
