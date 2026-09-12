@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Two fields on pluggable benchmarks
+
+- (feat): `icilval.benchmarks.api` is the contract a benchmark in another repository implements,
+  beside `spec.json` and `store-schema.json`. It is one-directional — a plugin must never import
+  `icilval` — so `Benchmark` is a `Protocol` and `validate_plugin` checks a duck. The surface
+  splits into a pure half that runs with no simulator, assets or GPU, and command builders that
+  return an argv, so the orchestrator never imports a simulator and the simulator side can run in
+  another image or on another host. `docs/benchmarks.md` (#38).
+
 ### Pluggable simulators
 
 - (refactor): `icilval.simulators` is a registry of `Simulator` records (policy factory, unit
