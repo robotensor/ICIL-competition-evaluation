@@ -29,9 +29,15 @@ def _sim(name: str, **kw) -> Simulator:
     return Simulator(name=name, **base)
 
 
+#: The simulators this repository ships. A benchmark from another repository may also be
+#: installed, which is the point of the registry - so these are a subset, never the whole list.
+IN_REPO = {"libero", "draw"}
+
+
 def test_the_shipped_simulators_are_registered():
-    assert set(simulators.names()) == {"libero", "draw"}
+    assert IN_REPO <= set(simulators.names())
     assert simulators.get("libero").name == "libero"
+    assert all(simulators.get(name).distribution == "icilval" for name in IN_REPO)
 
 
 def test_registering_a_name_twice_is_refused(monkeypatch):
@@ -52,11 +58,13 @@ def test_for_skill_reads_the_skill_s_simulator(spec):
         assert simulators.for_skill(spec, skill).name == spec.simulator(skill)
 
 
-def test_for_skill_on_a_benchmark_that_is_not_installed_says_so(spec):
-    """The video-only field names a benchmark from another repository. Until it is installed,
-    asking for it must name what is registered rather than fail obscurely."""
-    with pytest.raises(KeyError, match="robotwin"):
-        simulators.for_skill(spec, "rt_stacking")
+def test_an_uninstalled_benchmark_names_what_is_registered(spec):
+    """A field may name a benchmark from another repository. Until that is installed, asking for
+    it must say what there is rather than fail obscurely - and this must hold whether or not one
+    happens to be pip-installed in the environment running the suite."""
+    with pytest.raises(KeyError) as exc:
+        simulators.get("nosuchsim")
+    assert "nosuchsim" in str(exc.value) and "libero" in str(exc.value)
 
 
 def test_a_simulator_need_not_check_its_pool_tasks():
@@ -121,15 +129,21 @@ def test_no_module_outside_simulators_names_a_simulator():
     )
 
 
+def _packages() -> set[str]:
+    root = _repo_root()
+    if root is None:
+        return set()
+    pkg = root / "src" / "icilval" / "simulators"
+    return {p.name for p in pkg.iterdir() if p.is_dir() and (p / "__init__.py").exists()}
+
+
 def test_every_simulator_package_registers_itself():
     """`simulators/__init__` imports each package for its `register()` side effect. A package
     added without that import would be dead code, and the spec would reject its skills."""
-    root = _repo_root()
-    if root is None:
+    if _repo_root() is None:
         pytest.skip("not a source checkout")
-    pkg = root / "src" / "icilval" / "simulators"
-    on_disk = {p.name for p in pkg.iterdir() if p.is_dir() and (p / "__init__.py").exists()}
-    assert on_disk == set(simulators.names())
+    assert _packages() <= set(simulators.names())
+    assert _packages() == IN_REPO
 
 
 #: The libraries a simulator package must not pull in at module scope. `icilval spec validate`,
@@ -144,7 +158,7 @@ def test_a_simulator_package_imports_nothing_heavy_at_module_scope():
     if root is None:
         pytest.skip("not a source checkout")
     offenders: list[str] = []
-    for name in simulators.names():
+    for name in sorted(_packages()):
         path = root / "src" / "icilval" / "simulators" / name / "__init__.py"
         for node in ast.parse(path.read_text()).body:
             if isinstance(node, ast.Import):

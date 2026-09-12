@@ -112,10 +112,21 @@ def test_a_store_gives_every_field_a_head(two_fields, tmp_path):
         assert store.head(track) is not None and store.head(track)["king"] is None
 
 
-def test_a_field_whose_benchmark_is_absent_does_not_stop_the_other(two_fields):
-    """`require` is per field, so a missing plugin skips that queue and no other. The video-only
-    field's benchmark lives in another repository and is not installed here - which is the case
-    that matters, since it is how CI and a laptop see the contract."""
+def test_require_is_per_field_so_one_absence_does_not_stop_the_other(two_fields):
+    """A missing plugin skips that field's queue and no other.
+
+    Whether the video-only field's benchmark is installed depends on the environment - it lives
+    in another repository - so this asserts the *shape*: the sensorimotor field never needs it,
+    and asking for a field whose benchmark is genuinely absent names the distribution to install.
+    """
     simulators.require(two_fields, two_fields.skills("sensorimotor"))
-    with pytest.raises(simulators.MissingBenchmark, match="robotwin-icil-competition"):
-        simulators.require(two_fields, two_fields.skills("video_only"))
+
+    class _Absent:
+        raw = {"benchmarks": {"nosuchsim": {"distribution": "some-benchmark-icil"}}}
+        all_skills = ("phantom",)
+
+        def simulator(self, skill):
+            return "nosuchsim"
+
+    with pytest.raises(simulators.MissingBenchmark, match="some-benchmark-icil"):
+        simulators.require(_Absent(), ("phantom",))
