@@ -4,6 +4,15 @@
 
 ### Two fields on pluggable benchmarks
 
+- (feat): a field whose skills are on a plugged benchmark derives its units from the plugin.
+  `pools/units.py` knows what a LIBERO initial state and a drawing board's angle ranges are,
+  because those benchmarks ship here; only a benchmark knows what one of *its* units is. What the
+  orchestrator keeps is what belongs to the competition: a unit's identity (`<skill code>-<index>`,
+  the same shape every field uses, so a benchmark cannot collide with another's ids) and the seed
+  material it derives from (the duel id and the skill, never a clock or anything the benchmark
+  chooses), because both must be reproducible from the published record by someone holding neither
+  the pool nor the simulator (#69).
+
 - (feat): the orchestrator **serves** an entrant's policy, which is what `policy_address` in the
   benchmark ABI has always pointed at and what nothing provided. The weights are a submission and
   the network around them is a template this repository fingerprints, so handing them to a
