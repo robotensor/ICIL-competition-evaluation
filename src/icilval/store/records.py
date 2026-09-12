@@ -78,6 +78,7 @@ def duel_event(
     sides: dict[str, Any] | None = None,
     notes: list[str] | None = None,
     demonstration: dict[str, Any] | None = None,
+    prompts: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     event = dict(record)
     event.pop("seq", None)
@@ -91,6 +92,10 @@ def duel_event(
             "sides": sides or {},
             # What this field let its policies see of a demonstration, and what it withheld.
             "demonstration": demonstration or {},
+            # Present on a field that produces its own prompts: one hash per unit, published
+            # here rather than up front because the demonstration is the answer for the scene
+            # it is scored on.
+            "prompts": prompts or [],
             "units": units,
             "notes": notes or [],
         }

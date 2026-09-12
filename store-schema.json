@@ -117,6 +117,17 @@
       }
      ],
      "description": "Digest of exactly the arrays the policy was handed. Recomputable from the published prompt, so a third party can confirm what was withheld."
+    },
+    "sha256": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/sha256"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "description": "Content address of the materialized prompt, for a field that produces its own. Absent on a field drawing from a published pool."
     }
    }
   },
@@ -507,6 +518,28 @@
         "withheld": {
          "type": "array",
          "items": {
+          "type": "string"
+         }
+        }
+       }
+      },
+      "prompts": {
+       "type": "array",
+       "description": "One entry per unit on a field that materializes its own prompts: the unit id, the prompt's sha256, and the unit it was substituted for when the expert never succeeded. Published here rather than up front, because the demonstration is the answer for the scene it is scored on.",
+       "items": {
+        "type": "object",
+        "required": [
+         "unit_id",
+         "sha256"
+        ],
+        "properties": {
+         "unit_id": {
+          "type": "string"
+         },
+         "sha256": {
+          "$ref": "#/$defs/sha256"
+         },
+         "substituted_from": {
           "type": "string"
          }
         }

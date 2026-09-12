@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .. import simulators
+from .. import materialize, simulators
 from ..canon import Signer
 from ..ids import ModelRef, duel_id, event_id
 from ..live import LiveReporter, build_frame
@@ -335,6 +335,8 @@ class Orchestrator:
             state["unit_defs"] = [u.as_dict() for u in units]
             view = spec.demo_view(track)
             state["units"] = [unit_verdict_from_unit(u.as_dict(), view) for u in units]
+            # ---- materializing
+            self._materialize(state, run_dir, track)
             self._render_demos(state, run_dir)
             # ---- evaluating
             for side in ("challenger", "king"):
@@ -395,6 +397,7 @@ class Orchestrator:
                 wall_seconds=time.monotonic() - t0,
                 sides=sides_meta,
                 demonstration=_demonstration(spec, track),
+                prompts=state.get("prompts") or None,
                 notes=[],
             )
             self.rt.store.write_event(track, event)
@@ -419,6 +422,39 @@ class Orchestrator:
                 state, force=True, phase="failed", message=f"{type(exc).__name__}: {exc}"[:280]
             )
             raise DuelFailed(str(exc)) from exc
+
+    def _materialize(self, state: dict[str, Any], run_dir: Path, track: str) -> Any:
+        """Fix this duel's prompts, for a field that produces its own.
+
+        Runs on the validator host, before either side, so both see identical bytes and a unit
+        whose expert never succeeds is replaced here rather than failing mid-duel.
+        """
+        if not materialize.needed(self.spec, track):
+            return None
+        from .. import simulators
+
+        self._post(state, force=True, phase="materializing", message="materializing prompts")
+        benchmark = simulators.get(self.spec.simulators(track)[0]).benchmark
+        if benchmark is None:
+            raise DuelFailed(
+                f"{track} materializes its own prompts, but its benchmark exposes no plugin"
+            )
+        out = materialize.materialize(
+            self.spec,
+            track,
+            state["unit_defs"],
+            run_dir / "prompts",
+            benchmark=benchmark,
+            timeout_s=float(self.spec.budgets["unit_wall_seconds"]),
+        )
+        by_unit = {u["unit_id"]: u for u in state["units"]}
+        for unit_id, prompt in out.prompts.items():
+            if unit_id in by_unit:
+                by_unit[unit_id]["prompt"]["sha256"] = prompt.sha256
+                if prompt.substituted_from:
+                    by_unit[unit_id]["substituted_from"] = prompt.substituted_from
+        state["prompts"] = out.manifest()
+        return out
 
     def _render_demos(self, state: dict[str, Any], run_dir: Path) -> None:
         if not self.spec.media.get("demo_video", True):

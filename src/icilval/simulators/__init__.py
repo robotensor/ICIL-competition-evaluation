@@ -47,6 +47,10 @@ class Simulator:
     verify_pool_task: Callable[[Any, Any], list[str]] = field(default=lambda pool, task: [])
     #: The distribution providing it, named in the error when it turns out not to be installed
     distribution: str = "icilval"
+    #: The `icilval.benchmarks` plugin object, when this simulator comes from a distribution
+    #: that publishes one. In-repo simulators have none: their prompts are drawn from a pool
+    #: built offline, so nothing asks them to materialize one.
+    benchmark: Any = None
     #: channel -> the demonstration arrays that carry it, for `icilval.demoview`. A field keeps
     #: the channels its demonstration declares; an array claimed by no channel is never handed
     #: to a policy, so growing a new one cannot leak it into a restricted view by accident.
