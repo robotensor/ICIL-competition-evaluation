@@ -26,14 +26,22 @@ def cmd_spec(args) -> int:
         print("invalid:", ", ".join(errors))
         return 1
     if getattr(args, "strict", False):
-        # `validate_spec` deliberately accepts a benchmark that is not installed, so CI and a
-        # laptop can check the contract with no simulator. --strict is the deploy check.
+        # `validate_spec` deliberately accepts a benchmark that is not installed and needs no
+        # `arch/` directory, so CI, a laptop and the dashboard can check the contract with no
+        # simulator and no templates. --strict is the deploy check.
+        from . import arch as arch_mod
         from . import simulators
 
-        rows = [r for r in simulators.audit(load_spec(args.spec)) if r["problems"]]
-        if rows:
-            for row in rows:
-                print(f"{row['simulator']}: {'; '.join(row['problems'])}")
+        spec = load_spec(args.spec)
+        problems = [
+            f"{row['simulator']}: {'; '.join(row['problems'])}"
+            for row in simulators.audit(spec)
+            if row["problems"]
+        ]
+        problems.extend(arch_mod.check_spec(spec, args.arch))
+        if problems:
+            for problem in problems:
+                print(problem)
             return 1
     print(f"{path}: ok")
     return 0
@@ -608,8 +616,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument(
         "--strict",
         action="store_true",
-        help="also require every benchmark a skill names to be installed and pinned",
+        help="also require every benchmark installed and every architecture template present",
     )
+    s.add_argument("--arch", default="arch", help="the architecture templates directory")
     s.set_defaults(func=cmd_spec)
 
     bm = sub.add_parser("benchmarks", help="the benchmarks this validator can run")
