@@ -4,6 +4,18 @@
 
 ### Two fields on pluggable benchmarks
 
+- (feat): `icilval.reference` publishes a measurement that is no field's score, to
+  `references/<id>.json` — signed like an index record, clips in the same content-addressed
+  `media/` tree, and in no index at all. Where a record lives is itself a claim:
+  `tracks/<field>/index-NNNN.jsonl` says the validator ran this under that field's contract for
+  its crown, and a benchmark run is none of those. It would also be machine-readably false, since
+  the orchestrator stamps `prompt.view` from the *field* — so a run handed the demonstration's
+  actions would publish under a field whose record says they were withheld. An exhibit carries
+  `ladder: false` and `track: null` as literals, must state what the policy was shown, and must
+  carry the sentence a reader sees first (#67).
+- (fix): crowning is an allow-list. `Store.append` advanced the head to `new_king` whenever that
+  field was present, whatever the record's kind; only duels set it today, but a kind added later
+  that reused the record shape would have moved a field's crown silently (#67).
 - (feat): `icilval.benchmarks.api` is the contract a benchmark in another repository implements,
   beside `spec.json` and `store-schema.json`. It is one-directional — a plugin must never import
   `icilval` — so `Benchmark` is a `Protocol` and `validate_plugin` checks a duck. The surface
