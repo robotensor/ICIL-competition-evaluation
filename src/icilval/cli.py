@@ -173,6 +173,7 @@ def cmd_units(args) -> int:
 def cmd_pools(args) -> int:
     import logging
 
+    from . import simulators
     from .pools.build import finalize, open_pool, stage_skill, summary, verify_pool
     from .pools.schema import Pool
     from .pools.sources import Sources
@@ -197,6 +198,9 @@ def cmd_pools(args) -> int:
         if unknown:
             print("unknown stage(s):", *unknown, "- stages are the skill ids and finalize")
             return 2
+        # A stage runs its simulator's own importer, so an absent benchmark must stop the build
+        # before a half-filled pool is written.
+        simulators.require(spec, [st for st in stages if st != "finalize"])
         datasets = tuple(
             dict.fromkeys(str(spec.tasks(st)["dataset"]) for st in stages if st != "finalize")
         )

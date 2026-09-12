@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .. import simulators
 from ..canon import Signer
 from ..ids import ModelRef, duel_id, event_id
 from ..live import LiveReporter, build_frame
@@ -265,6 +266,9 @@ class Orchestrator:
     # ---------------------------------------------------------------- the duel
     def run(self, req: DuelRequest, block: int) -> dict[str, Any]:
         spec = self.spec
+        # Before anything is fetched: a duel that would score a skill whose benchmark is not
+        # installed must stop here, not halfway through with half a score.
+        simulators.require(spec)
         size = spec.size_of(req.size)
         did = duel_id(spec.version, spec.track_id, req.challenger, req.king)
         eid = event_id(req.kind, spec.track_id, block, did)
@@ -456,6 +460,7 @@ def publish_genesis(
     check: bool = True,
 ) -> dict[str, Any]:
     spec = rt.spec
+    simulators.require(spec)
     if check:
         got = fetch_model(king, rt.run_root / "models" / king.key, spec, local_models=local_models)
         rep = check_submission(got.path, spec, rt.arch_dir)
