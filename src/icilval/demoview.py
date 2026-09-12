@@ -33,7 +33,21 @@ import numpy as np
 
 #: Keys that are metadata about the demonstration rather than a channel of it. Kept under every
 #: view: they carry no observation, and the side runner needs them to identify what it loaded.
+#: A benchmark with its own metadata arrays names them in a `metadata` channel rather than
+#: hoping this constant covers them - RoboTwin's frame timestamps (`times`) are the case that
+#: showed the constant cannot: they are not an observation, every view needs them, and no view's
+#: modalities list would ever claim them.
 METADATA_KEYS = ("meta",)
+
+#: The channel a benchmark puts its own always-kept arrays in. Not a modality: no field lists it
+#: in `demonstration.modalities`, and every view keeps it.
+METADATA_CHANNEL = "metadata"
+
+#: A channel entry ending in this is a **prefix**, matching every array whose name starts with the
+#: rest of it. One benchmark array per camera (`frames_head_camera`, `frames_far_side_camera`, …)
+#: cannot be enumerated by the orchestrator, which does not know a benchmark's camera list, so the
+#: benchmark declares `frames_*` and the allow-list stays an allow-list.
+PREFIX_MARK = "*"
 
 
 @dataclass(frozen=True)
@@ -60,12 +74,36 @@ def view_for(spec: Any, track: str) -> DemoView:
     )
 
 
-def allowed_keys(channels: dict[str, tuple[str, ...]], view: DemoView) -> set[str]:
-    """The array names a view permits, given a benchmark's channel map."""
-    keys: set[str] = set(METADATA_KEYS)
-    for channel in view.keep:
-        keys.update(channels.get(channel, ()))
-    return keys
+@dataclass(frozen=True)
+class Allowance:
+    """What a view admits: exact array names, and prefixes for families of them.
+
+    Kept as a predicate rather than a set because a prefix cannot be enumerated - the orchestrator
+    does not know how many cameras a benchmark records, which is the whole reason prefixes exist.
+    """
+
+    names: frozenset[str]
+    prefixes: tuple[str, ...]
+
+    def admits(self, key: str) -> bool:
+        return key in self.names or (bool(self.prefixes) and key.startswith(self.prefixes))
+
+
+def allowed_keys(channels: dict[str, tuple[str, ...]], view: DemoView) -> Allowance:
+    """What a view permits, given a benchmark's channel map.
+
+    The benchmark's `metadata` channel is kept under every view; the field's own modalities decide
+    the rest. An entry ending in `*` is a prefix (see `PREFIX_MARK`).
+    """
+    names: set[str] = set(METADATA_KEYS)
+    prefixes: list[str] = []
+    for channel in (*view.keep, METADATA_CHANNEL):
+        for entry in channels.get(channel, ()):
+            if entry.endswith(PREFIX_MARK):
+                prefixes.append(entry[: -len(PREFIX_MARK)])
+            else:
+                names.add(entry)
+    return Allowance(names=frozenset(names), prefixes=tuple(sorted(prefixes)))
 
 
 def apply(
@@ -77,7 +115,7 @@ def apply(
     channel before a policy can see it.
     """
     allowed = allowed_keys(channels, view)
-    out = {k: v for k, v in demo.items() if k in allowed}
+    out = {k: v for k, v in demo.items() if allowed.admits(k)}
     meta = out.get("meta")
     if isinstance(meta, dict):
         out["meta"] = {**meta, "view": view.name}
@@ -87,7 +125,9 @@ def apply(
 def check(demo: dict[str, Any], channels: dict[str, tuple[str, ...]], view: DemoView) -> list[str]:
     """Anything in `demo` that this view should never have let through."""
     allowed = allowed_keys(channels, view)
-    return sorted(f"{k}: withheld under the {view.name} view" for k in demo if k not in allowed)
+    return sorted(
+        f"{k}: withheld under the {view.name} view" for k in demo if not allowed.admits(k)
+    )
 
 
 def _array_digest(value: Any) -> str:

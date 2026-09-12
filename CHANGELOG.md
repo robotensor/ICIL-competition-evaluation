@@ -4,6 +4,14 @@
 
 ### Two fields on pluggable benchmarks
 
+- (fix): the demonstration view can redact a benchmark whose arrays are prefixed. `allowed_keys`
+  did exact set-membership, so RoboTwin's one-array-per-camera video channel matched nothing and a
+  video-only prompt over it would have carried **no frames at all** - the field's enforcement
+  mechanism silently handing over an empty observation. A channel entry ending in `*` is now a
+  prefix, and a benchmark's own always-kept arrays (RoboTwin's frame timestamps) are declared in a
+  `metadata` channel rather than hoped to be covered by a constant here. It stays an allow-list:
+  the prefix matches its declared string and nothing near it (#70).
+
 - (feat): `icilval.reference` publishes a measurement that is no field's score, to
   `references/<id>.json` — signed like an index record, clips in the same content-addressed
   `media/` tree, and in no index at all. Where a record lives is itself a claim:
