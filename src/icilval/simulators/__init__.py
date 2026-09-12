@@ -11,7 +11,7 @@ names one. Adding a simulator is a new package that calls `register` and an impo
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 
@@ -31,6 +31,9 @@ class Simulator:
     demo_frames: Callable[[dict[str, Any]], list[Any]]
     #: (skill id, its spec.json entry) -> validation errors for what this simulator needs there
     validate_skill: Callable[[str, dict[str, Any]], list[str]]
+    #: (pool, `pools.schema.PoolTask`) -> errors `pools.build.verify_pool` cannot check
+    #: generically, because reading them needs this simulator's own file formats
+    verify_pool_task: Callable[[Any, Any], list[str]] = field(default=lambda pool, task: [])
 
 
 REGISTRY: dict[str, Simulator] = {}

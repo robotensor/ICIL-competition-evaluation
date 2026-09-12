@@ -46,6 +46,20 @@ def _validate_skill(skill: str, doc: dict[str, Any]) -> list[str]:
     return errors
 
 
+def _verify_pool_task(pool: Any, task: Any) -> list[str]:
+    """A LIBERO task's BDDL must parse: `pools.build.verify_pool` only checks the file is there,
+    and a BDDL that is present but unreadable fails the duel instead of the pool build."""
+    if not task.bddl:
+        return []
+    from .bddl import load
+
+    try:
+        load(pool.path(task.bddl))
+    except Exception as exc:  # noqa: BLE001
+        return [f"bddl unparsable: {exc}"]
+    return []
+
+
 SIMULATOR = register(
     Simulator(
         name="libero",
@@ -55,5 +69,6 @@ SIMULATOR = register(
         make_unit=_make_unit,
         demo_frames=_demo_frames,
         validate_skill=_validate_skill,
+        verify_pool_task=_verify_pool_task,
     )
 )

@@ -13,6 +13,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from .. import simulators
 from ..spec import Spec
 from .schema import POOL_SCHEMA, Pool
 from .sources import Sources
@@ -90,6 +91,12 @@ def verify_pool(root: Path, spec: Spec | None = None) -> list[str]:
                 errors.append(f"{tid}: missing demo {d}")
         if spec is not None and t.skill not in spec.skills:
             errors.append(f"{tid}: unknown skill {t.skill}")
+        elif spec is not None:
+            # Whatever this task's simulator can check about its own files, which the generic
+            # walk above cannot: a LIBERO task's BDDL has to parse, for instance.
+            errors.extend(
+                f"{tid}: {e}" for e in simulators.for_skill(spec, t.skill).verify_pool_task(pool, t)
+            )
     skills = list(spec.skills) if spec is not None else list(pool.skills)
     for skill in skills:
         if not pool.eligible(skill):
