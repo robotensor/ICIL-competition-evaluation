@@ -14,7 +14,17 @@ from .store.records import now_iso
 
 log = logging.getLogger(__name__)
 
-PHASES = ("fetching", "checking", "evaluating", "publishing", "done", "failed")
+#: `materializing` is between checking and evaluating: a field that produces its own prompts
+#: fixes them before either side starts, so both see identical bytes.
+PHASES = (
+    "fetching",
+    "checking",
+    "materializing",
+    "evaluating",
+    "publishing",
+    "done",
+    "failed",
+)
 
 
 def build_frame(
