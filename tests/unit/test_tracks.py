@@ -7,54 +7,23 @@ lineages, and a benchmark missing from one field not stopping the other.
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from icilval import simulators
 from icilval.queue import Queues
-from icilval.spec import load_spec_file
 
 
 @pytest.fixture
-def two_fields(spec, tmp_path):
-    """The real contract with `goal_chain` moved into a second field of its own."""
-    doc = json.loads(spec.path.read_text())
-    first = doc["tracks"]["sensorimotor"]
-    first["skills"] = [s for s in first["skills"] if s != "goal_chain"]
-    second = json.loads(json.dumps(first))
-    second.update(
-        id="video_only",
-        code="vo",
-        slug="video-only",
-        short="Video-only",
-        title="Video-only demonstration",
-        skills=["goal_chain"],
-        protocol="same_initial_state",
-        prompt_instance_disjoint=False,
-        prompts="materialized",
-        default_size="smoke",
-        sizes={k: {"units_per_skill": 1} for k in doc["duel"]["sizes"]},
-        max_void_fraction=0.2,
-    )
-    second["demonstration"] = {
-        "view": "video_only",
-        "modalities": ["video"],
-        "withheld": ["actions", "qpos", "endpose"],
-    }
-    doc["tracks"]["video_only"] = second
-    doc["baselines"]["video_only"] = None
-    doc["pools"]["tracks"]["video_only"] = {"version": None, "pool_id": None}
-    path = tmp_path / "spec.json"
-    path.write_text(json.dumps(doc))
-    return load_spec_file(path)
+def two_fields(spec):
+    """The shipped contract, which now declares both fields."""
+    return spec
 
 
 def test_two_fields_load_and_keep_their_own_skills(two_fields):
     spec = two_fields
     assert spec.tracks == ("sensorimotor", "video_only")
-    assert spec.skills("sensorimotor") == ("pick_and_place", "draw_anything")
-    assert spec.skills("video_only") == ("goal_chain",)
+    assert spec.skills("sensorimotor") == ("pick_and_place", "goal_chain", "draw_anything")
+    assert spec.skills("video_only") == ("rt_pick_and_place", "rt_stacking", "rt_press_push")
     assert set(spec.all_skills) == set(spec.skills("sensorimotor")) | set(spec.skills("video_only"))
 
 
@@ -62,7 +31,7 @@ def test_each_field_carries_its_own_demonstration_view(two_fields):
     assert two_fields.demo_view("sensorimotor") == "sensorimotor"
     assert two_fields.withheld("sensorimotor") == ()
     assert two_fields.demo_view("video_only") == "video_only"
-    assert "actions" in two_fields.withheld("video_only")
+    assert set(two_fields.withheld("video_only")) == {"actions", "proprio"}
 
 
 def test_the_two_fields_close_the_replay_shortcut_differently(two_fields):
@@ -80,7 +49,9 @@ def test_the_two_fields_close_the_replay_shortcut_differently(two_fields):
 
 def test_a_field_overrides_the_duelling_constants_it_needs_to(two_fields):
     spec = two_fields
-    assert spec.units_per_skill("video_only", "heavy") == 1
+    assert spec.units_per_skill("video_only", "heavy") < spec.units_per_skill(
+        "sensorimotor", "heavy"
+    )
     assert spec.units_per_skill("sensorimotor", "heavy") > 1
     assert spec.max_void_fraction("video_only") == 0.2
     assert spec.max_void_fraction("sensorimotor") == spec.duel["max_void_fraction"]
@@ -90,10 +61,10 @@ def test_a_field_overrides_the_duelling_constants_it_needs_to(two_fields):
 
 def test_units_per_side_counts_the_field_not_the_contract(two_fields):
     spec = two_fields
-    assert spec.units_per_side("video_only", "smoke") == spec.units_per_skill("video_only", "smoke")
-    assert spec.units_per_side("sensorimotor", "smoke") == 2 * spec.units_per_skill(
-        "sensorimotor", "smoke"
-    )
+    for track in spec.tracks:
+        assert spec.units_per_side(track, "smoke") == len(
+            spec.skills(track)
+        ) * spec.units_per_skill(track, "smoke")
 
 
 def test_sole_track_will_not_guess_between_them(two_fields):
@@ -142,6 +113,9 @@ def test_a_store_gives_every_field_a_head(two_fields, tmp_path):
 
 
 def test_a_field_whose_benchmark_is_absent_does_not_stop_the_other(two_fields):
-    """`require` is per field, so a missing plugin skips that queue and no other."""
+    """`require` is per field, so a missing plugin skips that queue and no other. The video-only
+    field's benchmark lives in another repository and is not installed here - which is the case
+    that matters, since it is how CI and a laptop see the contract."""
     simulators.require(two_fields, two_fields.skills("sensorimotor"))
-    simulators.require(two_fields, two_fields.skills("video_only"))
+    with pytest.raises(simulators.MissingBenchmark, match="robotwin-icil-competition"):
+        simulators.require(two_fields, two_fields.skills("video_only"))

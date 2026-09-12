@@ -44,13 +44,13 @@ def _units(n=2):
 
 
 def test_a_pool_field_materializes_nothing(spec):
-    assert materialize.needed(spec, spec.sole_track) is False
+    assert materialize.needed(spec, "sensorimotor") is False
 
 
 def test_every_unit_gets_a_verified_prompt(spec, tmp_path):
     bench = FakeBenchmark()
     out = materialize.materialize(
-        spec, spec.sole_track, _units(), tmp_path / "prompts", benchmark=bench, runner=bench.run
+        spec, "sensorimotor", _units(), tmp_path / "prompts", benchmark=bench, runner=bench.run
     )
     assert bench.calls == ["pp-0", "pp-1"]
     assert set(out.prompts) == {"pp-0", "pp-1"}
@@ -63,7 +63,7 @@ def test_a_prompt_that_could_not_be_produced_stops_the_duel(spec, tmp_path):
     bench = FakeBenchmark(fail_on={"pp-1"})
     with pytest.raises(MaterializeFailed, match="materialize exited 1"):
         materialize.materialize(
-            spec, spec.sole_track, _units(), tmp_path / "p", benchmark=bench, runner=bench.run
+            spec, "sensorimotor", _units(), tmp_path / "p", benchmark=bench, runner=bench.run
         )
 
 
@@ -72,7 +72,7 @@ def test_a_prompt_that_is_not_the_one_asked_for_stops_the_duel(spec, tmp_path):
     bench = FakeBenchmark(wrong={"pp-0"})
     with pytest.raises(MaterializeFailed, match="not the one the unit asked for"):
         materialize.materialize(
-            spec, spec.sole_track, _units(), tmp_path / "p", benchmark=bench, runner=bench.run
+            spec, "sensorimotor", _units(), tmp_path / "p", benchmark=bench, runner=bench.run
         )
 
 
@@ -83,7 +83,7 @@ def test_a_substitution_is_carried_onto_the_published_prompt(spec, tmp_path):
     units = _units(1)
     units[0]["substituted_from"] = "pp-9"
     out = materialize.materialize(
-        spec, spec.sole_track, units, tmp_path / "p", benchmark=bench, runner=bench.run
+        spec, "sensorimotor", units, tmp_path / "p", benchmark=bench, runner=bench.run
     )
     assert out.prompts["pp-0"].substituted_from == "pp-9"
     assert out.manifest()[0]["substituted_from"] == "pp-9"
@@ -92,7 +92,7 @@ def test_a_substitution_is_carried_onto_the_published_prompt(spec, tmp_path):
 def test_the_published_manifest_can_be_rechecked_without_a_simulator(spec, tmp_path):
     bench = FakeBenchmark()
     out = materialize.materialize(
-        spec, spec.sole_track, _units(), tmp_path / "p", benchmark=bench, runner=bench.run
+        spec, "sensorimotor", _units(), tmp_path / "p", benchmark=bench, runner=bench.run
     )
     assert materialize.verify_against(out.root, out.manifest()) == []
     (out.root / "pp-0" / "prompt.npz").unlink()

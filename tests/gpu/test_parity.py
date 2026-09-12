@@ -80,7 +80,7 @@ def test_parity_draw_anything(spec, genesis_dir, smoke_pool_or_skip):
         pytest.skip("pool has no drawing tasks")
     policy = DrawPolicy(genesis_dir / "draw_anything", arch_dir(), spec, "draw_anything")
     policy.load()
-    did = duel_id(spec.version, spec.sole_track, ModelRef.make("parity/draw", "1" * 40), None)
+    did = duel_id(spec.version, "sensorimotor", ModelRef.make("parity/draw", "1" * 40), None)
     units = [
         u.as_dict() for u in derive_units(pool, spec, did, "heavy") if u.skill == "draw_anything"
     ][:DRAW_TASKS]

@@ -7,8 +7,9 @@ from icilval.spec import load_spec_file, validate_spec
 
 def test_spec_loads_and_fingerprints(spec):
     assert spec.version == 5
-    assert spec.tracks == ("sensorimotor",) and spec.sole_track == "sensorimotor"
-    assert spec.all_skills == ("pick_and_place", "goal_chain", "draw_anything")
+    assert spec.tracks == ("sensorimotor", "video_only")
+    assert spec.skills("sensorimotor") == ("pick_and_place", "goal_chain", "draw_anything")
+    assert spec.skills("video_only") == ("rt_pick_and_place", "rt_stacking", "rt_press_push")
     assert (
         spec.skill_code("pick_and_place") == "pp" and spec.skill_for_code("da") == "draw_anything"
     )
@@ -20,7 +21,7 @@ def test_spec_loads_and_fingerprints(spec):
     assert "perturbations" not in spec.skill("pick_and_place")
     lo, hi = spec.env("draw_anything")["board_angle_range_rad"]
     assert lo < 0 < hi
-    track = spec.sole_track
+    track = "sensorimotor"
     assert spec.units_per_side(track, "smoke") == len(spec.skills(track)) * spec.units_per_skill(
         track, "smoke"
     )
@@ -191,16 +192,15 @@ def test_a_field_without_overrides_reads_the_competition_defaults(spec):
     assert spec.max_void_fraction("sensorimotor") == spec.duel["max_void_fraction"]
 
 
-def test_sole_track_refuses_to_guess_once_a_second_field_exists(spec, tmp_path):
-    doc = _two_fields(spec)
-    loaded = load_spec_file(_save(tmp_path, doc))
-    assert loaded.tracks == ("sensorimotor", "second")
+def test_sole_track_refuses_to_guess_between_the_fields(spec):
+    """The transitional accessor. It raises on the shipped contract, which is the point: any
+    call site still assuming one field fails loudly rather than scoring the wrong one."""
     with pytest.raises(ValueError, match="still assumes one track"):
-        _ = loaded.sole_track
+        _ = spec.sole_track
 
 
 def test_track_of_finds_the_field_a_skill_is_scored_in(spec):
-    for skill in spec.all_skills:
-        assert spec.track_of(skill) == "sensorimotor"
+    assert spec.track_of("draw_anything") == "sensorimotor"
+    assert spec.track_of("rt_stacking") == "video_only"
     with pytest.raises(KeyError):
         spec.track_of("no_such_skill")
