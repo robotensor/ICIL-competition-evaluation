@@ -17,6 +17,18 @@
   deploy check, while `validate_spec` still accepts an uninstalled benchmark so CI and the
   dashboard can check the contract with no simulator. A duel, genesis or pool build refuses up
   front, naming the distribution to install (#39).
+- (feat): **spec v5** — the competition has fields. `track` becomes `tracks`, a map; each field
+  carries its own demonstration modality, protocol, skills, pool, baseline and duelling
+  constants. `prompt_instance_disjoint` moves onto the field, because it describes how that field
+  closes the replay shortcut and a Same Scene field closes it the other way; a field claiming a
+  disjoint prompt while scoring the state it demonstrated is now a validation error. `benchmarks`
+  declares which distribution provides each simulator. Version 4 was published and rolled back,
+  so that number is retired; store and live schema are 4. The sensorimotor field is renamed from
+  `icil_1demo`, which rebuilds the store (#49). The submission layout and the three skill ids are
+  unchanged, so existing entrant repositories and the published genesis still fit (#41).
+- (feat): `Spec`'s duelling constants are track-keyed methods rather than properties, so a call
+  site that was not updated raises rather than silently scoring the wrong field's skills;
+  `units_per_duel` becomes `units_per_side` and counts the field's own skills (#41).
 
 ### Pluggable simulators
 
