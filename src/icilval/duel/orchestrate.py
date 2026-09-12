@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from .. import materialize, simulators
+from ..benchmarks import units as plugin_units
 from ..canon import Signer
 from ..ids import ModelRef, duel_id, event_id
 from ..live import LiveReporter, build_frame
@@ -331,10 +332,16 @@ class Orchestrator:
                 if not rep.ok and not (req.skip_model_check and side == "challenger"):
                     raise DuelFailed(f"{side} failed the model check: " + "; ".join(rep.errors[:5]))
             # ---- units
-            units = derive_units(self.rt.pool, spec, did, size, track=track)
-            state["unit_defs"] = [u.as_dict() for u in units]
+            if plugin_units.derives_its_own_units(spec, track):
+                # Only the benchmark knows what one of its units is; the orchestrator keeps the
+                # identity and the seed material, which are the competition's.
+                state["unit_defs"] = plugin_units.plugin_units(spec, track, did, size)
+            else:
+                state["unit_defs"] = [
+                    u.as_dict() for u in derive_units(self.rt.pool, spec, did, size, track=track)
+                ]
             view = spec.demo_view(track)
-            state["units"] = [unit_verdict_from_unit(u.as_dict(), view) for u in units]
+            state["units"] = [unit_verdict_from_unit(u, view) for u in state["unit_defs"]]
             # ---- materializing
             self._materialize(state, run_dir, track)
             self._render_demos(state, run_dir)
@@ -385,7 +392,9 @@ class Orchestrator:
                 media_count=len(media_shas(state["units"])),
                 duel_size=size,
                 duel_id=did,
-                pool_id=self.rt.pool.pool_id,
+                # A field whose prompts are materialized per duel has no pool; the prompts
+                # themselves are published with the event instead.
+                pool_id=None if state.get("prompts") else self.rt.pool.pool_id,
             )
             event = duel_event(
                 record,
@@ -448,11 +457,16 @@ class Orchestrator:
             timeout_s=float(self.spec.budgets["unit_wall_seconds"]),
         )
         by_unit = {u["unit_id"]: u for u in state["units"]}
+        by_def = {u["unit_id"]: u for u in state["unit_defs"]}
         for unit_id, prompt in out.prompts.items():
             if unit_id in by_unit:
                 by_unit[unit_id]["prompt"]["sha256"] = prompt.sha256
                 if prompt.substituted_from:
                     by_unit[unit_id]["substituted_from"] = prompt.substituted_from
+            if unit_id in by_def:
+                # Where the side runner reads this unit's prompt from. A materialized field has no
+                # pool, so without this the benchmark subprocess has nothing to run against.
+                by_def[unit_id]["prompt_dir"] = str(prompt.path)
         state["prompts"] = out.manifest()
         return out
 
@@ -469,13 +483,20 @@ class Orchestrator:
             if demo not in cache:
                 out = demo_dir / (demo.replace("/", "__") + f".{ext}")
                 try:
-                    render_demo(
-                        self.rt.pool.path("demos") / f"{demo}.npz",
-                        out,
-                        self.spec,
-                        d["skill"],
-                    )
-                    sha = self.rt.store.put_media(out, ext)
+                    # A materialized field has no pool to render from - the benchmark already
+                    # wrote this unit's clip beside its prompt, so it is published as it is
+                    # rather than re-encoded from arrays the orchestrator would have to fetch.
+                    ready = _materialized_clip(d, ext)
+                    if ready is not None:
+                        sha = self.rt.store.put_media(ready, ext)
+                    else:
+                        render_demo(
+                            self.rt.pool.path("demos") / f"{demo}.npz",
+                            out,
+                            self.spec,
+                            d["skill"],
+                        )
+                        sha = self.rt.store.put_media(out, ext)
                     touched.append(
                         str(self.rt.store.media_path(sha, ext).relative_to(self.rt.store.root))
                     )
@@ -489,6 +510,22 @@ class Orchestrator:
                 self.rt.mirror.push(touched)
             except Exception as exc:  # noqa: BLE001
                 log.warning("demo mirror failed: %s", exc)
+
+
+def _materialized_clip(unit: dict[str, Any], ext: str) -> Path | None:
+    """The demonstration clip a benchmark wrote beside this unit's prompt, if it did.
+
+    `materialize_command` is documented as producing "one unit's prompt, its clip and its hash",
+    so for a materialized field the clip already exists and re-rendering it from arrays would be
+    both wasteful and a second chance to get the frame layout wrong.
+    """
+    prompt_dir = unit.get("prompt_dir")
+    if not prompt_dir:
+        return None
+    for candidate in sorted(Path(prompt_dir).glob(f"*.{ext}")):
+        if candidate.stat().st_size > 0:
+            return candidate
+    return None
 
 
 def read_summary(side_dir: Path) -> dict[str, Any]:

@@ -1,0 +1,6165 @@
+{
+ "_dummy_variable": {
+  "dtype": "F32",
+  "shape": [
+   0
+  ]
+ },
+ "model.diffusion_step_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.diffusion_step_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   128
+  ]
+ },
+ "model.diffusion_step_encoder.3.bias": {
+  "dtype": "F32",
+  "shape": [
+   128
+  ]
+ },
+ "model.diffusion_step_encoder.3.weight": {
+  "dtype": "F32",
+  "shape": [
+   128,
+   512
+  ]
+ },
+ "model.down_modules.0.0.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.0.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   10,
+   5
+  ]
+ },
+ "model.down_modules.0.0.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.0.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.0.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.0.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   256,
+   5
+  ]
+ },
+ "model.down_modules.0.0.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.0.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.0.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.0.0.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   15488
+  ]
+ },
+ "model.down_modules.0.0.residual_conv.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.0.residual_conv.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   10,
+   1
+  ]
+ },
+ "model.down_modules.0.1.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.1.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   256,
+   5
+  ]
+ },
+ "model.down_modules.0.1.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.1.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.1.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.1.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   256,
+   5
+  ]
+ },
+ "model.down_modules.0.1.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.1.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.1.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.0.1.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   15488
+  ]
+ },
+ "model.down_modules.0.2.conv.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.down_modules.0.2.conv.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   256,
+   3
+  ]
+ },
+ "model.down_modules.1.0.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.0.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   256,
+   5
+  ]
+ },
+ "model.down_modules.1.0.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.0.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.0.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.0.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   512,
+   5
+  ]
+ },
+ "model.down_modules.1.0.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.0.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.0.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.1.0.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   15488
+  ]
+ },
+ "model.down_modules.1.0.residual_conv.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.0.residual_conv.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   256,
+   1
+  ]
+ },
+ "model.down_modules.1.1.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.1.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   512,
+   5
+  ]
+ },
+ "model.down_modules.1.1.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.1.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.1.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.1.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   512,
+   5
+  ]
+ },
+ "model.down_modules.1.1.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.1.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.1.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.1.1.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   15488
+  ]
+ },
+ "model.down_modules.1.2.conv.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.down_modules.1.2.conv.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   512,
+   3
+  ]
+ },
+ "model.down_modules.2.0.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.0.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   512,
+   5
+  ]
+ },
+ "model.down_modules.2.0.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.0.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.0.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.0.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   1024,
+   5
+  ]
+ },
+ "model.down_modules.2.0.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.0.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.0.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   2048
+  ]
+ },
+ "model.down_modules.2.0.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   2048,
+   15488
+  ]
+ },
+ "model.down_modules.2.0.residual_conv.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.0.residual_conv.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   512,
+   1
+  ]
+ },
+ "model.down_modules.2.1.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.1.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   1024,
+   5
+  ]
+ },
+ "model.down_modules.2.1.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.1.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.1.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.1.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   1024,
+   5
+  ]
+ },
+ "model.down_modules.2.1.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.1.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.down_modules.2.1.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   2048
+  ]
+ },
+ "model.down_modules.2.1.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   2048,
+   15488
+  ]
+ },
+ "model.final_conv.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.final_conv.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   256,
+   5
+  ]
+ },
+ "model.final_conv.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.final_conv.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.final_conv.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "model.final_conv.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   10,
+   256,
+   1
+  ]
+ },
+ "model.mid_modules.0.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.0.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   1024,
+   5
+  ]
+ },
+ "model.mid_modules.0.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.0.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.0.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.0.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   1024,
+   5
+  ]
+ },
+ "model.mid_modules.0.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.0.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.0.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   2048
+  ]
+ },
+ "model.mid_modules.0.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   2048,
+   15488
+  ]
+ },
+ "model.mid_modules.1.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.1.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   1024,
+   5
+  ]
+ },
+ "model.mid_modules.1.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.1.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.1.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.1.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   1024,
+   5
+  ]
+ },
+ "model.mid_modules.1.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.1.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.mid_modules.1.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   2048
+  ]
+ },
+ "model.mid_modules.1.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   2048,
+   15488
+  ]
+ },
+ "model.up_modules.0.0.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.0.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   2048,
+   5
+  ]
+ },
+ "model.up_modules.0.0.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.0.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.0.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.0.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   512,
+   5
+  ]
+ },
+ "model.up_modules.0.0.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.0.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.0.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.up_modules.0.0.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   15488
+  ]
+ },
+ "model.up_modules.0.0.residual_conv.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.0.residual_conv.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   2048,
+   1
+  ]
+ },
+ "model.up_modules.0.1.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.1.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   512,
+   5
+  ]
+ },
+ "model.up_modules.0.1.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.1.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.1.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.1.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   512,
+   5
+  ]
+ },
+ "model.up_modules.0.1.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.1.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.1.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   1024
+  ]
+ },
+ "model.up_modules.0.1.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   1024,
+   15488
+  ]
+ },
+ "model.up_modules.0.2.conv.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.0.2.conv.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   512,
+   4
+  ]
+ },
+ "model.up_modules.1.0.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.0.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   1024,
+   5
+  ]
+ },
+ "model.up_modules.1.0.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.0.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.0.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.0.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   256,
+   5
+  ]
+ },
+ "model.up_modules.1.0.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.0.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.0.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.1.0.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   15488
+  ]
+ },
+ "model.up_modules.1.0.residual_conv.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.0.residual_conv.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   1024,
+   1
+  ]
+ },
+ "model.up_modules.1.1.blocks.0.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.1.blocks.0.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   256,
+   5
+  ]
+ },
+ "model.up_modules.1.1.blocks.0.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.1.blocks.0.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.1.blocks.1.block.0.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.1.blocks.1.block.0.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   256,
+   5
+  ]
+ },
+ "model.up_modules.1.1.blocks.1.block.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.1.blocks.1.block.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.1.cond_encoder.1.bias": {
+  "dtype": "F32",
+  "shape": [
+   512
+  ]
+ },
+ "model.up_modules.1.1.cond_encoder.1.weight": {
+  "dtype": "F32",
+  "shape": [
+   512,
+   15488
+  ]
+ },
+ "model.up_modules.1.2.conv.bias": {
+  "dtype": "F32",
+  "shape": [
+   256
+  ]
+ },
+ "model.up_modules.1.2.conv.weight": {
+  "dtype": "F32",
+  "shape": [
+   256,
+   256,
+   4
+  ]
+ },
+ "normalizer.params_dict.action.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.params_dict.action.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.params_dict.action.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.params_dict.action.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.params_dict.action.offset": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.params_dict.action.scale": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.params_dict.agentview_rgb.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.agentview_rgb.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.agentview_rgb.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.agentview_rgb.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.agentview_rgb.offset": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.agentview_rgb.scale": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.ee_ori.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.params_dict.ee_ori.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.params_dict.ee_ori.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.params_dict.ee_ori.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.params_dict.ee_ori.offset": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.params_dict.ee_ori.scale": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.params_dict.ee_pos.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.params_dict.ee_pos.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.params_dict.ee_pos.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.params_dict.ee_pos.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.params_dict.ee_pos.offset": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.params_dict.ee_pos.scale": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.params_dict.eye_in_hand_rgb.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.eye_in_hand_rgb.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.eye_in_hand_rgb.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.eye_in_hand_rgb.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.eye_in_hand_rgb.offset": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.eye_in_hand_rgb.scale": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.params_dict.gripper_states.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "normalizer.params_dict.gripper_states.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "normalizer.params_dict.gripper_states.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "normalizer.params_dict.gripper_states.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "normalizer.params_dict.gripper_states.offset": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "normalizer.params_dict.gripper_states.scale": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.action.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.action.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.action.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.action.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.action.offset": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.action.scale": {
+  "dtype": "F32",
+  "shape": [
+   10
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.agentview_rgb.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.agentview_rgb.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.agentview_rgb.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.agentview_rgb.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.agentview_rgb.offset": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.agentview_rgb.scale": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_ori.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_ori.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_ori.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_ori.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_ori.offset": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_ori.scale": {
+  "dtype": "F32",
+  "shape": [
+   6
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_pos.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_pos.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_pos.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_pos.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_pos.offset": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.ee_pos.scale": {
+  "dtype": "F32",
+  "shape": [
+   3
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.eye_in_hand_rgb.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.eye_in_hand_rgb.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.eye_in_hand_rgb.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.eye_in_hand_rgb.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.eye_in_hand_rgb.offset": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.eye_in_hand_rgb.scale": {
+  "dtype": "F32",
+  "shape": [
+   1
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.gripper_states.input_stats.max": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.gripper_states.input_stats.mean": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.gripper_states.input_stats.min": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.gripper_states.input_stats.std": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.gripper_states.offset": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "normalizer.prompt_normalizer.params_dict.gripper_states.scale": {
+  "dtype": "F32",
+  "shape": [
+   2
+  ]
+ },
+ "obs_encoder._dummy_variable": {
+  "dtype": "F32",
+  "shape": [
+   0
+  ]
+ },
+ "obs_encoder.attention_sink_tokens": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   4,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder._dummy_variable": {
+  "dtype": "F32",
+  "shape": [
+   0
+  ]
+ },
+ "obs_encoder.obs_encoder.action_proj.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   200
+  ]
+ },
+ "obs_encoder.obs_encoder.action_proj.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   200,
+   200
+  ]
+ },
+ "obs_encoder.obs_encoder.action_proj.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.action_proj.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   200
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_attention_pool.kv.bias": {
+  "dtype": "F32",
+  "shape": [
+   1536
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_attention_pool.kv.weight": {
+  "dtype": "F32",
+  "shape": [
+   1536,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_attention_pool.latent": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   1,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_attention_pool.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_attention_pool.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_attention_pool.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_attention_pool.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_attention_pool.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_attention_pool.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_attention_pool.q.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_attention_pool.q.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder._dummy_variable": {
+  "dtype": "F32",
+  "shape": [
+   0
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.0.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.1.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.10.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.11.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.2.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.3.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.4.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.5.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.6.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.7.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.8.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.blocks.9.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.cls_token": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   1,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.norm.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.norm.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.norm_pre.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.norm_pre.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.patch_embed.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3,
+   16,
+   16
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.agentview_rgb.pos_embed": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   197,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.cls_token": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   1,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.norm.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.norm.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.norm_pre.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.norm_pre.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.patch_embed.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3,
+   16,
+   16
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_model_map.eye_in_hand_rgb.pos_embed": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   197,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_projection_map.ee_ori.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_projection_map.ee_ori.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   6
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_projection_map.ee_pos.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_projection_map.ee_pos.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_projection_map.gripper_states.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.prompt_obs_encoder.key_projection_map.gripper_states.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   2
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder._dummy_variable": {
+  "dtype": "F32",
+  "shape": [
+   0
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.0.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.1.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.10.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.11.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.2.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.3.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.4.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.5.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.6.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.7.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.8.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.blocks.9.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.cls_token": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   1,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.norm.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.norm.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.norm_pre.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.norm_pre.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.patch_embed.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3,
+   16,
+   16
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.agentview_rgb.pos_embed": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   197,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.0.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.1.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.10.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.11.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.2.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.3.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.4.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.5.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.6.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.7.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.8.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.attn.proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.attn.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.attn.qkv.bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.attn.qkv.weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.mlp.fc1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.mlp.fc1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.mlp.fc2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.mlp.fc2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.blocks.9.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.cls_token": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   1,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.norm.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.norm.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.norm_pre.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.norm_pre.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.patch_embed.proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3,
+   16,
+   16
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_model_map.eye_in_hand_rgb.pos_embed": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   197,
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_projection_map.ee_ori.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_projection_map.ee_ori.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   6
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_projection_map.ee_pos.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_projection_map.ee_pos.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_projection_map.gripper_states.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.obs_encoder.receding_obs_encoder.key_projection_map.gripper_states.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   2
+  ]
+ },
+ "obs_encoder.prompt_current_obs_pos_emb": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   10,
+   768
+  ]
+ },
+ "obs_encoder.prompt_pos_emb": {
+  "dtype": "F32",
+  "shape": [
+   1,
+   50,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.linear1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.linear1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.linear2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.linear2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.multihead_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.multihead_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.multihead_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.multihead_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.norm3.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.norm3.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.self_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.self_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.self_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.0.self_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.linear1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.linear1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.linear2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.linear2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.multihead_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.multihead_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.multihead_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.multihead_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.norm3.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.norm3.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.self_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.self_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.self_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.1.self_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.linear1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.linear1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.linear2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.linear2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.multihead_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.multihead_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.multihead_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.multihead_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.norm3.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.norm3.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.self_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.self_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.self_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.2.self_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.linear1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.linear1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.linear2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.linear2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.multihead_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.multihead_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.multihead_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.multihead_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.norm3.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.norm3.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.self_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.self_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.self_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.3.self_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.linear1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.linear1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.linear2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.linear2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.multihead_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.multihead_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.multihead_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.multihead_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.norm3.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.norm3.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.self_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.self_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.self_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.4.self_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.linear1.bias": {
+  "dtype": "F32",
+  "shape": [
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.linear1.weight": {
+  "dtype": "F32",
+  "shape": [
+   3072,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.linear2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.linear2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   3072
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.multihead_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.multihead_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.multihead_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.multihead_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.norm1.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.norm1.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.norm2.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.norm2.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.norm3.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.norm3.weight": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.self_attn.in_proj_bias": {
+  "dtype": "F32",
+  "shape": [
+   2304
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.self_attn.in_proj_weight": {
+  "dtype": "F32",
+  "shape": [
+   2304,
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.self_attn.out_proj.bias": {
+  "dtype": "F32",
+  "shape": [
+   768
+  ]
+ },
+ "obs_encoder.prompt_with_obs_decoder.layers.5.self_attn.out_proj.weight": {
+  "dtype": "F32",
+  "shape": [
+   768,
+   768
+  ]
+ }
+}
