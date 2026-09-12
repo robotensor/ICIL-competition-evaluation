@@ -29,6 +29,12 @@
 - (feat): `Spec`'s duelling constants are track-keyed methods rather than properties, so a call
   site that was not updated raises rather than silently scoring the wrong field's skills;
   `units_per_duel` becomes `units_per_side` and counts the field's own skills (#41).
+- (feat): the store, queues, daemon, intake and live frames are keyed by the field. The queue
+  becomes a directory with one file per field, because a field's block counter advances with its
+  own lineage; the daemon takes one entry from each field in turn under the store's single writer
+  lock, and skips a field whose benchmark is not installed rather than stopping or scoring it
+  empty. A submission names the field it enters, required once there is more than one.
+  `--track` on `queue`, `units derive`, `duel`, `run-side` and `smoke` (#42).
 
 ### Pluggable simulators
 
