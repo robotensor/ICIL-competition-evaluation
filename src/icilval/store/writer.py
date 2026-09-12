@@ -26,6 +26,10 @@ from typing import Any
 from ..canon import Signer, canonical_json, sha256_file
 from ..spec import Spec
 
+#: The event kinds that may move the crown. Everything else is published and rendered but never
+#: enters a lineage - see `Store.current_king`.
+CROWNING = frozenset({"duel", "genesis", "succession"})
+
 SHA_LEN = 64
 
 
@@ -170,9 +174,11 @@ class Store:
         finally:
             os.close(fd)
         self._touch(path)
+        # Crowning is an allow-list: a kind that is not one of these cannot take the crown, and
+        # a kind added later cannot start doing so by accident.
         king = (
             record.get("new_king")
-            if record.get("new_king")
+            if record.get("new_king") and record.get("kind") in CROWNING
             else (
                 record.get("king")
                 if record.get("kind") in ("genesis", "succession")
@@ -190,6 +196,12 @@ class Store:
         return seq
 
     def current_king(self, track: str, record: dict[str, Any]) -> dict | None:
+        """Who holds the crown after this record.
+
+        Only a duel, a genesis, a succession or a vacancy can move it. Any other kind - one added
+        later, or one written by a tool that reused the record shape - leaves the head exactly as
+        it was: it cannot take the crown, lose it, or blank it by omission.
+        """
         if record.get("kind") == "vacancy":
             return None
         if record.get("kind") == "duel":
