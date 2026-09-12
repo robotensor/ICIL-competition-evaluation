@@ -55,6 +55,19 @@
   pins every template value outside `model.mutable_keys`, so a submission cannot flip one back
   on. `spec validate --strict` checks it, along with a declared architecture that has no template
   (#45).
+- (feat): **the video-only field**. Three skills over RoboTwin's V1 suite, namespaced because
+  RoboTwin's own task table also has a pick-and-place category. Same Scene: the demonstration
+  starts in the very scene the rollout is scored in, so replaying its actions would be perfect -
+  which is exactly why they are withheld, and why the two fields close the same shortcut in
+  opposite ways. Its prompts are materialized per duel, its sizes are small and its void
+  tolerance higher (a unit is a scene rebuild plus a rollout), and its skill encoder is
+  organizer-owned and frozen so two entrants are comparable. It opens with no king, and is
+  declared but not open: its benchmark is not installed and `uniskill_v1` has no template yet
+  (#61), both reported by `spec validate --strict` (#46).
+- (fix): a skill is held only to what its field asks of it. A field that withholds the action
+  trajectory has no prompt chunking to describe, and a skill naming a benchmark that is not
+  installed is no longer refused - `validate_spec` must pass on CI, on a laptop and against the
+  dashboard's vendored copy, none of which have a simulator (#46).
 
 ### Pluggable simulators
 

@@ -103,7 +103,7 @@ def test_the_digest_ignores_metadata():
 
 
 def test_a_view_is_read_off_the_field(spec):
-    view = demoview.view_for(spec, spec.sole_track)
+    view = demoview.view_for(spec, "sensorimotor")
     assert view.name == "sensorimotor" and not view.is_restrictive
     assert set(view.keep) == {"video", "actions", "proprio"}
 
@@ -117,21 +117,14 @@ def test_a_video_only_field_hands_its_policies_no_actions(spec, tmp_path, monkey
     from icilval.duel.side_runner import run_side
     from icilval.spec import load_spec_file
 
-    # A field that withholds the action trajectory and the proprioception.
+    # The real video-only field, with its benchmark swapped for a fake: the field's declaration
+    # is the contract under test, and the benchmark it names lives in another repository.
     doc = json.loads(spec.path.read_text())
-    track = doc["tracks"]["sensorimotor"]
-    track["skills"] = ["pick_and_place"]
-    track["protocol"] = "same_initial_state"
-    track["prompt_instance_disjoint"] = False
-    track["prompts"] = "materialized"
-    track["demonstration"] = {
-        "view": "video_only",
-        "modalities": ["video"],
-        "withheld": ["actions", "proprio"],
-    }
-    doc["skills"] = {"pick_and_place": doc["skills"]["pick_and_place"]}
-    doc["skills"]["pick_and_place"]["simulator"] = "fakesim"
+    doc["skills"]["rt_pick_and_place"]["simulator"] = "fakesim"
     doc["benchmarks"]["fakesim"] = {"distribution": "icilval", "in_repo": True}
+    doc["tracks"]["video_only"]["skills"] = ["rt_pick_and_place"]
+    for gone in ("rt_stacking", "rt_press_push"):
+        doc["skills"].pop(gone)
     path = tmp_path / "spec.json"
     path.write_text(json.dumps(doc))
 
@@ -173,8 +166,8 @@ def test_a_video_only_field_hands_its_policies_no_actions(spec, tmp_path, monkey
 
     units = [
         {
-            "unit_id": "pp-0",
-            "skill": "pick_and_place",
+            "unit_id": "rp-0",
+            "skill": "rt_pick_and_place",
             "demo": "task0/demo_00",
             "index": 0,
             "task": "task0",
@@ -189,7 +182,7 @@ def test_a_video_only_field_hands_its_policies_no_actions(spec, tmp_path, monkey
         pool=_Pool(),
         units=units,
         spec=load_spec_file(path),
-        track="sensorimotor",
+        track="video_only",
         out_dir=tmp_path / "out",
         record_video=False,
     )

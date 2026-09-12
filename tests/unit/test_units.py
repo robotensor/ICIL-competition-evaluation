@@ -105,15 +105,13 @@ def test_pool_roundtrip(tmp_path):
 
 def test_units_deterministic_and_spread_over_tasks(spec):
     pool = make_pool()
-    did = duel_id(
-        3, spec.sole_track, ModelRef.make("a/b", "1" * 40), ModelRef.make("c/d", "2" * 40)
-    )
-    units = derive_units(pool, spec, did, "heavy")
-    again = derive_units(pool, spec, did, "heavy")
+    did = duel_id(3, "sensorimotor", ModelRef.make("a/b", "1" * 40), ModelRef.make("c/d", "2" * 40))
+    units = derive_units(pool, spec, did, "heavy", track="sensorimotor")
+    again = derive_units(pool, spec, did, "heavy", track="sensorimotor")
     assert [u.as_dict() for u in units] == [u.as_dict() for u in again]
-    per = spec.units_per_skill(spec.sole_track, "heavy")
-    assert len(units) == len(spec.all_skills) * per
-    for skill in spec.all_skills:
+    per = spec.units_per_skill("sensorimotor", "heavy")
+    assert len(units) == len(spec.skills("sensorimotor")) * per
+    for skill in spec.skills("sensorimotor"):
         skill_units = [u for u in units if u.skill == skill]
         assert len(skill_units) == per
         assert [u.index for u in skill_units] == list(range(per))
@@ -126,16 +124,20 @@ def test_units_deterministic_and_spread_over_tasks(spec):
     ids = [u.unit_id for u in units]
     assert len(set(ids)) == len(ids)
     other = derive_units(
-        pool, spec, duel_id(3, spec.sole_track, ModelRef.make("a/b", "3" * 40), None), "heavy"
+        pool,
+        spec,
+        duel_id(3, "sensorimotor", ModelRef.make("a/b", "3" * 40), None),
+        "heavy",
+        track="sensorimotor",
     )
     assert [u.seed for u in other] != [u.seed for u in units]
 
 
 def test_units_prompt_disjoint_and_instances(spec):
     pool = make_pool()
-    did = duel_id(3, spec.sole_track, ModelRef.make("a/b", "1" * 40), None)
+    did = duel_id(3, "sensorimotor", ModelRef.make("a/b", "1" * 40), None)
     env = spec.env("draw_anything")
-    for u in derive_units(pool, spec, did, "heavy"):
+    for u in derive_units(pool, spec, did, "heavy", track="sensorimotor"):
         task = pool.tasks[u.task]
         assert u.max_steps <= spec.max_steps(u.skill)
         assert u.demo in task.demos
@@ -159,9 +161,9 @@ def test_units_prompt_disjoint_and_instances(spec):
 def test_units_need_eligible_tasks(spec):
     pool = make_pool()
     pool.skills[DA]["eligible"] = []
-    did = duel_id(3, spec.sole_track, ModelRef.make("a/b", "1" * 40), None)
+    did = duel_id(3, "sensorimotor", ModelRef.make("a/b", "1" * 40), None)
     with pytest.raises(ValueError, match="no eligible tasks"):
-        derive_units(pool, spec, did, "smoke")
+        derive_units(pool, spec, did, "smoke", track="sensorimotor")
 
 
 def test_instances_roundtrip(tmp_path):

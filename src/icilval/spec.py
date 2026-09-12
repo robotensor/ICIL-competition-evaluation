@@ -18,6 +18,7 @@ SKILL_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 SKILL_CODE_RE = re.compile(r"^[a-z]{2}$")
 TRACK_CODE_RE = re.compile(r"^[a-z]{2}$")
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+SIMULATOR_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 
 #: How a field stops a model from simply replaying the demonstration it was shown.
 PROTOCOLS = ("different_initial_state", "same_initial_state")
@@ -75,6 +76,15 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
     need("track removed (v3); use tracks", "track" not in doc)
     skills = doc.get("skills") or {}
     need("skills non-empty", isinstance(skills, dict) and bool(skills))
+    # Which field scores each skill, so a skill's entry is held only to what its field asks of
+    # it: a field that withholds the action trajectory has no prompt chunking to describe.
+    kept: dict[str, set[str]] = {}
+    for _tid, _t in (doc.get("tracks") or {}).items():
+        if not isinstance(_t, dict):
+            continue
+        modalities = set((_t.get("demonstration") or {}).get("modalities") or ())
+        for _sid in _t.get("skills") or []:
+            kept[_sid] = modalities
     codes: set[str] = set()
     for sid, s in skills.items():
         need(f"skills.{sid} id", bool(SKILL_ID_RE.match(sid)))
@@ -87,11 +97,18 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
         codes.add(str(code))
         need(f"skills.{sid}.title", isinstance(s.get("title"), str) and bool(s.get("title")))
         need(f"skills.{sid}.architecture", isinstance(s.get("architecture"), str))
-        need(f"skills.{sid}.simulator", s.get("simulator") in simulator_names())
+        # A benchmark that is not installed is accepted here on purpose: CI, a laptop and the
+        # dashboard's vendored copy must all be able to check the contract with no simulator
+        # present. `benchmarks` must still declare it (below), and the deploy check is
+        # `icilval spec validate --strict`.
+        need(f"skills.{sid}.simulator", bool(SIMULATOR_ID_RE.match(str(s.get("simulator", "")))))
         need(f"skills.{sid}.max_steps", isinstance(s.get("max_steps"), int) and s["max_steps"] > 0)
         need(f"skills.{sid}.environment", isinstance(s.get("environment"), dict))
         env = s.get("environment") or {}
-        for key in ("obs_history", "action_horizon", "exec_horizon", "prompt_actions_per_chunk"):
+        keys = ["obs_history", "action_horizon", "exec_horizon"]
+        if "actions" in kept.get(sid, {"actions"}):
+            keys.append("prompt_actions_per_chunk")
+        for key in keys:
             need(f"skills.{sid}.environment.{key}", isinstance(env.get(key), int) and env[key] > 0)
         need(f"skills.{sid}.perturbations removed", "perturbations" not in s)
         if s.get("simulator") in simulator_names():

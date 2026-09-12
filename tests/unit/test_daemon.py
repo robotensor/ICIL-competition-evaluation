@@ -20,7 +20,7 @@ class FakeOrchestrator:
             schema=1,
             event_id=f"{block:064x}",
             kind="duel",
-            track=self.rt.spec.sole_track,
+            track="sensorimotor",
             block=block,
             finished_at=now_iso(),
             king=req.king,
@@ -32,7 +32,7 @@ class FakeOrchestrator:
             new_king=req.challenger if self.outcome == "win" else None,
         )
         self.rt.store.write_event(
-            self.rt.spec.sole_track,
+            "sensorimotor",
             duel_event(
                 rec,
                 spec_version=1,
@@ -43,13 +43,13 @@ class FakeOrchestrator:
                 wall_seconds=1,
             ),
         )
-        self.rt.store.append(self.rt.spec.sole_track, rec)
+        self.rt.store.append("sensorimotor", rec)
         return rec
 
 
 def test_daemon_genesis_then_duels(spec, tmp_path, monkeypatch):
     rt = make_rt(spec, tmp_path)
-    track = spec.sole_track
+    track = "sensorimotor"
     queues = Queues(tmp_path / "queue", spec.tracks)
     q = queues[track]
     cfg = DaemonConfig(
@@ -91,7 +91,7 @@ def test_daemon_genesis_then_duels(spec, tmp_path, monkeypatch):
         and d.current_king(track).repo == "org/second"
         and q.state.in_progress is None
     )
-    snap = rt.store.queue_path(spec.sole_track)
+    snap = rt.store.queue_path("sensorimotor")
     assert snap.exists()
 
 
@@ -102,7 +102,7 @@ def _genesis(rt, ref, block):
         schema=1,
         event_id=f"{1000 + block:064x}",
         kind="genesis",
-        track=rt.spec.sole_track,
+        track="sensorimotor",
         block=block,
         finished_at=now_iso(),
         king=ref,
@@ -114,7 +114,7 @@ def _genesis(rt, ref, block):
         new_king=None,
     )
     rt.store.write_event(
-        rt.spec.sole_track,
+        "sensorimotor",
         duel_event(
             rec,
             spec_version=1,
@@ -125,5 +125,5 @@ def _genesis(rt, ref, block):
             wall_seconds=0,
         ),
     )
-    rt.store.append(rt.spec.sole_track, rec)
+    rt.store.append("sensorimotor", rec)
     return rec

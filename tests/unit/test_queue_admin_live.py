@@ -63,7 +63,7 @@ def test_admin_server_contract(spec, tmp_path):
         assert (
             status == 200
             and body["ok"]
-            and body["tracks"][spec.sole_track]["queue_len"] == 0
+            and body["tracks"]["sensorimotor"]["queue_len"] == 0
             and body["validator_key"] == "k" * 64
         )
         assert _call(base + "/nope", "secret")[0] == 404
@@ -74,7 +74,7 @@ def test_admin_server_contract(spec, tmp_path):
             {
                 "repo": "org/model",
                 "revision": None,
-                "track": spec.sole_track,
+                "track": "sensorimotor",
                 "duel_size": "smoke",
                 "skip_model_config_check": False,
                 "source": "dashboard-dev-mode",
@@ -88,6 +88,7 @@ def test_admin_server_contract(spec, tmp_path):
             and body["entry"] == "org/model@" + "c" * 40
         )
         assert set(body) >= {
+            "track",
             "key",
             "repo",
             "revision",
@@ -104,7 +105,7 @@ def test_admin_server_contract(spec, tmp_path):
                 base + "/admin/submissions",
                 "secret",
                 "POST",
-                {"repo": "org/model", "duel_size": "huge"},
+                {"repo": "org/model", "track": "sensorimotor", "duel_size": "huge"},
             )[0]
             == 422
         )
@@ -117,7 +118,17 @@ def test_admin_server_contract(spec, tmp_path):
             )[0]
             == 422
         )
-        status, body = _call(base + "/admin/submissions", "secret", "POST", {"repo": "bad/repo"})
+        # With more than one field, saying which is required: queueing against the wrong ladder
+        # is not something the organizer can see from the reply.
+        status, body = _call(base + "/admin/submissions", "secret", "POST", {"repo": "org/model"})
+        assert status == 422 and "track is required" in body["error"]
+        assert "sensorimotor" in body["error"] and "video_only" in body["error"]
+        status, body = _call(
+            base + "/admin/submissions",
+            "secret",
+            "POST",
+            {"repo": "bad/repo", "track": "sensorimotor"},
+        )
         assert status == 422 and "detail" in body
         req = urllib.request.Request(
             base + "/admin/submissions",
@@ -182,7 +193,7 @@ def test_live_frame_and_reporter(spec):
     ]
     frame = build_frame(
         spec,
-        track=spec.sole_track,
+        track="sensorimotor",
         validator_key="k",
         event_id="e" * 64,
         kind="duel",
@@ -215,7 +226,7 @@ def test_live_frame_and_reporter(spec):
     with pytest.raises(ValueError):
         build_frame(
             spec,
-            track=spec.sole_track,
+            track="sensorimotor",
             validator_key="k",
             event_id="e",
             kind="duel",

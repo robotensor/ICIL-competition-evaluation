@@ -57,7 +57,7 @@ def test_merge_and_media_flush(spec, tmp_path):
         "media_done": {},
         "recent_media": None,
         "event_id": "e" * 64,
-        "track": spec.sole_track,
+        "track": "sensorimotor",
         "kind": "duel",
         "size": "smoke",
         "king": None,

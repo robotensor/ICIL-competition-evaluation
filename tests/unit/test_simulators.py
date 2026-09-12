@@ -48,8 +48,15 @@ def test_an_unknown_simulator_names_the_ones_there_are():
 
 
 def test_for_skill_reads_the_skill_s_simulator(spec):
-    for skill in spec.all_skills:
+    for skill in spec.skills("sensorimotor"):
         assert simulators.for_skill(spec, skill).name == spec.simulator(skill)
+
+
+def test_for_skill_on_a_benchmark_that_is_not_installed_says_so(spec):
+    """The video-only field names a benchmark from another repository. Until it is installed,
+    asking for it must name what is registered rather than fail obscurely."""
+    with pytest.raises(KeyError, match="robotwin"):
+        simulators.for_skill(spec, "rt_stacking")
 
 
 def test_a_simulator_need_not_check_its_pool_tasks():

@@ -65,8 +65,17 @@ def test_the_shipped_sensorimotor_architectures_are_not_video_only_architectures
         assert arch.check_view(cfg, ("actions", "proprio"))
 
 
-def test_the_shipped_contract_passes_its_own_check(spec):
-    assert arch.check_spec(spec, "arch") == []
+def test_the_sensorimotor_field_passes_its_own_check(spec):
+    """Its architectures exist and it withholds nothing, so there is nothing to refuse."""
+    problems = arch.check_spec(spec, "arch")
+    assert not [p for p in problems if p.startswith("sensorimotor")]
+
+
+def test_the_video_only_field_says_its_template_is_missing(spec):
+    """Declared but not open: `uniskill_v1` cannot be emitted until a checkpoint exists, so the
+    deploy check reports it rather than letting a submission fail later."""
+    problems = arch.check_spec(spec, "arch")
+    assert any("uniskill_v1 has no template" in p for p in problems)
 
 
 def test_a_declared_architecture_with_no_template_is_reported(spec, tmp_path):
