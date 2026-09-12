@@ -1,7 +1,8 @@
-"""The challenger queue: one entry per submission key, on disk, rewritten atomically."""
+"""The challenger queues: one per field, one entry per submission key, rewritten atomically."""
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -153,3 +154,41 @@ class Queue:
                 for i, e in enumerate(self.state.entries)
             ],
         }
+
+
+class Queues:
+    """One queue per field, as one file each in a directory.
+
+    A field's queue is its own file because its lineage is its own: the block counter advances
+    with that field's events, and a busy field must not hold up another's entries. The v3 layout
+    was a single `queue.json`; an operator moves it to `<dir>/<track>.json` once (see
+    `docs/operations.md`), and pointing at the old file says so rather than starting empty.
+    """
+
+    def __init__(self, root: str | Path, tracks: Sequence[str]):
+        self.root = Path(root)
+        if self.root.is_file():
+            raise ValueError(
+                f"{self.root} is a file: the queue is a directory with one file per field. "
+                f"Move it to {self.root.with_suffix('')}/{tracks[0]}.json and pass that directory."
+            )
+        self.root.mkdir(parents=True, exist_ok=True)
+        self._queues = {t: Queue(self.root / f"{t}.json") for t in tracks}
+
+    @property
+    def tracks(self) -> tuple[str, ...]:
+        return tuple(self._queues)
+
+    def __getitem__(self, track: str) -> Queue:
+        try:
+            return self._queues[track]
+        except KeyError:
+            raise KeyError(
+                f"unknown track {track!r}; the fields are {', '.join(self._queues)}"
+            ) from None
+
+    def __contains__(self, track: object) -> bool:
+        return track in self._queues
+
+    def items(self):
+        return self._queues.items()
