@@ -1,8 +1,9 @@
 """Run one side of a duel over a unit list. Resumable; runs where the simulators and torch live.
 
 Units are grouped by skill (spec order). For each skill the side's checkpoint for that skill
-is loaded from `<model_dir>/<skill>`, its units run on its simulator, and the model is
-unloaded before the next skill's is loaded.
+is loaded from `<model_dir>/<skill>`, its units run by its simulator's `run_units` (see
+`icilval.simulators`), and the model is unloaded before the next skill's is loaded. The
+simulator gets a `SideContext`: the time budget, the executor, and how to record a unit.
 """
 
 from __future__ import annotations
@@ -15,14 +16,13 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
+from .. import demoview
 from ..canon import sha256_file
-from ..model.bpp import make_policy
-from ..pools.demos import load_demo
+from ..pools.demos import load_demo_for
 from ..pools.schema import Pool
-from ..sim.video import VideoWriter
+from ..simulators import for_skill, make_policy
 from ..spec import Spec
+from ..video import VideoWriter
 
 log = logging.getLogger(__name__)
 
@@ -50,6 +50,7 @@ def run_side(
     pool: Pool,
     units: list[dict[str, Any]],
     spec: Spec,
+    track: str,
     out_dir: Path,
     device: str = "cuda",
     on_unit: Callable[[dict[str, Any]], None] | None = None,
@@ -74,7 +75,9 @@ def run_side(
         "skills": {},
     }
 
-    class _Ctx:
+    class SideContext:
+        """What a simulator's `run_units` needs from the side runner."""
+
         def __init__(self) -> None:
             self.t_start = t_start
             self.side_wall = side_wall
@@ -82,6 +85,28 @@ def run_side(
 
         def out_of_time(self) -> bool:
             return time.monotonic() - self.t_start > self.side_wall
+
+        def demo(self, unit: dict[str, Any]) -> dict[str, Any]:
+            """This unit's demonstration, as its field allows it to be seen.
+
+            The only way a simulator's episode loop gets a demonstration. What the field
+            withholds was never put in the mapping, and what was handed over is hashed onto the
+            unit so the record can publish it.
+            """
+            handed = load_demo_for(pool, spec, track, unit)
+            unit["handed_sha256"] = demoview.handed_sha256(handed)
+            return handed
+
+        def record(self, unit: dict[str, Any], res: Any, clip: Path) -> dict[str, Any]:
+            return _record(unit, res, clip, out_dir, record_video)
+
+        @staticmethod
+        def timed_out(unit: dict[str, Any]) -> dict[str, Any]:
+            return _timed_out(unit)
+
+        @staticmethod
+        def close_writer(writer: VideoWriter | None, unit: dict[str, Any]) -> None:
+            _close_writer(writer, unit)
 
         def finish(self, unit: dict[str, Any], rec: dict[str, Any], res: Any | None) -> None:
             _append(results_path, rec)
@@ -110,9 +135,9 @@ def run_side(
             if on_unit is not None:
                 on_unit(rec)
 
-    ctx = _Ctx()
+    ctx = SideContext()
     try:
-        for skill in spec.skills:
+        for skill in spec.skills(track):
             todo = [u for u in units if u["skill"] == skill and u["unit_id"] not in done]
             if not todo:
                 continue
@@ -120,10 +145,9 @@ def run_side(
             policy.load()
             summary["load_seconds"][skill] = round(policy.load_seconds, 1)
             try:
-                if spec.simulator(skill) == "draw":
-                    _run_draw(ctx, skill, policy, pool, todo, spec, media_dir, record_video)
-                else:
-                    _run_libero(ctx, skill, policy, pool, todo, spec, media_dir, record_video)
+                for_skill(spec, skill).run_units(
+                    ctx, skill, policy, pool, todo, spec, media_dir, record_video
+                )
             finally:
                 policy.unload()
     finally:
@@ -148,6 +172,7 @@ def _record(unit: dict[str, Any], res: Any, clip: Path, out_dir: Path, record_vi
         "void": res.void,
         "prompt_steps": res.prompt_steps,
         "prompt_chunks": res.prompt_chunks,
+        "handed_sha256": unit.get("handed_sha256"),
         "instance_applied": res.instance_applied,
         "video": None,
         "video_sha256": None,
@@ -167,91 +192,6 @@ def _timed_out(unit: dict[str, Any]) -> dict[str, Any]:
         "success": None,
         "metric": None,
     }
-
-
-def _run_libero(
-    ctx: Any,
-    skill: str,
-    policy: Any,
-    pool: Pool,
-    units: list[dict[str, Any]],
-    spec: Spec,
-    media_dir: Path,
-    record_video: bool,
-) -> None:
-    from ..sim.episode import run_episode
-    from ..sim.libero_env import LiberoEnv, load_init_states
-
-    video_cfg = spec.media["video"]
-    fps = int(spec.env(skill)["control_freq"])
-    env: LiberoEnv | None = None
-    env_key: str | None = None
-    init_cache: dict[str, np.ndarray] = {}
-    try:
-        # keep env switches rare: run units grouped by task scene, in unit order within a group
-        order = sorted(range(len(units)), key=lambda i: (units[i]["bddl"], i))
-        for i in order:
-            unit = units[i]
-            if ctx.out_of_time():
-                ctx.finish(unit, _timed_out(unit), None)
-                continue
-            key = unit["bddl"]
-            if env is None or env_key != key:
-                if env is not None:
-                    env.close()
-                env = LiberoEnv(pool.path(unit["bddl"]), spec, skill=skill)
-                env_key = key
-            if unit["init"] not in init_cache:
-                init_cache[unit["init"]] = load_init_states(pool.path(unit["init"]))
-            init_state = init_cache[unit["init"]][int(unit["instance"])]
-            demo = load_demo(pool.path("demos") / f"{unit['demo']}.npz")
-            clip = media_dir / f"{unit['unit_id']}.mp4"
-            writer = VideoWriter(clip, fps, video_cfg) if record_video else None
-            try:
-                res = run_episode(
-                    env, policy, unit, init_state, demo, spec, video=writer, executor=ctx.executor
-                )
-            finally:
-                _close_writer(writer, unit)
-            ctx.finish(unit, _record(unit, res, clip, media_dir.parent, record_video), res)
-    finally:
-        if env is not None:
-            env.close()
-
-
-def _run_draw(
-    ctx: Any,
-    skill: str,
-    policy: Any,
-    pool: Pool,
-    units: list[dict[str, Any]],
-    spec: Spec,
-    media_dir: Path,
-    record_video: bool,
-) -> None:
-    from ..sim.draw_env import DrawBoard
-    from ..sim.draw_episode import run_draw_episode
-
-    video_cfg = spec.media["video"]
-    fps = int(spec.env(skill)["control_freq"])
-    board = DrawBoard(spec, skill)
-    try:
-        for unit in units:
-            if ctx.out_of_time():
-                ctx.finish(unit, _timed_out(unit), None)
-                continue
-            demo = load_demo(pool.path("demos") / f"{unit['demo']}.npz")
-            clip = media_dir / f"{unit['unit_id']}.mp4"
-            writer = VideoWriter(clip, fps, video_cfg) if record_video else None
-            try:
-                res = run_draw_episode(
-                    board, policy, unit, demo, spec, video=writer, executor=ctx.executor
-                )
-            finally:
-                _close_writer(writer, unit)
-            ctx.finish(unit, _record(unit, res, clip, media_dir.parent, record_video), res)
-    finally:
-        board.close()
 
 
 def _close_writer(writer: VideoWriter | None, unit: dict[str, Any]) -> None:

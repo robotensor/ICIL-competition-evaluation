@@ -26,6 +26,10 @@ from typing import Any
 from ..canon import Signer, canonical_json, sha256_file
 from ..spec import Spec
 
+#: The event kinds that may move the crown. Everything else is published and rendered but never
+#: enters a lineage - see `Store.current_king`.
+CROWNING = frozenset({"duel", "genesis", "succession"})
+
 SHA_LEN = 64
 
 
@@ -105,13 +109,15 @@ class Store:
             "spec_version": self.spec.version,
             "spec_fingerprint": self.spec.fingerprint,
             "pool_id": pool_id,
-            "tracks": [self.spec.track_id],
+            "tracks": list(self.spec.tracks),
         }
         atomic_write_json(self.root / "manifest.json", manifest)
         self._touch(self.root / "manifest.json")
-        track = self.spec.track_id
-        if not self.head_path(track).exists():
-            self.write_head(track, seq=0, event_id="", block=0, finished_at="", king=None)
+        # A head per field: each has its own king, lineage and sequence, and a field with no
+        # king yet still needs somewhere for its first genesis to land.
+        for track in self.spec.tracks:
+            if not self.head_path(track).exists():
+                self.write_head(track, seq=0, event_id="", block=0, finished_at="", king=None)
         return manifest
 
     def manifest(self) -> dict[str, Any] | None:
@@ -168,9 +174,11 @@ class Store:
         finally:
             os.close(fd)
         self._touch(path)
+        # Crowning is an allow-list: a kind that is not one of these cannot take the crown, and
+        # a kind added later cannot start doing so by accident.
         king = (
             record.get("new_king")
-            if record.get("new_king")
+            if record.get("new_king") and record.get("kind") in CROWNING
             else (
                 record.get("king")
                 if record.get("kind") in ("genesis", "succession")
@@ -188,6 +196,12 @@ class Store:
         return seq
 
     def current_king(self, track: str, record: dict[str, Any]) -> dict | None:
+        """Who holds the crown after this record.
+
+        Only a duel, a genesis, a succession or a vacancy can move it. Any other kind - one added
+        later, or one written by a tool that reused the record shape - leaves the head exactly as
+        it was: it cannot take the crown, lose it, or blank it by omission.
+        """
         if record.get("kind") == "vacancy":
             return None
         if record.get("kind") == "duel":

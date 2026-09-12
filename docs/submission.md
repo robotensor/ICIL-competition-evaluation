@@ -1,7 +1,9 @@
 # Submissions
 
-A submission is a **Hugging Face model repository at a pinned revision** holding one directory
-per skill (`spec.json` `model.layout`):
+A submission is to **one field**, as a Hugging Face model repository at a pinned revision holding
+one directory per skill *of that field* (`spec.json` `model.layout`). Enter one field or both;
+they have separate queues, separate kings and separate crowns, and a repository for one is not a
+repository for the other.
 
 ```
 pick_and_place/model.safetensors   the weights of a bpp_libero_v1 policy (see arch/)
@@ -13,8 +15,11 @@ draw_anything/config.yaml          produced by `icilval convert-ckpt --arch-name
 Each `config.yaml`'s `model` block must equal that skill's architecture template except for
 `model.mutable_keys` from `spec.json`. Optionally `README.md`, `.json`, `.txt`, `.yaml` files.
 Anything else (in particular `.ckpt` / pickles) is ignored on download and rejected if it is the
-only weights file. A repository missing a skill's directory is refused: every duel runs every
-skill. No participant code runs anywhere.
+only weights file. A repository missing one of its field's skill directories is refused: a duel
+runs every skill of the field it is in. No participant code runs anywhere.
+
+Queue it against the field it is for. With more than one field, saying which is **required** -
+queueing against the wrong ladder is not something you could see from the reply.
 
 ## Converting BPP training checkpoints
 

@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .. import materialize, simulators
 from ..canon import Signer
 from ..ids import ModelRef, duel_id, event_id
 from ..live import LiveReporter, build_frame
@@ -44,6 +45,8 @@ class DuelFailed(Exception):
 
 @dataclass
 class DuelRequest:
+    #: The field this duel is fought in. Each has its own king, queue, lineage and skills.
+    track: str
     challenger: ModelRef
     king: ModelRef | None
     size: str | None = None
@@ -77,6 +80,7 @@ class Orchestrator:
     def _frame(self, state: dict[str, Any], **kw: Any) -> dict[str, Any]:
         return build_frame(
             self.spec,
+            track=state["track"],
             validator_key=self.rt.signer.verify_key_hex,
             event_id=state["event_id"],
             kind=state["kind"],
@@ -160,10 +164,12 @@ class Orchestrator:
                 u[f"{side}_error"] = rec.get("error")
                 if rec.get("prompt_chunks"):
                     u["prompt"] = {
-                        "demo_id": u["prompt"]["demo_id"],
+                        **u["prompt"],
                         "steps": rec.get("prompt_steps", 0),
                         "chunks": rec.get("prompt_chunks", 0),
                     }
+                if rec.get("handed_sha256"):
+                    u["prompt"]["handed_sha256"] = rec["handed_sha256"]
             u["outcome"] = score.paired_outcome(u.get("king_success"), u.get("challenger_success"))
             return
 
@@ -188,6 +194,7 @@ class Orchestrator:
             pool=self.rt.pool,
             units=state["unit_defs"],
             spec=self.spec,
+            track=req.track,
             out_dir=side_dir,
             device=req.device,
             on_unit=on_unit,
@@ -235,6 +242,8 @@ class Orchestrator:
             "/work/units.json",
             "--side",
             side,
+            "--track",
+            req.track,
             "--out",
             "/work",
         ]
@@ -265,13 +274,18 @@ class Orchestrator:
     # ---------------------------------------------------------------- the duel
     def run(self, req: DuelRequest, block: int) -> dict[str, Any]:
         spec = self.spec
-        size = spec.size_of(req.size)
-        did = duel_id(spec.version, spec.track_id, req.challenger, req.king)
-        eid = event_id(req.kind, spec.track_id, block, did)
+        # Before anything is fetched: a duel that would score a skill whose benchmark is not
+        # installed must stop here, not halfway through with half a score.
+        simulators.require(spec)
+        track = req.track
+        size = spec.size_of(track, req.size)
+        did = duel_id(spec.version, track, req.challenger, req.king)
+        eid = event_id(req.kind, track, block, did)
         run_dir = self.rt.run_root / eid[:16]
         run_dir.mkdir(parents=True, exist_ok=True)
         state: dict[str, Any] = {
             "event_id": eid,
+            "track": track,
             "kind": req.kind,
             "size": size,
             "king": req.king,
@@ -302,7 +316,7 @@ class Orchestrator:
                 state, force=True, phase="checking", message="checking architectures and weights"
             )
             for side, d in dirs.items():
-                rep = check_submission(d, spec, self.rt.arch_dir)
+                rep = check_submission(d, spec, self.rt.arch_dir, spec.skills(track))
                 sides_meta[side] = {
                     "repo_bytes": rep.repo_bytes,
                     "skills": {
@@ -317,9 +331,12 @@ class Orchestrator:
                 if not rep.ok and not (req.skip_model_check and side == "challenger"):
                     raise DuelFailed(f"{side} failed the model check: " + "; ".join(rep.errors[:5]))
             # ---- units
-            units = derive_units(self.rt.pool, spec, did, size)
+            units = derive_units(self.rt.pool, spec, did, size, track=track)
             state["unit_defs"] = [u.as_dict() for u in units]
-            state["units"] = [unit_verdict_from_unit(u.as_dict()) for u in units]
+            view = spec.demo_view(track)
+            state["units"] = [unit_verdict_from_unit(u.as_dict(), view) for u in units]
+            # ---- materializing
+            self._materialize(state, run_dir, track)
             self._render_demos(state, run_dir)
             # ---- evaluating
             for side in ("challenger", "king"):
@@ -343,8 +360,8 @@ class Orchestrator:
                 if time.monotonic() - t0 > float(spec.budgets["duel_wall_seconds"]):
                     raise DuelFailed("duel wall time exceeded")
             # ---- scoring
-            v = score.verdict(state["units"], spec.score_margin, spec.skills)
-            if score.void_fraction(state["units"]) > spec.max_void_fraction:
+            v = score.verdict(state["units"], spec.score_margin(track), spec.skills(track))
+            if score.void_fraction(state["units"]) > spec.max_void_fraction(track):
                 raise DuelFailed(f"{v.tally.void} of {len(state['units'])} units void")
             # ---- publishing
             self._post(
@@ -354,14 +371,14 @@ class Orchestrator:
                 schema=int(spec.store["schema"]),
                 event_id=eid,
                 kind=req.kind,
-                track=spec.track_id,
+                track=track,
                 block=block,
                 finished_at=now_iso(),
                 king=req.king,
                 challenger=req.challenger,
                 king_scores=v.king_scores if req.king else None,
                 challenger_scores=v.challenger_scores,
-                score_margin=spec.score_margin,
+                score_margin=spec.score_margin(track),
                 dethroned=bool(v.dethroned),
                 new_king=req.challenger if v.dethroned else None,
                 tally=v.tally.as_dict(),
@@ -375,14 +392,16 @@ class Orchestrator:
                 spec_version=spec.version,
                 spec_fingerprint=spec.fingerprint,
                 units=state["units"],
-                units_per_skill=spec.units_per_skill(size),
+                units_per_skill=spec.units_per_skill(track, size),
                 started_at=state["started_at"],
                 wall_seconds=time.monotonic() - t0,
                 sides=sides_meta,
+                demonstration=_demonstration(spec, track),
+                prompts=state.get("prompts") or None,
                 notes=[],
             )
-            self.rt.store.write_event(spec.track_id, event)
-            record["seq"] = self.rt.store.append(spec.track_id, record)
+            self.rt.store.write_event(track, event)
+            record["seq"] = self.rt.store.append(track, record)
             (run_dir / "record.json").write_text(json.dumps(record, indent=2))
             self._post(
                 state,
@@ -403,6 +422,39 @@ class Orchestrator:
                 state, force=True, phase="failed", message=f"{type(exc).__name__}: {exc}"[:280]
             )
             raise DuelFailed(str(exc)) from exc
+
+    def _materialize(self, state: dict[str, Any], run_dir: Path, track: str) -> Any:
+        """Fix this duel's prompts, for a field that produces its own.
+
+        Runs on the validator host, before either side, so both see identical bytes and a unit
+        whose expert never succeeds is replaced here rather than failing mid-duel.
+        """
+        if not materialize.needed(self.spec, track):
+            return None
+        from .. import simulators
+
+        self._post(state, force=True, phase="materializing", message="materializing prompts")
+        benchmark = simulators.get(self.spec.simulators(track)[0]).benchmark
+        if benchmark is None:
+            raise DuelFailed(
+                f"{track} materializes its own prompts, but its benchmark exposes no plugin"
+            )
+        out = materialize.materialize(
+            self.spec,
+            track,
+            state["unit_defs"],
+            run_dir / "prompts",
+            benchmark=benchmark,
+            timeout_s=float(self.spec.budgets["unit_wall_seconds"]),
+        )
+        by_unit = {u["unit_id"]: u for u in state["units"]}
+        for unit_id, prompt in out.prompts.items():
+            if unit_id in by_unit:
+                by_unit[unit_id]["prompt"]["sha256"] = prompt.sha256
+                if prompt.substituted_from:
+                    by_unit[unit_id]["substituted_from"] = prompt.substituted_from
+        state["prompts"] = out.manifest()
+        return out
 
     def _render_demos(self, state: dict[str, Any], run_dir: Path) -> None:
         if not self.spec.media.get("demo_video", True):
@@ -447,8 +499,19 @@ def read_summary(side_dir: Path) -> dict[str, Any]:
         return {}
 
 
+def _demonstration(spec: Spec, track: str) -> dict[str, Any]:
+    """What a field's record says about what its policies were shown."""
+    demo = spec.track(track)["demonstration"]
+    return {
+        "view": demo["view"],
+        "modalities": list(demo["modalities"]),
+        "withheld": list(demo.get("withheld", [])),
+    }
+
+
 def publish_genesis(
     rt: Runtime,
+    track: str,
     king: ModelRef,
     block: int,
     *,
@@ -456,24 +519,25 @@ def publish_genesis(
     check: bool = True,
 ) -> dict[str, Any]:
     spec = rt.spec
+    simulators.require(spec)
     if check:
         got = fetch_model(king, rt.run_root / "models" / king.key, spec, local_models=local_models)
-        rep = check_submission(got.path, spec, rt.arch_dir)
+        rep = check_submission(got.path, spec, rt.arch_dir, spec.skills(track))
         if not rep.ok:
             raise DuelFailed("genesis model failed the check: " + "; ".join(rep.errors[:5]))
-    eid = event_id("genesis", spec.track_id, block, king.key)
+    eid = event_id("genesis", track, block, king.key)
     record = index_record(
         schema=int(spec.store["schema"]),
         event_id=eid,
         kind="genesis",
-        track=spec.track_id,
+        track=track,
         block=block,
         finished_at=now_iso(),
         king=king,
         challenger=None,
         king_scores=None,
         challenger_scores=None,
-        score_margin=spec.score_margin,
+        score_margin=spec.score_margin(track),
         dethroned=False,
         new_king=None,
         media_count=0,
@@ -491,8 +555,8 @@ def publish_genesis(
         wall_seconds=0.0,
         notes=["The opening entrant took an empty throne."],
     )
-    rt.store.write_event(spec.track_id, event)
-    record["seq"] = rt.store.append(spec.track_id, record)
+    rt.store.write_event(track, event)
+    record["seq"] = rt.store.append(track, record)
     return record
 
 

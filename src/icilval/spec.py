@@ -14,9 +14,22 @@ from .canon import canonical_sha256
 
 SPEC_ENV = "ICILVAL_SPEC"
 SCHEMA_ENV = "ICILVAL_STORE_SCHEMA"
-SIMULATORS = ("libero", "draw")
 SKILL_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 SKILL_CODE_RE = re.compile(r"^[a-z]{2}$")
+TRACK_CODE_RE = re.compile(r"^[a-z]{2}$")
+SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+SIMULATOR_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+
+#: How a field stops a model from simply replaying the demonstration it was shown.
+PROTOCOLS = ("different_initial_state", "same_initial_state")
+
+#: What a field's policies may see of a demonstration.
+DEMO_VIEWS = ("sensorimotor", "video_only")
+
+#: Where a field's prompts come from. "pool" is published up front; "materialized" is
+#: produced per duel and published with the event, which is what a field must use when the
+#: demonstration is the answer for the very scene it is scored on.
+PROMPT_SOURCES = ("pool", "materialized")
 
 
 def _repo_root() -> Path | None:
@@ -49,6 +62,9 @@ def schema_path() -> Path:
 
 
 def validate_spec(doc: dict[str, Any]) -> list[str]:
+    from .simulators import get as simulator
+    from .simulators import names as simulator_names
+
     errors: list[str] = []
 
     def need(path: str, cond: bool) -> None:
@@ -56,12 +72,19 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
             errors.append(path)
 
     need("spec_version:int", isinstance(doc.get("spec_version"), int))
-    track = doc.get("track") or {}
-    need("track.id", isinstance(track.get("id"), str) and bool(track.get("id")))
-    need("track.k_demos==1", track.get("k_demos") == 1)
-    need("track.language==none", track.get("language") == "none")
+    # A v3 spec read by v5 code would render the wrong numbers silently, so say so loudly.
+    need("track removed (v3); use tracks", "track" not in doc)
     skills = doc.get("skills") or {}
     need("skills non-empty", isinstance(skills, dict) and bool(skills))
+    # Which field scores each skill, so a skill's entry is held only to what its field asks of
+    # it: a field that withholds the action trajectory has no prompt chunking to describe.
+    kept: dict[str, set[str]] = {}
+    for _tid, _t in (doc.get("tracks") or {}).items():
+        if not isinstance(_t, dict):
+            continue
+        modalities = set((_t.get("demonstration") or {}).get("modalities") or ())
+        for _sid in _t.get("skills") or []:
+            kept[_sid] = modalities
     codes: set[str] = set()
     for sid, s in skills.items():
         need(f"skills.{sid} id", bool(SKILL_ID_RE.match(sid)))
@@ -74,13 +97,22 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
         codes.add(str(code))
         need(f"skills.{sid}.title", isinstance(s.get("title"), str) and bool(s.get("title")))
         need(f"skills.{sid}.architecture", isinstance(s.get("architecture"), str))
-        need(f"skills.{sid}.simulator", s.get("simulator") in SIMULATORS)
+        # A benchmark that is not installed is accepted here on purpose: CI, a laptop and the
+        # dashboard's vendored copy must all be able to check the contract with no simulator
+        # present. `benchmarks` must still declare it (below), and the deploy check is
+        # `icilval spec validate --strict`.
+        need(f"skills.{sid}.simulator", bool(SIMULATOR_ID_RE.match(str(s.get("simulator", "")))))
         need(f"skills.{sid}.max_steps", isinstance(s.get("max_steps"), int) and s["max_steps"] > 0)
         need(f"skills.{sid}.environment", isinstance(s.get("environment"), dict))
         env = s.get("environment") or {}
-        for key in ("obs_history", "action_horizon", "exec_horizon", "prompt_actions_per_chunk"):
+        keys = ["obs_history", "action_horizon", "exec_horizon"]
+        if "actions" in kept.get(sid, {"actions"}):
+            keys.append("prompt_actions_per_chunk")
+        for key in keys:
             need(f"skills.{sid}.environment.{key}", isinstance(env.get(key), int) and env[key] > 0)
         need(f"skills.{sid}.perturbations removed", "perturbations" not in s)
+        if s.get("simulator") in simulator_names():
+            errors.extend(simulator(str(s["simulator"])).validate_skill(sid, s))
         tasks = s.get("tasks") or {}
         need(
             f"skills.{sid}.tasks.dataset",
@@ -95,24 +127,92 @@ def validate_spec(doc: dict[str, Any]) -> list[str]:
             (isinstance(tasks.get("views"), list) and bool(tasks["views"]))
             or (isinstance(tasks.get("files"), dict) and bool(tasks["files"])),
         )
-        if s.get("simulator") == "draw":
-            for key in ("board_angle_range_rad", "cursor_start_range_px"):
-                rng = env.get(key)
-                need(
-                    f"skills.{sid}.environment.{key} range",
-                    isinstance(rng, list)
-                    and len(rng) == 2
-                    and all(isinstance(x, (int, float)) for x in rng)
-                    and rng[0] < rng[1],
-                )
-            success = s.get("success") or {}
-            need(
-                f"skills.{sid}.success.threshold>0",
-                isinstance(success.get("threshold"), (int, float)) and success["threshold"] > 0,
-            )
     duel = doc.get("duel") or {}
     sizes = duel.get("sizes") or {}
     need("duel.default_size in sizes", duel.get("default_size") in sizes)
+    tracks = doc.get("tracks") or {}
+    need("tracks non-empty", isinstance(tracks, dict) and bool(tracks))
+    benchmarks = doc.get("benchmarks") or {}
+    claimed: list[str] = []
+    slugs: set[str] = set()
+    track_codes: set[str] = set()
+    for tid, t in tracks.items():
+        if not isinstance(t, dict):
+            errors.append(f"tracks.{tid}: mapping")
+            continue
+        need(f"tracks.{tid}.id == key", t.get("id") == tid)
+        need(
+            f"tracks.{tid}.code",
+            isinstance(t.get("code"), str) and bool(TRACK_CODE_RE.match(str(t.get("code")))),
+        )
+        need(f"tracks.{tid}.code unique", t.get("code") not in track_codes)
+        track_codes.add(str(t.get("code")))
+        need(f"tracks.{tid}.slug", bool(SLUG_RE.match(str(t.get("slug", "")))))
+        need(f"tracks.{tid}.slug unique", t.get("slug") not in slugs)
+        slugs.add(str(t.get("slug")))
+        for key in ("short", "title", "blurb"):
+            need(f"tracks.{tid}.{key}", isinstance(t.get(key), str) and bool(t.get(key)))
+        need(f"tracks.{tid}.k_demos==1", t.get("k_demos") == 1)
+        need(f"tracks.{tid}.language==none", t.get("language") == "none")
+        need(f"tracks.{tid}.protocol", t.get("protocol") in PROTOCOLS)
+        need(f"tracks.{tid}.prompts", t.get("prompts") in PROMPT_SOURCES)
+        need(
+            f"tracks.{tid}.prompt_instance_disjoint",
+            isinstance(t.get("prompt_instance_disjoint"), bool),
+        )
+        # Same Scene shows the demonstration of the very state it scores; a field that does not
+        # is the one that needs the disjointness. Getting this pair backwards is the mistake the
+        # whole two-field design exists to make impossible.
+        need(
+            f"tracks.{tid}.prompt_instance_disjoint matches protocol",
+            t.get("prompt_instance_disjoint") == (t.get("protocol") == "different_initial_state"),
+        )
+        demo = t.get("demonstration") or {}
+        need(f"tracks.{tid}.demonstration.view", demo.get("view") in DEMO_VIEWS)
+        need(
+            f"tracks.{tid}.demonstration.modalities has video",
+            isinstance(demo.get("modalities"), list) and "video" in (demo.get("modalities") or []),
+        )
+        need(f"tracks.{tid}.demonstration.withheld", isinstance(demo.get("withheld"), list))
+        track_skills = t.get("skills")
+        need(
+            f"tracks.{tid}.skills non-empty", isinstance(track_skills, list) and bool(track_skills)
+        )
+        for sid in track_skills or []:
+            need(f"tracks.{tid}.skills.{sid} exists", sid in skills)
+            claimed.append(sid)
+        own_sizes = t.get("sizes")
+        if own_sizes is not None:
+            need(
+                f"tracks.{tid}.sizes names match duel.sizes",
+                isinstance(own_sizes, dict) and set(own_sizes) == set(sizes),
+            )
+            for name, entry in (own_sizes or {}).items():
+                n = (entry or {}).get("units_per_skill")
+                need(f"tracks.{tid}.sizes.{name}.units_per_skill>=1", isinstance(n, int) and n >= 1)
+        need(
+            f"tracks.{tid}.default_size in sizes",
+            t.get("default_size") in (own_sizes if own_sizes is not None else sizes),
+        )
+        for sid in track_skills or []:
+            name = (skills.get(sid) or {}).get("simulator")
+            if isinstance(name, str) and name not in benchmarks:
+                errors.append(f"benchmarks.{name} undeclared (skills.{sid}.simulator)")
+    # Every skill belongs to exactly one field: one scored twice would need two architectures,
+    # and one scored nowhere would sit in the contract affecting nothing.
+    need("tracks partition the skills", sorted(claimed) == sorted(skills))
+    need("tracks claim no skill twice", len(claimed) == len(set(claimed)))
+    for name, entry in benchmarks.items():
+        need(f"benchmarks.{name} mapping", isinstance(entry, dict))
+        need(
+            f"benchmarks.{name}.distribution",
+            isinstance((entry or {}).get("distribution"), str)
+            and bool((entry or {}).get("distribution")),
+        )
+    need("baselines", isinstance(doc.get("baselines"), dict))
+    for tid in tracks:
+        need(f"baselines.{tid}", tid in (doc.get("baselines") or {}))
+        need(f"pools.tracks.{tid}", tid in ((doc.get("pools") or {}).get("tracks") or {}))
     for name, s in sizes.items():
         n = s.get("units_per_skill")
         need(f"duel.sizes.{name}.units_per_skill>=1", isinstance(n, int) and n >= 1)
@@ -141,23 +241,85 @@ class Spec:
     path: Path
     fingerprint: str
 
-    # -- track
+    # -- tracks
     @property
     def version(self) -> int:
         return int(self.raw["spec_version"])
 
     @property
-    def track_id(self) -> str:
-        return str(self.raw["track"]["id"])
+    def tracks(self) -> tuple[str, ...]:
+        """The fields of the competition, in declaration order."""
+        return tuple(self.raw["tracks"].keys())
+
+    def track(self, track: str) -> dict[str, Any]:
+        return self.raw["tracks"][track]
 
     @property
-    def track(self) -> dict[str, Any]:
-        return self.raw["track"]
+    def sole_track(self) -> str:
+        """The only field, for a caller that has not been given one yet.
+
+        Transitional. Every remaining use is a place the track still has to be threaded through
+        (#42), and this raises rather than guessing the moment a second field is declared - so
+        the second field cannot quietly be scored as the first.
+        """
+        tracks = self.tracks
+        if len(tracks) != 1:
+            raise ValueError(
+                f"this call site still assumes one track, but the spec declares {len(tracks)}: "
+                f"{', '.join(tracks)}. Thread the track through instead."
+            )
+        return tracks[0]
+
+    def track_title(self, track: str) -> str:
+        return str(self.track(track)["title"])
+
+    def track_of(self, skill: str) -> str:
+        """The field a skill is scored in. A skill belongs to exactly one, which `validate_spec`
+        holds to, so this is total for any skill in the contract."""
+        for tid in self.tracks:
+            if skill in self.track(tid)["skills"]:
+                return tid
+        raise KeyError(f"skill {skill!r} belongs to no track")
+
+    def demo_view(self, track: str) -> str:
+        """What this field's policies may see of a demonstration."""
+        return str(self.track(track)["demonstration"]["view"])
+
+    def withheld(self, track: str) -> tuple[str, ...]:
+        """The demonstration arrays this field keeps from its policies."""
+        return tuple(self.track(track)["demonstration"].get("withheld", ()))
+
+    def protocol(self, track: str) -> str:
+        return str(self.track(track)["protocol"])
+
+    def prompts(self, track: str) -> str:
+        """Where this field's prompts come from: a published pool, or materialized per duel."""
+        return str(self.track(track)["prompts"])
+
+    def prompt_instance_disjoint(self, track: str) -> bool:
+        """Whether the demonstration must start somewhere other than the scored state."""
+        return bool(self.track(track)["prompt_instance_disjoint"])
+
+    def architectures(self, track: str) -> tuple[str, ...]:
+        """Derived, never stored: no contract value is duplicated."""
+        return tuple(dict.fromkeys(self.architecture(s) for s in self.skills(track)))
+
+    def simulators(self, track: str) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(self.simulator(s) for s in self.skills(track)))
 
     # -- skills
     @property
-    def skills(self) -> tuple[str, ...]:
+    def all_skills(self) -> tuple[str, ...]:
+        """Every skill in the contract, in declaration order.
+
+        Named `all_` because with more than one field "the skills" is ambiguous: a duel scores
+        one field's skills, not the contract's. `Spec.skills(track)` is that other reading.
+        """
         return tuple(self.raw["skills"].keys())
+
+    def skills(self, track: str) -> tuple[str, ...]:
+        """The skills one field scores, in the order they are run, rendered and averaged."""
+        return tuple(self.track(track)["skills"])
 
     def skill(self, name: str) -> dict[str, Any]:
         return self.raw["skills"][name]
@@ -166,7 +328,7 @@ class Spec:
         return str(self.skill(name)["code"])
 
     def skill_for_code(self, code: str) -> str:
-        for s in self.skills:
+        for s in self.all_skills:
             if self.skill_code(s) == code:
                 return s
         raise KeyError(code)
@@ -198,30 +360,37 @@ class Spec:
     def duel(self) -> dict[str, Any]:
         return self.raw["duel"]
 
-    @property
-    def default_size(self) -> str:
-        return str(self.raw["duel"]["default_size"])
+    def _duel_of(self, track: str, key: str) -> Any:
+        """A field's own value for a duelling constant, or the competition-wide default.
 
-    @property
-    def sizes(self) -> tuple[str, ...]:
-        return tuple(self.raw["duel"]["sizes"].keys())
+        A RoboTwin unit and a LIBERO unit are not the same amount of work, so sizes and
+        tolerances have to be per field; the margin is per field for the same reason a crown is.
+        """
+        own = self.track(track).get(key)
+        return self.raw["duel"][key] if own is None else own
 
-    def size_of(self, size: str | None) -> str:
-        return size if size in self.raw["duel"]["sizes"] else self.default_size
+    def sizes(self, track: str) -> tuple[str, ...]:
+        return tuple(self._duel_of(track, "sizes").keys())
 
-    def units_per_skill(self, size: str | None = None) -> int:
-        return int(self.raw["duel"]["sizes"][self.size_of(size)]["units_per_skill"])
+    def default_size(self, track: str) -> str:
+        return str(self.track(track)["default_size"])
 
-    def units_per_duel(self, size: str | None = None) -> int:
-        return self.units_per_skill(size) * len(self.skills)
+    def size_of(self, track: str, size: str | None) -> str:
+        return size if size in self._duel_of(track, "sizes") else self.default_size(track)
 
-    @property
-    def score_margin(self) -> float:
-        return float(self.raw["duel"]["score_margin"])
+    def units_per_skill(self, track: str, size: str | None = None) -> int:
+        sizes = self._duel_of(track, "sizes")
+        return int(sizes[self.size_of(track, size)]["units_per_skill"])
 
-    @property
-    def max_void_fraction(self) -> float:
-        return float(self.raw["duel"]["max_void_fraction"])
+    def units_per_side(self, track: str, size: str | None = None) -> int:
+        """Units one side of a duel runs: this field's skills, not the contract's."""
+        return self.units_per_skill(track, size) * len(self.skills(track))
+
+    def score_margin(self, track: str) -> float:
+        return float(self._duel_of(track, "score_margin"))
+
+    def max_void_fraction(self, track: str) -> float:
+        return float(self._duel_of(track, "max_void_fraction"))
 
     # -- the rest
     @property
@@ -252,9 +421,16 @@ class Spec:
     def pools(self) -> dict[str, Any]:
         return self.raw["pools"]
 
-    @property
-    def baseline(self) -> dict[str, Any]:
-        return self.raw["baseline"]
+    def pool_pin(self, track: str) -> dict[str, Any]:
+        """The pool version and id this field is pinned to. Empty for a field whose prompts are
+        materialized per duel rather than drawn from a published pool."""
+        return dict((self.raw["pools"].get("tracks") or {}).get(track) or {})
+
+    def baseline(self, track: str) -> dict[str, Any] | None:
+        """This field's genesis king, or None where it has none yet and opens on an empty
+        throne - which the daemon already handles by crowning its first entrant."""
+        entry = (self.raw.get("baselines") or {}).get(track)
+        return dict(entry) if isinstance(entry, dict) else None
 
 
 def load_spec_file(path: str | Path) -> Spec:

@@ -14,12 +14,23 @@ from .store.records import now_iso
 
 log = logging.getLogger(__name__)
 
-PHASES = ("fetching", "checking", "evaluating", "publishing", "done", "failed")
+#: `materializing` is between checking and evaluating: a field that produces its own prompts
+#: fixes them before either side starts, so both see identical bytes.
+PHASES = (
+    "fetching",
+    "checking",
+    "materializing",
+    "evaluating",
+    "publishing",
+    "done",
+    "failed",
+)
 
 
 def build_frame(
     spec: Spec,
     *,
+    track: str,
     validator_key: str,
     event_id: str,
     kind: str,
@@ -38,7 +49,7 @@ def build_frame(
         raise ValueError(f"phase must be one of {PHASES}")
     per_skill: dict[str, dict[str, dict[str, int]]] = {s: {} for s in ("challenger", "king")}
     for s in per_skill:
-        for skill in spec.skills:
+        for skill in spec.skills(track):
             skill_units = [u for u in units if u.get("skill") == skill]
             done = sum(
                 1 for u in skill_units if isinstance(u.get(f"{s}_success"), bool) or u.get("void")
@@ -67,7 +78,7 @@ def build_frame(
     return {
         "schema": int(spec.live["schema"]),
         "validator_key": validator_key,
-        "track": spec.track_id,
+        "track": track,
         "event_id": event_id,
         "kind": kind,
         "duel_size": duel_size,

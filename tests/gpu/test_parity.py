@@ -8,13 +8,13 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from icilval.model.bpp import BPPPolicy
-from icilval.model.draw import DrawPolicy
 from icilval.model.fingerprint import check_submission
-from icilval.sim.draw_env import DrawBoard
-from icilval.sim.draw_episode import run_draw_episode
-from icilval.sim.episode import run_episode
-from icilval.sim.libero_env import LiberoEnv, load_init_states
+from icilval.simulators.draw.env import DrawBoard
+from icilval.simulators.draw.episode import run_draw_episode
+from icilval.simulators.draw.policy import DrawPolicy
+from icilval.simulators.libero.env import LiberoEnv, load_init_states
+from icilval.simulators.libero.episode import run_episode
+from icilval.simulators.libero.policy import BPPPolicy
 from icilval.spec import _repo_root
 
 pytestmark = [pytest.mark.gpu, pytest.mark.slow]
@@ -33,7 +33,7 @@ def arch_dir() -> Path:
 def test_genesis_passes_fingerprint(spec, genesis_dir):
     rep = check_submission(genesis_dir, spec, arch_dir())
     assert rep.ok, rep.errors
-    assert set(rep.skills) == set(spec.skills)
+    assert set(rep.skills) == set(spec.all_skills)
 
 
 def test_parity_libero_spatial(spec, genesis_dir, smoke_pool_or_skip):
@@ -80,7 +80,7 @@ def test_parity_draw_anything(spec, genesis_dir, smoke_pool_or_skip):
         pytest.skip("pool has no drawing tasks")
     policy = DrawPolicy(genesis_dir / "draw_anything", arch_dir(), spec, "draw_anything")
     policy.load()
-    did = duel_id(spec.version, spec.track_id, ModelRef.make("parity/draw", "1" * 40), None)
+    did = duel_id(spec.version, "sensorimotor", ModelRef.make("parity/draw", "1" * 40), None)
     units = [
         u.as_dict() for u in derive_units(pool, spec, did, "heavy") if u.skill == "draw_anything"
     ][:DRAW_TASKS]

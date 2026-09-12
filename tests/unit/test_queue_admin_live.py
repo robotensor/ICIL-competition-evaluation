@@ -9,7 +9,7 @@ import pytest
 from icilval.admin import AdminServer
 from icilval.ids import ModelRef
 from icilval.live import LiveReporter, build_frame
-from icilval.queue import Queue
+from icilval.queue import Queue, Queues
 
 
 def test_queue_replace_moves_to_back_and_persists(tmp_path):
@@ -51,8 +51,10 @@ def test_admin_server_contract(spec, tmp_path):
             raise RuntimeError("no such repo")
         return (revision or "c") * 40 if len(revision or "c") == 1 else "d" * 40
 
-    q = Queue(tmp_path / "q.json")
-    server = AdminServer(spec, q, "secret", "k" * 64, bind="127.0.0.1", port=0, resolver=resolver)
+    queues = Queues(tmp_path / "queue", spec.tracks)
+    server = AdminServer(
+        spec, queues, "secret", "k" * 64, bind="127.0.0.1", port=0, resolver=resolver
+    )
     server.start_background()
     base = f"http://127.0.0.1:{server.port}"
     try:
@@ -61,7 +63,7 @@ def test_admin_server_contract(spec, tmp_path):
         assert (
             status == 200
             and body["ok"]
-            and body["queue_len"] == 0
+            and body["tracks"]["sensorimotor"]["queue_len"] == 0
             and body["validator_key"] == "k" * 64
         )
         assert _call(base + "/nope", "secret")[0] == 404
@@ -72,7 +74,7 @@ def test_admin_server_contract(spec, tmp_path):
             {
                 "repo": "org/model",
                 "revision": None,
-                "track": spec.track_id,
+                "track": "sensorimotor",
                 "duel_size": "smoke",
                 "skip_model_config_check": False,
                 "source": "dashboard-dev-mode",
@@ -86,6 +88,7 @@ def test_admin_server_contract(spec, tmp_path):
             and body["entry"] == "org/model@" + "c" * 40
         )
         assert set(body) >= {
+            "track",
             "key",
             "repo",
             "revision",
@@ -102,7 +105,7 @@ def test_admin_server_contract(spec, tmp_path):
                 base + "/admin/submissions",
                 "secret",
                 "POST",
-                {"repo": "org/model", "duel_size": "huge"},
+                {"repo": "org/model", "track": "sensorimotor", "duel_size": "huge"},
             )[0]
             == 422
         )
@@ -115,7 +118,17 @@ def test_admin_server_contract(spec, tmp_path):
             )[0]
             == 422
         )
-        status, body = _call(base + "/admin/submissions", "secret", "POST", {"repo": "bad/repo"})
+        # With more than one field, saying which is required: queueing against the wrong ladder
+        # is not something the organizer can see from the reply.
+        status, body = _call(base + "/admin/submissions", "secret", "POST", {"repo": "org/model"})
+        assert status == 422 and "track is required" in body["error"]
+        assert "sensorimotor" in body["error"] and "video_only" in body["error"]
+        status, body = _call(
+            base + "/admin/submissions",
+            "secret",
+            "POST",
+            {"repo": "bad/repo", "track": "sensorimotor"},
+        )
         assert status == 422 and "detail" in body
         req = urllib.request.Request(
             base + "/admin/submissions",
@@ -180,6 +193,7 @@ def test_live_frame_and_reporter(spec):
     ]
     frame = build_frame(
         spec,
+        track="sensorimotor",
         validator_key="k",
         event_id="e" * 64,
         kind="duel",
@@ -212,6 +226,7 @@ def test_live_frame_and_reporter(spec):
     with pytest.raises(ValueError):
         build_frame(
             spec,
+            track="sensorimotor",
             validator_key="k",
             event_id="e",
             kind="duel",

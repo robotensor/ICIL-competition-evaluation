@@ -19,7 +19,7 @@ def make_rt(spec, tmp_path):
         spec_version=3,
         sources={},
         tasks={},
-        skills={s: {"eligible": []} for s in spec.skills},
+        skills={s: {"eligible": []} for s in spec.all_skills},
         root=tmp_path,
     )
     return Runtime(
@@ -57,6 +57,7 @@ def test_merge_and_media_flush(spec, tmp_path):
         "media_done": {},
         "recent_media": None,
         "event_id": "e" * 64,
+        "track": "sensorimotor",
         "kind": "duel",
         "size": "smoke",
         "king": None,

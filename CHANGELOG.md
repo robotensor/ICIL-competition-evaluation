@@ -2,6 +2,107 @@
 
 ## Unreleased
 
+### Two fields on pluggable benchmarks
+
+- (feat): `icilval.reference` publishes a measurement that is no field's score, to
+  `references/<id>.json` — signed like an index record, clips in the same content-addressed
+  `media/` tree, and in no index at all. Where a record lives is itself a claim:
+  `tracks/<field>/index-NNNN.jsonl` says the validator ran this under that field's contract for
+  its crown, and a benchmark run is none of those. It would also be machine-readably false, since
+  the orchestrator stamps `prompt.view` from the *field* — so a run handed the demonstration's
+  actions would publish under a field whose record says they were withheld. An exhibit carries
+  `ladder: false` and `track: null` as literals, must state what the policy was shown, and must
+  carry the sentence a reader sees first. `icilval reference` publishes one, ingesting its clips
+  into the same `media/` tree and rebuilding `references/index.json` - the listing a reader needs
+  to find one at all, since a directory cannot be listed over HTTP. The listing repeats no claim
+  that is not also in the signed document it points at, and names the benchmark rather than a
+  field, so a page can work out where an exhibit is worth offering without the exhibit naming a
+  contest (#67).
+- (fix): crowning is an allow-list. `Store.append` advanced the head to `new_king` whenever that
+  field was present, whatever the record's kind; only duels set it today, but a kind added later
+  that reused the record shape would have moved a field's crown silently (#67).
+- (feat): `icilval.benchmarks.api` is the contract a benchmark in another repository implements,
+  beside `spec.json` and `store-schema.json`. It is one-directional — a plugin must never import
+  `icilval` — so `Benchmark` is a `Protocol` and `validate_plugin` checks a duck. The surface
+  splits into a pure half that runs with no simulator, assets or GPU, and command builders that
+  return an argv, so the orchestrator never imports a simulator and the simulator side can run in
+  another image or on another host. `docs/benchmarks.md` (#38).
+- (feat): benchmarks are discovered from the `icilval.benchmarks` entry point group, so one in
+  another repository registers exactly as an in-repo one does. A distribution that registers
+  nothing, registers another name, or fails to import raises rather than being skipped.
+  `icilval benchmarks list|info|verify` and `spec validate --strict` are the validator host's
+  deploy check, while `validate_spec` still accepts an uninstalled benchmark so CI and the
+  dashboard can check the contract with no simulator. A duel, genesis or pool build refuses up
+  front, naming the distribution to install (#39).
+- (feat): **spec v5** — the competition has fields. `track` becomes `tracks`, a map; each field
+  carries its own demonstration modality, protocol, skills, pool, baseline and duelling
+  constants. `prompt_instance_disjoint` moves onto the field, because it describes how that field
+  closes the replay shortcut and a Same Scene field closes it the other way; a field claiming a
+  disjoint prompt while scoring the state it demonstrated is now a validation error. `benchmarks`
+  declares which distribution provides each simulator. Version 4 was published and rolled back,
+  so that number is retired; store and live schema are 4. The sensorimotor field is renamed from
+  `icil_1demo`, which rebuilds the store (#49). The submission layout and the three skill ids are
+  unchanged, so existing entrant repositories and the published genesis still fit (#41).
+- (feat): `Spec`'s duelling constants are track-keyed methods rather than properties, so a call
+  site that was not updated raises rather than silently scoring the wrong field's skills;
+  `units_per_duel` becomes `units_per_side` and counts the field's own skills (#41).
+- (feat): the store, queues, daemon, intake and live frames are keyed by the field. The queue
+  becomes a directory with one file per field, because a field's block counter advances with its
+  own lineage; the daemon takes one entry from each field in turn under the store's single writer
+  lock, and skips a field whose benchmark is not installed rather than stopping or scoring it
+  empty. A submission names the field it enters, required once there is more than one.
+  `--track` on `queue`, `units derive`, `duel`, `run-side` and `smoke` (#42).
+- (feat): a field declares a **demonstration view**, and it is enforced rather than agreed. The
+  sensorimotor view shows frames, actions and proprioception; the video-only view shows the
+  frames alone. Redaction happens in the orchestrator, over its own arrays, so it works for every
+  benchmark and survives one changing underneath: a view names the channels it keeps and an array
+  claimed by no channel is dropped, so a benchmark that grows a new array cannot leak it into a
+  restricted view. A duel reads a demonstration through one chokepoint, which also hashes what it
+  handed over; store schema 4 publishes that digest and the view on every unit, and what the
+  field withheld on every event, so a third party can confirm it (#43).
+- (feat): a field says where its prompts come from. `pool` is published up front, as the
+  sensorimotor field has always done; `materialized` is produced per duel on the validator host
+  and published **with the event**, which is what a field must use when the demonstration is the
+  answer for the very scene it is scored on. Both sides still see identical bytes and a third
+  party still verifies by hash, just not before. A unit whose expert never succeeds is replaced
+  during materializing, so a generation failure cannot strike mid-duel (#44).
+- (feat): a field's withheld channels must be absent from its architecture, not merely from the
+  mapping its policies are handed. The Behavior Prompting templates already carry
+  `ignore_prompt_obs` / `ignore_prompt_proprio` / `ignore_prompt_action`, and the fingerprint
+  pins every template value outside `model.mutable_keys`, so a submission cannot flip one back
+  on. `spec validate --strict` checks it, along with a declared architecture that has no template
+  (#45).
+- (feat): **the video-only field**. Three skills over RoboTwin's V1 suite, namespaced because
+  RoboTwin's own task table also has a pick-and-place category. Same Scene: the demonstration
+  starts in the very scene the rollout is scored in, so replaying its actions would be perfect -
+  which is exactly why they are withheld, and why the two fields close the same shortcut in
+  opposite ways. Its prompts are materialized per duel, its sizes are small and its void
+  tolerance higher (a unit is a scene rebuild plus a rollout), and its skill encoder is
+  organizer-owned and frozen so two entrants are comparable. It opens with no king, and is
+  declared but not open: its benchmark is not installed and `uniskill_v1` has no template yet
+  (#61), both reported by `spec validate --strict` (#46).
+- (fix): a skill is held only to what its field asks of it. A field that withholds the action
+  trajectory has no prompt chunking to describe, and a skill naming a benchmark that is not
+  installed is no longer refused - `validate_spec` must pass on CI, on a laptop and against the
+  dashboard's vendored copy, none of which have a simulator (#46).
+
+### Pluggable simulators
+
+- (refactor): `icilval.simulators` is a registry of `Simulator` records (policy factory, unit
+  runner, pool stage, unit-instance builder, demo frames, spec checks), one package per
+  simulator under `simulators/`; the side runner, unit derivation, demo rendering, pool build
+  and spec validation look a skill's simulator up and never name one. `sim/` and the
+  per-simulator halves of `model/` and `pools/` moved under `simulators/libero/` and
+  `simulators/draw/`; unit lists and pool ids are unchanged (#6).
+- (fix): a simulator checks its own pool tasks. `verify_pool` walks a pool generically and
+  cannot read a simulator's file formats, so LIBERO's BDDL parse check had been dropped: a
+  present-but-unreadable BDDL passed the pool build and failed the duel. `Simulator.verify_pool_task`
+  (default no-op) is the seam, and LIBERO supplies the parse (#37).
+- (test): the boundary is checked, not just documented. A guard fails if a simulator name appears
+  in `src/icilval` outside `simulators/` — `robotwin`, `sapien` and `uniskill` are listed before
+  they exist so it cannot rot when the first out-of-repo benchmark lands — and no simulator
+  package may import a model stack at module scope (#37).
+
 ### Spec v3: BPP's unit protocol (pool schema 3, store schema 3, live schema 3)
 
 - published: pool `2026.09-v3` (`73a98b08…`, 2378 tasks, 23530 demonstrations) as

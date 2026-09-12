@@ -1,6 +1,6 @@
 from icilval.daemon import Daemon, DaemonConfig
 from icilval.duel.orchestrate import DuelFailed
-from icilval.queue import Queue
+from icilval.queue import Queues
 from tests.unit.test_orchestrate import make_rt
 
 
@@ -20,7 +20,7 @@ class FakeOrchestrator:
             schema=1,
             event_id=f"{block:064x}",
             kind="duel",
-            track=self.rt.spec.track_id,
+            track="sensorimotor",
             block=block,
             finished_at=now_iso(),
             king=req.king,
@@ -32,7 +32,7 @@ class FakeOrchestrator:
             new_king=req.challenger if self.outcome == "win" else None,
         )
         self.rt.store.write_event(
-            self.rt.spec.track_id,
+            "sensorimotor",
             duel_event(
                 rec,
                 spec_version=1,
@@ -43,25 +43,27 @@ class FakeOrchestrator:
                 wall_seconds=1,
             ),
         )
-        self.rt.store.append(self.rt.spec.track_id, rec)
+        self.rt.store.append("sensorimotor", rec)
         return rec
 
 
 def test_daemon_genesis_then_duels(spec, tmp_path, monkeypatch):
     rt = make_rt(spec, tmp_path)
-    q = Queue(tmp_path / "q.json")
+    track = "sensorimotor"
+    queues = Queues(tmp_path / "queue", spec.tracks)
+    q = queues[track]
     cfg = DaemonConfig(
         store_root=tmp_path / "store",
-        queue_path=tmp_path / "q.json",
+        queue_path=tmp_path / "queue",
         run_root=tmp_path / "runs",
         docker_image=None,
         local_models={},
         once=True,
     )
-    d = Daemon(rt, q, cfg)
+    d = Daemon(rt, queues, cfg)
     monkeypatch.setattr(
         "icilval.duel.orchestrate.publish_genesis",
-        lambda rt_, ref, block, **kw: (
+        lambda rt_, track_, ref, block, **kw: (
             FakeOrchestrator(rt_, "win").run(
                 type("R", (), {"challenger": ref, "king": None})(), block
             )
@@ -69,25 +71,27 @@ def test_daemon_genesis_then_duels(spec, tmp_path, monkeypatch):
             else _genesis(rt_, ref, block)
         ),
     )
-    assert d.step() is False
+    assert d.step(track) is False
     q.add("org/first", "a" * 40)
     q.add("org/second", "b" * 40)
-    assert d.step() is True  # genesis
-    assert d.current_king().repo == "org/first"
+    assert d.step(track) is True  # genesis
+    assert d.current_king(track).repo == "org/first"
     fake = FakeOrchestrator(rt, "win")
     d.orchestrator = fake
-    assert d.step() is True  # duel: second beats first
+    assert d.step(track) is True  # duel: second beats first
     assert fake.calls == [("org/second", "org/first", 2)]
-    assert d.current_king().repo == "org/second"
+    assert d.current_king(track).repo == "org/second"
     assert q.state.in_progress is None and not q.entries()
     q.add("org/second", "b" * 40)  # the king resubmits: dropped
-    assert d.step() is True and not q.entries()
+    assert d.step(track) is True and not q.entries()
     q.add("org/third", "c" * 40)
     d.orchestrator = FakeOrchestrator(rt, "fail")
     assert (
-        d.step() is True and d.current_king().repo == "org/second" and q.state.in_progress is None
+        d.step(track) is True
+        and d.current_king(track).repo == "org/second"
+        and q.state.in_progress is None
     )
-    snap = rt.store.queue_path(spec.track_id)
+    snap = rt.store.queue_path("sensorimotor")
     assert snap.exists()
 
 
@@ -98,7 +102,7 @@ def _genesis(rt, ref, block):
         schema=1,
         event_id=f"{1000 + block:064x}",
         kind="genesis",
-        track=rt.spec.track_id,
+        track="sensorimotor",
         block=block,
         finished_at=now_iso(),
         king=ref,
@@ -110,7 +114,7 @@ def _genesis(rt, ref, block):
         new_king=None,
     )
     rt.store.write_event(
-        rt.spec.track_id,
+        "sensorimotor",
         duel_event(
             rec,
             spec_version=1,
@@ -121,5 +125,5 @@ def _genesis(rt, ref, block):
             wall_seconds=0,
         ),
     )
-    rt.store.append(rt.spec.track_id, rec)
+    rt.store.append("sensorimotor", rec)
     return rec

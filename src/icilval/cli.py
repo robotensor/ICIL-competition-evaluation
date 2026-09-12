@@ -25,7 +25,47 @@ def cmd_spec(args) -> int:
     if errors:
         print("invalid:", ", ".join(errors))
         return 1
+    if getattr(args, "strict", False):
+        # `validate_spec` deliberately accepts a benchmark that is not installed and needs no
+        # `arch/` directory, so CI, a laptop and the dashboard can check the contract with no
+        # simulator and no templates. --strict is the deploy check.
+        from . import arch as arch_mod
+        from . import simulators
+
+        spec = load_spec(args.spec)
+        problems = [
+            f"{row['simulator']}: {'; '.join(row['problems'])}"
+            for row in simulators.audit(spec)
+            if row["problems"]
+        ]
+        problems.extend(arch_mod.check_spec(spec, args.arch))
+        if problems:
+            for problem in problems:
+                print(problem)
+            return 1
     print(f"{path}: ok")
+    return 0
+
+
+def cmd_benchmarks(args) -> int:
+    from . import simulators
+    from .spec import load_spec
+
+    spec = load_spec(args.spec)
+    rows = simulators.audit(spec)
+    if args.benchmarks_cmd == "info":
+        print(json.dumps(rows, indent=2, sort_keys=True))
+        return 0
+    bad = 0
+    for row in rows:
+        state = "ok" if not row["problems"] else "; ".join(row["problems"])
+        bad += bool(row["problems"])
+        version = f" {row['version']}" if row["version"] else ""
+        distribution = row["distribution"] or "-"
+        skills = ",".join(row["skills"]) or "-"
+        print(f"{row['simulator']:<16} {distribution + version:<34} skills={skills:<28} {state}")
+    if args.benchmarks_cmd == "verify" and bad:
+        return 1
     return 0
 
 
@@ -77,10 +117,80 @@ def cmd_store(args) -> int:
     return 2
 
 
-def cmd_queue(args) -> int:
-    from .queue import Queue
+def cmd_reference(args) -> int:
+    """Publish a measurement that is no field's score.
 
-    q = Queue(args.queue)
+    The document is read from a file rather than assembled from flags: what an exhibit says about
+    what the policy was shown is the load-bearing part, and it should be reviewable as a file and
+    diffable in a pull request, not typed on a command line once.
+
+    Clips are ingested into the same content-addressed `media/` tree the ladders use, so an
+    exhibit's videos play through the ordinary media route. The document names them, each with the
+    `source` file it comes from, resolved relative to the document; the sha256 is computed here,
+    so the document cannot claim a clip the store does not hold.
+    """
+    from . import reference as ref
+    from .canon import Signer
+    from .store.records import now_iso
+    from .store.writer import Store
+
+    spec = _spec(args)
+    signer = Signer.from_file(args.key)
+    store = Store(args.store, spec, signer)
+
+    doc = json.loads(Path(args.doc).read_text(encoding="utf-8"))
+
+    # A clip is declared in the document, with the file it comes from. `source` is where the bytes
+    # are on this machine and is stripped before publishing; `sha256`, if the document states one,
+    # must match what was actually ingested, so a document cannot claim a clip it does not have.
+    # Declaring them here rather than on the command line is what makes republishing idempotent:
+    # the first version of this took clips as flags, and re-running it without them quietly
+    # published an exhibit with no videos.
+    media = []
+    for entry in doc.get("media") or []:
+        entry = dict(entry)
+        source = entry.pop("source", None)
+        if source:
+            sha = store.put_media(Path(args.doc).parent / source)
+            if entry.get("sha256") and entry["sha256"] != sha:
+                print(f"error: {source} hashes to {sha}, not {entry['sha256']} as declared")
+                return 2
+            entry["sha256"] = sha
+        if not entry.get("sha256"):
+            print(f"error: clip {entry.get('label')!r} has neither a source nor a sha256")
+            return 2
+        media.append(entry)
+
+    out = ref.write(
+        args.store,
+        ref.exhibit(
+            reference_id=doc["reference_id"],
+            headline=doc["headline"],
+            not_a_competition_score=doc["not_a_competition_score"],
+            benchmark=doc.get("benchmark", {}),
+            protocol=doc.get("protocol", {}),
+            demonstration_shown=doc["demonstration_shown"],
+            subject=doc.get("subject", {}),
+            results=doc.get("results", {}),
+            ceiling=doc.get("ceiling"),
+            published_at=doc.get("published_at") or now_iso(),
+            media=media,
+        ),
+        signer,
+    )
+    # The listing is rebuilt from disk rather than appended to, so it cannot drift from what the
+    # store actually holds.
+    ref.write_listing(args.store)
+    print(out)
+    return 0
+
+
+def cmd_queue(args) -> int:
+    from .queue import Queues
+
+    spec = _spec(args)
+    track = args.track or spec.sole_track
+    q = Queues(args.queue, spec.tracks)[track]
     if args.queue_cmd == "add":
         entry, pos = q.add(args.repo, args.revision, duel_size=args.duel_size, source="cli")
         print(f"{entry.ref.entry} key={entry.key} position={pos}")
@@ -101,11 +211,13 @@ def cmd_queue(args) -> int:
 
 def cmd_admin(args) -> int:
     from .admin import AdminServer
-    from .queue import Queue
+    from .queue import Queues
 
     spec = _spec(args)
     key = Path(args.pub).read_text().strip() if args.pub else ""
-    server = AdminServer(spec, Queue(args.queue), args.token, key, bind=args.bind, port=args.port)
+    server = AdminServer(
+        spec, Queues(args.queue, spec.tracks), args.token, key, bind=args.bind, port=args.port
+    )
     print(f"admin listening on http://{server.bind}:{server.port}")
     try:
         server.serve_forever()
@@ -127,9 +239,15 @@ def cmd_units(args) -> int:
     if args.king:
         k_repo, k_rev = args.king.split("@", 1)
         king = ModelRef.make(k_repo, k_rev)
-    did = duel_id(spec.version, spec.track_id, challenger, king)
+    track = args.track or spec.sole_track
+    did = duel_id(spec.version, track, challenger, king)
     units = [u.as_dict() for u in derive_units(pool, spec, did, args.size)]
-    doc = {"duel_id": did, "pool_id": pool.pool_id, "size": spec.size_of(args.size), "units": units}
+    doc = {
+        "duel_id": did,
+        "pool_id": pool.pool_id,
+        "size": spec.size_of(track, args.size),
+        "units": units,
+    }
     if args.out:
         Path(args.out).write_text(json.dumps(doc, indent=2) + "\n")
         print(f"{len(units)} units -> {args.out}")
@@ -141,6 +259,7 @@ def cmd_units(args) -> int:
 def cmd_pools(args) -> int:
     import logging
 
+    from . import simulators
     from .pools.build import finalize, open_pool, stage_skill, summary, verify_pool
     from .pools.schema import Pool
     from .pools.sources import Sources
@@ -160,11 +279,14 @@ def cmd_pools(args) -> int:
     if args.pools_cmd == "build":
         out = Path(args.out)
         src = sources()
-        stages = args.stage or [*spec.skills, "finalize"]
-        unknown = [st for st in stages if st != "finalize" and st not in spec.skills]
+        stages = args.stage or [*spec.all_skills, "finalize"]
+        unknown = [st for st in stages if st != "finalize" and st not in spec.all_skills]
         if unknown:
             print("unknown stage(s):", *unknown, "- stages are the skill ids and finalize")
             return 2
+        # A stage runs its simulator's own importer, so an absent benchmark must stop the build
+        # before a half-filled pool is written.
+        simulators.require(spec, [st for st in stages if st != "finalize"])
         datasets = tuple(
             dict.fromkeys(str(spec.tasks(st)["dataset"]) for st in stages if st != "finalize")
         )
@@ -225,7 +347,7 @@ def cmd_pools(args) -> int:
         )
         return 0
     if args.pools_cmd == "generate-draw":
-        from .pools.build_draw import generate_draw, import_generated_draw
+        from .simulators.draw.pool import generate_draw, import_generated_draw
         from .spec import _repo_root as rr
 
         root = rr() or Path.cwd()
@@ -353,6 +475,8 @@ def cmd_run_side(args) -> int:
     spec = _spec(args)
     doc = json.loads(Path(args.units).read_text())
     units = doc["units"] if isinstance(doc, dict) else doc
+    if isinstance(doc, dict) and not args.track:
+        args.track = doc.get("track")
     summary = run_side(
         side=args.side,
         model_dir=Path(args.model),
@@ -360,6 +484,7 @@ def cmd_run_side(args) -> int:
         pool=Pool.load(args.pool),
         units=units,
         spec=spec,
+        track=args.track or spec.sole_track,
         out_dir=Path(args.out),
         device=args.device,
         record_video=not args.no_video,
@@ -379,6 +504,7 @@ def cmd_duel(args) -> int:
     spec = _spec(args)
     rt = _runtime(args, spec)
     req = DuelRequest(
+        track=args.track or spec.sole_track,
         challenger=_parse_ref(args.challenger),
         king=_parse_ref(args.king) if args.king else None,
         size=args.size,
@@ -430,19 +556,19 @@ def cmd_daemon(args) -> int:
     import threading
 
     from .daemon import Daemon, DaemonConfig
-    from .queue import Queue
+    from .queue import Queues
 
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
     )
     spec = _spec(args)
     rt = _runtime(args, spec)
-    queue = Queue(args.queue)
+    queues = Queues(args.queue, spec.tracks)
     if args.admin_token:
         from .admin import AdminServer
 
         server = AdminServer(
-            spec, queue, args.admin_token, rt.signer.verify_key_hex, lock=threading.Lock()
+            spec, queues, args.admin_token, rt.signer.verify_key_hex, lock=threading.Lock()
         )
         server.start_background()
         print(f"admin listening on http://{server.bind}:{server.port}")
@@ -454,7 +580,7 @@ def cmd_daemon(args) -> int:
         local_models=_local_models(args.local_model),
         once=args.once,
     )
-    Daemon(rt, queue, cfg).run()
+    Daemon(rt, queues, cfg).run()
     return 0
 
 
@@ -487,10 +613,12 @@ def cmd_smoke(args) -> int:
     challenger = ModelRef.make(args.repo, args.revision[::-1] if args.same_model else args.revision)
     local = {args.repo: args.model_dir}
     block = 1
-    if rt.store.head(spec.track_id) is None or not rt.store.head(spec.track_id).get("king"):
-        publish_genesis(rt, king, block, local_models=local, check=True)
+    track = args.track or spec.sole_track
+    if rt.store.head(track) is None or not rt.store.head(track).get("king"):
+        publish_genesis(rt, track, king, block, local_models=local, check=True)
         block += 1
     req = DuelRequest(
+        track=track,
         challenger=challenger,
         king=king,
         size=args.size or "smoke",
@@ -553,7 +681,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("spec", help="inspect the contract")
     s.add_argument("spec_cmd", choices=["fingerprint", "validate"])
+    s.add_argument(
+        "--strict",
+        action="store_true",
+        help="also require every benchmark installed and every architecture template present",
+    )
+    s.add_argument("--arch", default="arch", help="the architecture templates directory")
     s.set_defaults(func=cmd_spec)
+
+    bm = sub.add_parser("benchmarks", help="the benchmarks this validator can run")
+    bm.add_argument("benchmarks_cmd", choices=["list", "info", "verify"])
+    bm.set_defaults(func=cmd_benchmarks)
 
     k = sub.add_parser("keys", help="generate the validator signing key")
     k.add_argument("keys_cmd", choices=["generate"])
@@ -584,8 +722,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     st.set_defaults(func=cmd_store)
 
-    q = sub.add_parser("queue", help="challenger queue")
-    q.add_argument("--queue", default="queue/queue.json")
+    rf = sub.add_parser(
+        "reference",
+        help="publish a measurement that is no field's score (references/<id>.json, on no ladder)",
+    )
+    rf.add_argument("--store", required=True)
+    rf.add_argument("--key", required=True, help="validator.ed25519 secret file")
+    rf.add_argument("--doc", required=True, help="the exhibit, as JSON")
+    rf.set_defaults(func=cmd_reference)
+
+    q = sub.add_parser("queue", help="challenger queues, one per field")
+    q.add_argument("--queue", default="queue", help="the queue directory, one file per field")
+    q.add_argument("--track", default=None, help="which field (default: the only one)")
     q_sub = q.add_subparsers(dest="queue_cmd", required=True)
     q_add = q_sub.add_parser("add")
     q_add.add_argument("repo")
@@ -598,7 +746,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     a = sub.add_parser("admin", help="submission intake server")
     a.add_argument("admin_cmd", choices=["serve"])
-    a.add_argument("--queue", default="queue/queue.json")
+    a.add_argument("--queue", default="queue")
     a.add_argument("--token", required=True)
     a.add_argument("--pub", default=None, help="validator.pub, echoed by /admin/health")
     a.add_argument("--bind", default=None)
@@ -667,6 +815,7 @@ def build_parser() -> argparse.ArgumentParser:
     u.add_argument("--challenger", required=True, help="repo@revision")
     u.add_argument("--king", default=None, help="repo@revision")
     u.add_argument("--size", default=None)
+    u.add_argument("--track", default=None, help="which field (default: the only one)")
     u.add_argument("--out", default=None)
     u.set_defaults(func=cmd_units)
 
@@ -710,6 +859,9 @@ def build_parser() -> argparse.ArgumentParser:
     rs.add_argument("--side", required=True, choices=["challenger", "king"])
     rs.add_argument("--out", required=True)
     rs.add_argument("--device", default="cuda")
+    rs.add_argument(
+        "--track", default=None, help="the field these units belong to (default: the unit list's)"
+    )
     rs.add_argument("--no-video", action="store_true")
     rs.set_defaults(func=cmd_run_side)
 
@@ -718,6 +870,7 @@ def build_parser() -> argparse.ArgumentParser:
     d.add_argument("--challenger", required=True, help="repo@revision")
     d.add_argument("--king", default=None, help="repo@revision (default: none)")
     d.add_argument("--size", default=None)
+    d.add_argument("--track", default=None, help="which field (default: the only one)")
     d.add_argument("--block", type=int, default=1)
     d.add_argument("--skip-model-check", action="store_true")
     d.add_argument("--gpus", default="all")
@@ -733,7 +886,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     dm = sub.add_parser("daemon", help="the validator loop")
     _add_runtime_args(dm)
-    dm.add_argument("--queue", default="queue/queue.json")
+    dm.add_argument("--queue", default="queue")
     dm.add_argument("--admin-token", default=None, help="also serve the submission intake")
     dm.add_argument("--once", action="store_true")
     dm.set_defaults(func=cmd_daemon)
@@ -756,6 +909,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="challenger = a distinct ref to the same weights (copy-of-king case)",
     )
     sm.add_argument("--size", default="smoke")
+    sm.add_argument("--track", default=None, help="which field (default: the only one)")
     sm.add_argument("--no-video", action="store_true")
     sm.set_defaults(func=cmd_smoke)
 
