@@ -56,6 +56,27 @@ its value is a module that calls `icilval.simulators.register()` for exactly tha
 distribution that registers nothing, or registers a different name, is refused loudly: a
 half-installed benchmark must never be silently absent.
 
+## Installing one, and finding out you have not
+
+Discovery is lazy: the registry imports the entry point group the first time anything asks it
+what simulators exist. Three different behaviours, deliberately:
+
+| where | a benchmark that is not installed |
+| --- | --- |
+| `validate_spec` | **accepted.** Only the name shape and the `benchmarks` declaration are checked. This is what lets CI, a laptop and the dashboard's vendored copy validate the contract with no simulator anywhere. |
+| `icilval benchmarks list\|verify`, `icilval spec validate --strict` | **reported**, with the distribution to install. The validator host's deploy check; `verify` exits non-zero. |
+| a duel, a genesis, a pool build | **raises `MissingBenchmark`** before anything is fetched or written. |
+
+The daemon logs and skips a track whose benchmark is missing rather than stopping: one absent
+benchmark must not halt another field's queue, and must never be silently scored as empty.
+
+```console
+$ icilval benchmarks list
+draw             icilval                            skills=draw_anything                ok
+libero           icilval                            skills=pick_and_place,goal_chain    ok
+robotwin         robotwin-icil-competition          skills=rt_stacking                  not installed
+```
+
 ## `api_version`
 
 Version 1 is **provisional**. It was designed against one benchmark, and the second will bend it.

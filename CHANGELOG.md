@@ -10,6 +10,13 @@
   splits into a pure half that runs with no simulator, assets or GPU, and command builders that
   return an argv, so the orchestrator never imports a simulator and the simulator side can run in
   another image or on another host. `docs/benchmarks.md` (#38).
+- (feat): benchmarks are discovered from the `icilval.benchmarks` entry point group, so one in
+  another repository registers exactly as an in-repo one does. A distribution that registers
+  nothing, registers another name, or fails to import raises rather than being skipped.
+  `icilval benchmarks list|info|verify` and `spec validate --strict` are the validator host's
+  deploy check, while `validate_spec` still accepts an uninstalled benchmark so CI and the
+  dashboard can check the contract with no simulator. A duel, genesis or pool build refuses up
+  front, naming the distribution to install (#39).
 
 ### Pluggable simulators
 

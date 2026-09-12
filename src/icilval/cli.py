@@ -25,7 +25,39 @@ def cmd_spec(args) -> int:
     if errors:
         print("invalid:", ", ".join(errors))
         return 1
+    if getattr(args, "strict", False):
+        # `validate_spec` deliberately accepts a benchmark that is not installed, so CI and a
+        # laptop can check the contract with no simulator. --strict is the deploy check.
+        from . import simulators
+
+        rows = [r for r in simulators.audit(load_spec(args.spec)) if r["problems"]]
+        if rows:
+            for row in rows:
+                print(f"{row['simulator']}: {'; '.join(row['problems'])}")
+            return 1
     print(f"{path}: ok")
+    return 0
+
+
+def cmd_benchmarks(args) -> int:
+    from . import simulators
+    from .spec import load_spec
+
+    spec = load_spec(args.spec)
+    rows = simulators.audit(spec)
+    if args.benchmarks_cmd == "info":
+        print(json.dumps(rows, indent=2, sort_keys=True))
+        return 0
+    bad = 0
+    for row in rows:
+        state = "ok" if not row["problems"] else "; ".join(row["problems"])
+        bad += bool(row["problems"])
+        version = f" {row['version']}" if row["version"] else ""
+        distribution = row["distribution"] or "-"
+        skills = ",".join(row["skills"]) or "-"
+        print(f"{row['simulator']:<16} {distribution + version:<34} skills={skills:<28} {state}")
+    if args.benchmarks_cmd == "verify" and bad:
+        return 1
     return 0
 
 
@@ -141,6 +173,7 @@ def cmd_units(args) -> int:
 def cmd_pools(args) -> int:
     import logging
 
+    from . import simulators
     from .pools.build import finalize, open_pool, stage_skill, summary, verify_pool
     from .pools.schema import Pool
     from .pools.sources import Sources
@@ -165,6 +198,9 @@ def cmd_pools(args) -> int:
         if unknown:
             print("unknown stage(s):", *unknown, "- stages are the skill ids and finalize")
             return 2
+        # A stage runs its simulator's own importer, so an absent benchmark must stop the build
+        # before a half-filled pool is written.
+        simulators.require(spec, [st for st in stages if st != "finalize"])
         datasets = tuple(
             dict.fromkeys(str(spec.tasks(st)["dataset"]) for st in stages if st != "finalize")
         )
@@ -553,7 +589,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("spec", help="inspect the contract")
     s.add_argument("spec_cmd", choices=["fingerprint", "validate"])
+    s.add_argument(
+        "--strict",
+        action="store_true",
+        help="also require every benchmark a skill names to be installed and pinned",
+    )
     s.set_defaults(func=cmd_spec)
+
+    bm = sub.add_parser("benchmarks", help="the benchmarks this validator can run")
+    bm.add_argument("benchmarks_cmd", choices=["list", "info", "verify"])
+    bm.set_defaults(func=cmd_benchmarks)
 
     k = sub.add_parser("keys", help="generate the validator signing key")
     k.add_argument("keys_cmd", choices=["generate"])
