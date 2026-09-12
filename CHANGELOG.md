@@ -4,6 +4,19 @@
 
 ### Two fields on pluggable benchmarks
 
+- (feat): the orchestrator **serves** an entrant's policy, which is what `policy_address` in the
+  benchmark ABI has always pointed at and what nothing provided. The weights are a submission and
+  the network around them is a template this repository fingerprints, so handing them to a
+  benchmark would put the one thing the competition must control inside the thing it does not.
+  `model/wire.py` carries **named arrays and nothing else** - deliberately not RoboTwin's own
+  transport, good as it is, because that one carries its `Demonstration`, `Frame` and
+  `Observation` types and an orchestrator that spoke it would know one benchmark's types. Never
+  pickles. `model/host.py` serves it; `model/client.py` is the reference client a benchmark
+  **vendors** rather than imports, and this repository's tests drive the real host through it over
+  a real socket, so the thing a benchmark copies is the thing known to work. A model error is one
+  unit's failure, counted, with the host left up - tearing it down would void every unit after it
+  (#69).
+
 - (feat): a plugged benchmark can actually be **run**. `simulators.adapt` wired `run_units` to a
   refusal and nothing in `src/` ever called the ABI's `run_command` or `read_result`, so the only
   benchmarks that could execute a duel were the two shipped here - an orchestration layer that can
