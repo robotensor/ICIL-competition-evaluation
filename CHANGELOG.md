@@ -35,6 +35,14 @@
   lock, and skips a field whose benchmark is not installed rather than stopping or scoring it
   empty. A submission names the field it enters, required once there is more than one.
   `--track` on `queue`, `units derive`, `duel`, `run-side` and `smoke` (#42).
+- (feat): a field declares a **demonstration view**, and it is enforced rather than agreed. The
+  sensorimotor view shows frames, actions and proprioception; the video-only view shows the
+  frames alone. Redaction happens in the orchestrator, over its own arrays, so it works for every
+  benchmark and survives one changing underneath: a view names the channels it keeps and an array
+  claimed by no channel is dropped, so a benchmark that grows a new array cannot leak it into a
+  restricted view. A duel reads a demonstration through one chokepoint, which also hashes what it
+  handed over; store schema 4 publishes that digest and the view on every unit, and what the
+  field withheld on every event, so a third party can confirm it (#43).
 
 ### Pluggable simulators
 
