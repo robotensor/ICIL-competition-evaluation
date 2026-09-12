@@ -90,18 +90,77 @@ def load_plugins() -> tuple[str, ...]:
         if ep.name in REGISTRY:
             continue
         try:
-            ep.load()  # importing it is what registers
+            loaded = ep.load()
         except Exception as exc:  # noqa: BLE001
             raise MissingBenchmark(
                 f"the benchmark {ep.name!r} ({ep.value}) is installed but did not import: {exc}"
             ) from exc
-        if ep.name not in REGISTRY:
-            raise MissingBenchmark(
-                f"{ep.value} advertises the simulator {ep.name!r} but registered {sorted(REGISTRY)}"
-            )
+        register(adapt(ep.name, _benchmark_of(ep, loaded), distribution=_distribution(ep)))
         added.append(ep.name)
     _LOADED = True
     return tuple(added)
+
+
+def _benchmark_of(ep: Any, loaded: Any) -> Any:
+    """The plugin object behind an entry point.
+
+    A plugin may not import `icilval`, so it cannot register itself: it exposes an object, and the
+    orchestrator adapts it. An entry point may name that object or the module holding it as
+    `BENCHMARK`.
+    """
+    candidate = loaded if hasattr(loaded, "api_version") else getattr(loaded, "BENCHMARK", None)
+    if candidate is None:
+        raise MissingBenchmark(
+            f"{ep.value} exposes no benchmark: expected the object itself, or a module with a "
+            "`BENCHMARK` attribute"
+        )
+    from ..benchmarks import validate_plugin
+
+    errors = validate_plugin(candidate)
+    if errors:
+        raise MissingBenchmark(f"{ep.value} is not a usable benchmark: {'; '.join(errors)}")
+    if candidate.id != ep.name:
+        raise MissingBenchmark(
+            f"{ep.value} is advertised as {ep.name!r} but calls itself {candidate.id!r}"
+        )
+    return candidate
+
+
+def _distribution(ep: Any) -> str:
+    dist = getattr(ep, "dist", None)
+    return getattr(dist, "name", None) or "unknown"
+
+
+def adapt(name: str, benchmark: Any, *, distribution: str) -> Simulator:
+    """Wrap a plugin object as the `Simulator` the rest of the validator dispatches on.
+
+    An out-of-repo benchmark runs its simulator in a subprocess, so the hooks that would run one
+    in *this* process raise rather than pretend. The orchestrator uses the plugin's command
+    builders for that work, which is the whole point of the argv split.
+    """
+
+    def out_of_process(what: str):
+        def refuse(*_a: Any, **_k: Any):
+            raise MissingBenchmark(
+                f"{name}: {what} runs out of process for a benchmark in another repository; "
+                "the orchestrator drives it through the plugin's command builders"
+            )
+
+        return refuse
+
+    info = benchmark.info() if hasattr(benchmark, "info") else {}
+    return Simulator(
+        name=name,
+        make_policy=out_of_process("loading a policy"),
+        run_units=out_of_process("running units"),
+        build_stage=out_of_process("building a pool"),
+        make_unit=out_of_process("building a unit"),
+        demo_frames=lambda demo: [],
+        validate_skill=getattr(benchmark, "validate_skill", lambda skill, doc: []),
+        distribution=distribution,
+        benchmark=benchmark,
+        demo_channels={k: tuple(v) for k, v in (info.get("demo_channels") or {}).items()},
+    )
 
 
 def _ensure_loaded() -> None:
