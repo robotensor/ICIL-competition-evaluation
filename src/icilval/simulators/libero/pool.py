@@ -11,7 +11,7 @@ from typing import Any
 
 import numpy as np
 
-from ...pools.demos import load_demo
+from ...pools.demos import load_demo_raw
 from ...pools.schema import Pool, PoolTask
 from ...pools.sources import Sources, evict, fetch, hub_files
 from ...spec import Spec
@@ -161,7 +161,7 @@ def demo_init_indices(
     """
     out: dict[str, int | None] = {}
     for demo_id in demos:
-        start = load_demo(pool.path("demos") / f"{demo_id}.npz")["init_state"]
+        start = load_demo_raw(pool.path("demos") / f"{demo_id}.npz")["init_state"]
         hit = None
         if states.ndim == 2 and states.shape[1] == start.shape[0]:
             close = np.all(np.abs(states - start[None, :]) <= atol, axis=1)

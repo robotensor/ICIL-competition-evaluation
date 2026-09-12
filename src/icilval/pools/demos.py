@@ -39,11 +39,38 @@ def sorted_demo_keys(keys: list[str]) -> list[str]:
 
 
 # ---------------------------------------------------------------- reading back
-def load_demo(path: str | Path) -> dict[str, Any]:
+def load_demo_raw(path: str | Path) -> dict[str, Any]:
+    """Every array in the file.
+
+    Build-time and rendering only. A duel must not call this: what a policy may see depends on
+    the field it is being scored in, which is what `load_demo_for` applies.
+    """
     with np.load(path, allow_pickle=False) as z:
         out = {k: z[k] for k in z.files if k != "meta"}
         out["meta"] = json.loads(str(z["meta"]))
     return out
+
+
+def demo_path(pool: Any, demo_id: str) -> Path:
+    return Path(pool.path("demos")) / f"{demo_id}.npz"
+
+
+def load_demo_for(pool: Any, spec: Spec, track: str, unit: dict[str, Any]) -> dict[str, Any]:
+    """The demonstration this unit's field allows, and nothing else.
+
+    The only loader a duel may call. What the field withholds is never put in the mapping, so a
+    benchmark's episode loop cannot reach it however it is written.
+    """
+    from .. import demoview, simulators
+
+    view = demoview.view_for(spec, track)
+    channels = simulators.for_skill(spec, unit["skill"]).demo_channels
+    raw = load_demo_raw(demo_path(pool, unit["demo"]))
+    handed = demoview.apply(raw, channels, view)
+    leaked = demoview.check(handed, channels, view)
+    if leaked:  # unreachable unless `apply` and `check` disagree; loud rather than silent
+        raise ValueError(f"{unit['demo']}: {'; '.join(leaked)}")
+    return handed
 
 
 def render_demo(path: str | Path, out_mp4: str | Path, spec: Spec, skill: str) -> str:
@@ -52,7 +79,7 @@ def render_demo(path: str | Path, out_mp4: str | Path, spec: Spec, skill: str) -
     from ..simulators import for_skill
     from ..video import encode_frames
 
-    demo = load_demo(path)
+    demo = load_demo_raw(path)
     fps = int(spec.env(skill)["control_freq"])
     frames = for_skill(spec, skill).demo_frames(demo)
     return encode_frames(frames, out_mp4, fps, spec.media["video"])

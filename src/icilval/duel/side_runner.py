@@ -16,7 +16,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from .. import demoview
 from ..canon import sha256_file
+from ..pools.demos import load_demo_for
 from ..pools.schema import Pool
 from ..simulators import for_skill, make_policy
 from ..spec import Spec
@@ -83,6 +85,17 @@ def run_side(
 
         def out_of_time(self) -> bool:
             return time.monotonic() - self.t_start > self.side_wall
+
+        def demo(self, unit: dict[str, Any]) -> dict[str, Any]:
+            """This unit's demonstration, as its field allows it to be seen.
+
+            The only way a simulator's episode loop gets a demonstration. What the field
+            withholds was never put in the mapping, and what was handed over is hashed onto the
+            unit so the record can publish it.
+            """
+            handed = load_demo_for(pool, spec, track, unit)
+            unit["handed_sha256"] = demoview.handed_sha256(handed)
+            return handed
 
         def record(self, unit: dict[str, Any], res: Any, clip: Path) -> dict[str, Any]:
             return _record(unit, res, clip, out_dir, record_video)
@@ -159,6 +172,7 @@ def _record(unit: dict[str, Any], res: Any, clip: Path, out_dir: Path, record_vi
         "void": res.void,
         "prompt_steps": res.prompt_steps,
         "prompt_chunks": res.prompt_chunks,
+        "handed_sha256": unit.get("handed_sha256"),
         "instance_applied": res.instance_applied,
         "video": None,
         "video_sha256": None,

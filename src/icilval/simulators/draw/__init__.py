@@ -56,6 +56,16 @@ def _validate_skill(skill: str, doc: dict[str, Any]) -> list[str]:
     return errors
 
 
+#: What each drawing demonstration array carries. `boundary_angle` and `drawing` are the target
+#: the episode is scored against, not something the demonstrator observed, so they belong to no
+#: channel and reach no policy.
+DEMO_CHANNELS = {
+    "video": ("image",),
+    "proprio": ("agent_pos", "pen_down"),
+    "actions": ("actions",),
+}
+
+
 SIMULATOR = register(
     Simulator(
         name="draw",
@@ -65,5 +75,6 @@ SIMULATOR = register(
         make_unit=_make_unit,
         demo_frames=_demo_frames,
         validate_skill=_validate_skill,
+        demo_channels=DEMO_CHANNELS,
     )
 )
