@@ -7,7 +7,6 @@ from typing import Any
 
 import numpy as np
 
-from ...pools.demos import load_demo
 from ...pools.schema import Pool
 from ...spec import Spec
 from ...video import VideoWriter
@@ -48,7 +47,7 @@ def run_units(
             if unit["init"] not in init_cache:
                 init_cache[unit["init"]] = load_init_states(pool.path(unit["init"]))
             init_state = init_cache[unit["init"]][int(unit["instance"])]
-            demo = load_demo(pool.path("demos") / f"{unit['demo']}.npz")
+            demo = ctx.demo(unit)
             clip = media_dir / f"{unit['unit_id']}.mp4"
             writer = VideoWriter(clip, fps, video_cfg) if record_video else None
             try:

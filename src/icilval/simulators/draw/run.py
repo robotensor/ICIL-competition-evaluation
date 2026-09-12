@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from ...pools.demos import load_demo
 from ...pools.schema import Pool
 from ...spec import Spec
 from ...video import VideoWriter
@@ -32,7 +31,7 @@ def run_units(
             if ctx.out_of_time():
                 ctx.finish(unit, ctx.timed_out(unit), None)
                 continue
-            demo = load_demo(pool.path("demos") / f"{unit['demo']}.npz")
+            demo = ctx.demo(unit)
             clip = media_dir / f"{unit['unit_id']}.mp4"
             writer = VideoWriter(clip, fps, video_cfg) if record_video else None
             try:

@@ -60,6 +60,15 @@ def _verify_pool_task(pool: Any, task: Any) -> list[str]:
     return []
 
 
+#: What each LIBERO demonstration array carries. `init_state` is deliberately in no channel: it
+#: is the scene the demonstration started from, which the pool builder reads and no policy sees.
+DEMO_CHANNELS = {
+    "video": ("agentview", "eye_in_hand"),
+    "proprio": ("ee_pos", "ee_ori", "gripper"),
+    "actions": ("actions",),
+}
+
+
 SIMULATOR = register(
     Simulator(
         name="libero",
@@ -70,5 +79,6 @@ SIMULATOR = register(
         demo_frames=_demo_frames,
         validate_skill=_validate_skill,
         verify_pool_task=_verify_pool_task,
+        demo_channels=DEMO_CHANNELS,
     )
 )
