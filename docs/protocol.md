@@ -146,8 +146,16 @@ architecture template under `arch/`.
 A **field** is an entry in `tracks`: its demonstration view, its protocol, its skills, its
 baseline, its pool or catalogue, and any duelling constants that differ from the defaults. It
 brings its own king, queue, lineage and crown. See `docs/benchmarks.md` for the benchmark behind
-it. If its simulator is
-already registered (`icilval.simulators`), that is all: the simulator's package supplies the
-pool stage, the unit instances, the episode loop and the policy. A new simulator is a new
-package under `simulators/` registering those six things, plus one import. Adding a skill bumps
-`spec_version`, since it changes every duel id and every submission's layout.
+it.
+
+Two registries decide what runs a skill, and they are deliberately separate. The **simulator**
+(`icilval.simulators`) supplies the pool stage, the unit instances and the episode loop; a new
+one is a package under `simulators/` registering those, plus one import, or a distribution
+advertising itself through the `icilval.benchmarks` entry point group. The **architecture**
+(`icilval.model.architectures`) supplies the policy, because that is what the policy is built
+from: `arch/<architecture>.cfg.json` instantiates it, `arch/<architecture>.tensors.json` checks
+its weights, and the observation names it consumes are the ones that template declares. A
+benchmark in another repository could never have supplied a policy - the orchestrator holds the
+weights and *serves* the policy to it - which is why the key is the architecture and not the
+simulator. Adding a skill bumps `spec_version`, since it changes every duel id and every
+submission's layout.

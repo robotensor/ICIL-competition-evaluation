@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from ...model.architectures import register as register_architecture
 from .. import Simulator, register
+
+#: The architecture in `arch/` this simulator's policy implements.
+ARCHITECTURE = "bpp_draw_v1"
 
 
 def _make_policy(model_dir: Any, arch_dir: Any, spec: Any, skill: str, device: str = "cuda"):
@@ -66,10 +70,11 @@ DEMO_CHANNELS = {
 }
 
 
+register_architecture(ARCHITECTURE, _make_policy)
+
 SIMULATOR = register(
     Simulator(
         name="draw",
-        make_policy=_make_policy,
         run_units=_run_units,
         build_stage=_build_stage,
         make_unit=_make_unit,

@@ -18,9 +18,10 @@ from typing import Any
 
 from .. import demoview
 from ..canon import sha256_file
+from ..model.architectures import make_policy
 from ..pools.demos import load_demo_for
 from ..pools.schema import Pool
-from ..simulators import for_skill, make_policy
+from ..simulators import for_skill
 from ..spec import Spec
 from ..video import VideoWriter
 

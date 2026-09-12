@@ -115,6 +115,7 @@ def test_a_video_only_field_hands_its_policies_no_actions(spec, tmp_path, monkey
     """Drive the real side runner with a fake benchmark that records what it was handed."""
     from icilval import simulators
     from icilval.duel.side_runner import run_side
+    from icilval.model import architectures
     from icilval.spec import load_spec_file
 
     # The real video-only field, with its benchmark swapped for a fake: the field's declaration
@@ -140,12 +141,18 @@ def test_a_video_only_field_hands_its_policies_no_actions(spec, tmp_path, monkey
         steps, model_errors, wall_s, error = 1, 0, 0.1, None
         prompt_steps, prompt_chunks, instance_applied = 2, 1, {}
 
+    # The policy is the architecture's, not the simulator's: the side runner asks
+    # `model.architectures` for the one this skill's `architecture` names.
+    monkeypatch.setitem(
+        architectures.REGISTRY,
+        json.loads(path.read_text())["skills"]["rt_pick_and_place"]["architecture"],
+        lambda *a, **k: _Policy(),
+    )
     monkeypatch.setitem(
         simulators.REGISTRY,
         "fakesim",
         simulators.Simulator(
             name="fakesim",
-            make_policy=lambda *a, **k: _Policy(),
             run_units=run_units,
             build_stage=lambda *a, **k: None,
             make_unit=lambda *a, **k: None,

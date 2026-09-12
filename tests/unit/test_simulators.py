@@ -18,7 +18,6 @@ from icilval.simulators import Simulator
 
 def _sim(name: str, **kw) -> Simulator:
     base = dict(
-        make_policy=lambda *a, **k: None,
         run_units=lambda *a, **k: None,
         build_stage=lambda *a, **k: None,
         make_unit=lambda *a, **k: None,

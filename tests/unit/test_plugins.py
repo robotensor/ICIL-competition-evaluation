@@ -15,7 +15,6 @@ from icilval.simulators import MissingBenchmark, Simulator
 
 def _sim(name: str, **kw) -> Simulator:
     base = dict(
-        make_policy=lambda *a, **k: None,
         run_units=lambda *a, **k: None,
         build_stage=lambda *a, **k: None,
         make_unit=lambda *a, **k: None,
@@ -238,15 +237,16 @@ def test_the_hooks_that_cannot_work_in_this_process_refuse_rather_than_pretend(e
     """A hook that quietly did nothing would score a field on no episodes at all.
 
     `run_units` is deliberately not in this list: it is implemented for a plugged benchmark, by
-    driving `run_command` and `read_result` in a subprocess. The rest genuinely cannot happen
-    here - the orchestrator owns the weights and the architecture template, so a policy is
-    *served* rather than loaded into the benchmark's process, and a pool is built from a
-    benchmark's own sources on its own side.
+    driving `run_command` and `read_result` in a subprocess. A pool genuinely cannot be built
+    here - it comes from a benchmark's own sources, on its own side. A policy is not on the
+    record at all any more: the orchestrator owns the weights and the architecture template and
+    serves the policy, so `model.architectures` supplies it and no simulator is asked.
     """
     entry_points.append(_EntryPoint("fakesim", "fakepkg.plugin", lambda: _Plugin()))
     simulators.load_plugins()
     sim = simulators.get("fakesim")
-    for hook in (sim.make_policy, sim.build_stage, sim.make_unit):
+    assert not hasattr(sim, "make_policy")
+    for hook in (sim.build_stage, sim.make_unit):
         with pytest.raises(MissingBenchmark, match="out of process"):
             hook()
 
